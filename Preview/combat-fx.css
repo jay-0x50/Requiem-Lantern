@@ -1,0 +1,76 @@
+/* Effects sit above the field but below the HUD. Coordinates use the 1600×900 stage. */
+.combat-fx{position:absolute;inset:0;pointer-events:none;z-index:7;overflow:hidden}
+.combat-fx>div{position:absolute;pointer-events:none;--fx-color:#f6c682}
+/* The full character changes pose at every phase; only local weapon contact glows. */
+.combat-fx>.melee-fighter{width:480px;height:480px;transform:translateX(-50%);transform-origin:50% 92%;z-index:1;filter:drop-shadow(0 8px 9px #0009)}
+.melee-sprite{position:absolute;inset:0;background-repeat:no-repeat;background-size:300% 200%;background-position:0 0}
+.melee-fighter:after{content:'';position:absolute;left:24%;right:24%;bottom:5%;height:16px;background:#05060b8a;border-radius:50%;filter:blur(8px);z-index:-1}
+.melee-active .field-hero,.melee-active .enemy{opacity:.22;filter:saturate(.4)}
+.melee-active .threads,.melee-active .intent,.melee-active .parts,.melee-active .body-target,.melee-active .ally-target{opacity:0!important;pointer-events:none}
+.melee-active .field-name{opacity:.25}
+.melee-active .combat-fx:before{content:'';position:absolute;inset:140px 0 225px;background:radial-gradient(ellipse at 66% 70%,transparent 12%,#090c1340 68%);pointer-events:none}
+.combat-fx>.weapon-cut{z-index:3;width:166px;height:218px;border-radius:50%;border-right:9px solid #ffe8be;border-top:3px solid #ffd08b;border-bottom:0;box-shadow:7px 0 6px -5px var(--fx-color);transform:translate(-50%,-50%) rotate(35deg);animation:weapon-sweep .22s ease-out both}
+.weapon-cut.reverse{scale:-1 1}
+.combat-fx>.weapon-contact{z-index:4;width:78px;height:78px;transform:translate(-50%,-50%) rotate(45deg);background:radial-gradient(circle,#fff7db 0 5%,#ffd38c88 13%,transparent 65%);animation:contact-pop .16s ease-out both}
+.weapon-contact:before,.weapon-contact:after{content:'';position:absolute;left:37px;top:8px;width:3px;height:62px;background:linear-gradient(transparent,#fff7d8,transparent)}
+.weapon-contact:after{transform:rotate(90deg)}
+.combat-fx>.fx-spark,.combat-fx>.fx-number,.combat-fx>.fx-ring{z-index:4}
+.hit-stop .melee-fighter{transition:none!important}
+.contact-kick .combat-fx{animation:contact-kick .2s ease-out both}
+@keyframes weapon-sweep{from{transform:translate(-50%,-50%) rotate(-35deg) scale(.8);opacity:.9}to{transform:translate(-50%,-50%) rotate(65deg) scale(1.1);opacity:0}}
+@keyframes contact-pop{from{opacity:1;scale:1.2}to{opacity:0;scale:.65}}
+@keyframes contact-kick{0%,100%{translate:0 0}25%{translate:-5px 2px}60%{translate:3px -1px}}
+.reduce-motion .weapon-cut,.reduce-motion .weapon-contact{display:none}
+.thread-player{stroke-width:3;filter:drop-shadow(0 0 5px #f2bc70a0)}
+.thread-player.flow{stroke-dasharray:12 5 2 5;animation:thread-flow 2s linear infinite}
+#drag-thread{stroke-width:4;stroke:#ffe1a0;stroke-dasharray:8 3;animation:thread-flow .6s linear infinite;filter:drop-shadow(0 0 7px #f2a541)}
+.drop-ready:not(.ally-target){outline:1px solid #d5ac6177;outline-offset:4px}
+.drop-focus:not(.ally-target),.fx-active.intent{outline:2px solid #ffdd93;outline-offset:5px;filter:drop-shadow(0 0 15px #e1a75577)}
+.ally-target.drop-ready{box-shadow:inset 0 -30px 35px -25px #f2c56fa0}
+.ally-target.drop-focus{box-shadow:inset 0 0 30px #f2c56f66;border-bottom:2px solid #ffdc91!important}
+.drag-cursor{position:absolute;z-index:16;pointer-events:none;display:none;--fx-color:#ffd899}
+.drag-cursor.visible{display:block}.drag-cursor i{display:block;position:absolute;width:17px;height:17px;border:2px solid #fff0c3;background:var(--fx-color);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 12px 4px var(--fx-color),0 0 35px var(--fx-color)}
+.drag-cursor.matched i{width:38px;height:38px;background:transparent;animation:target-lock .8s ease infinite}
+.drag-cursor span{position:absolute;left:24px;top:-41px;white-space:nowrap;background:#111927ef;border:1px solid #c7a571;padding:7px 15px;font-size:16px;color:#ffe1a7}
+.fx-ring{width:35px;height:35px;border:3px solid var(--fx-color);border-radius:50%;box-shadow:0 0 20px var(--fx-color),inset 0 0 18px var(--fx-color);animation:impact-ring .65s ease-out both;transform:translate(-50%,-50%)}
+.fx-ring.large{width:80px;height:80px;border-width:2px}
+.fx-spark{width:24px;height:3px;border-radius:50%;background:#fff2c9;box-shadow:0 0 10px 3px var(--fx-color);animation:spark-fly .6s ease-out both}
+.fx-beam{height:5px;transform-origin:left center;transform:rotate(var(--angle));background:linear-gradient(90deg,transparent,var(--fx-color),#fff6dc);box-shadow:0 0 13px var(--fx-color);animation:beam-arrive .42s ease-out both}
+.fx-beam:after{content:'';position:absolute;right:0;top:-6px;width:18px;height:18px;background:#fff8e6;border-radius:50%;box-shadow:0 0 22px 10px var(--fx-color)}
+.fx-beam.opposed{--fx-color:#b397e5!important}
+.fx-slash{width:210px;height:6px;border-radius:50%;background:#fff6e7;box-shadow:0 0 20px 10px var(--fx-color);animation:slash-cut .35s ease-out both}
+.fx-slash:after{content:'';position:absolute;inset:0;background:inherit;transform:rotate(75deg);box-shadow:inherit}
+.fx-number{font-family:Georgia,Noto,serif;font-size:52px;font-weight:700;color:#fff0d0;text-shadow:0 3px 2px #140f19,0 0 18px #e4ad64;animation:damage-rise .9s ease-out both;z-index:2}
+.fx-number.healing{color:#a5edda;text-shadow:0 2px 5px #082825,0 0 18px #75c8c4}
+.fx-link-label{padding:8px 18px;color:#ffe4aa;background:linear-gradient(90deg,transparent,#101725eb 20%,#101725eb 80%,transparent);white-space:nowrap;font-size:20px;letter-spacing:.1em;animation:label-rise .95s ease-out both}
+.fx-verdict{white-space:nowrap;font-size:39px;font-weight:600;letter-spacing:.12em;color:var(--fx-color);text-shadow:0 0 22px #11101d,0 3px 3px #090b13;animation:verdict .95s ease-out both}
+.fx-fracture{font-family:Georgia,serif;font-size:210px;line-height:1;color:var(--fx-color);text-shadow:0 0 40px #af74e1;animation:fracture .85s ease-out both}
+.fx-guard{font-size:150px;line-height:1;color:var(--fx-color);text-shadow:0 0 35px #b3dbea;transform:translate(-50%,-50%);animation:guard-in 1.4s ease both}
+.field-hero.fx-active{filter:drop-shadow(0 0 15px #e9bb6e80)}
+.field-hero.fx-lunge{animation:ally-lunge .3s ease!important}.enemy.fx-lunge{animation:enemy-lunge .3s ease!important}
+.field-hero.fx-hit,.enemy.fx-hit{animation:unit-hit .32s ease!important}.enemy.dead{opacity:.22;filter:grayscale(1)}
+.combat-caption{position:absolute;bottom:51px;left:385px;width:830px;min-height:133px;z-index:14;pointer-events:none;text-align:center;padding:20px 35px 22px;background:linear-gradient(90deg,transparent,#0c121bea 12%,#0c121bfa 50%,#0c121bea 88%,transparent);opacity:0;transition:opacity .15s}
+.combat-caption.visible{opacity:1}.caption-overline{font-size:12px;letter-spacing:.23em;color:#caa875}.combat-caption strong{display:block;font-size:27px;font-weight:500;color:#f5ddba;margin:9px 0 4px}.combat-caption>span{font-size:15px;color:#aeb9c7}
+.playback-progress{position:absolute;bottom:0;left:20%;right:20%;height:2px;background:#454035}.playback-progress i{display:block;width:0;height:100%;background:#f0c181;transition:width .2s;box-shadow:0 0 8px #f2a541}
+.resolving .action-dock{opacity:.17;filter:saturate(.4);pointer-events:none}.resolving .battle-controls{opacity:.25}.resolving .battle-help,.resolving .battle-prediction{opacity:0}.resolving .thread-enemy{opacity:.16}.resolving .thread-player{opacity:.35}
+.intent-cancelled{opacity:.17!important;filter:grayscale(1);transition:opacity .3s}.intent.intent-cancelled strong{text-decoration:line-through}.part-broken{opacity:.35!important}
+.fx-shake{animation:field-shake .28s ease!important}
+.modal.ignite-modal{background:linear-gradient(90deg,#080d1899,#080d1855,#080d1899);backdrop-filter:none;justify-content:flex-end;padding-bottom:74px}.ignite-modal h2{font-size:27px;margin:0;color:#ffe0ac}.ignite-modal p{font-size:16px;margin:9px 0}.ignite-modal .ignite-area{height:290px}.ignite-modal .ring{box-shadow:0 0 16px #f2a54133}.ignite-modal .ignite-grade{font-size:40px}
+@keyframes thread-flow{to{stroke-dashoffset:-48}}
+@keyframes target-lock{50%{transform:translate(-50%,-50%) scale(1.15);opacity:.7}}
+@keyframes impact-ring{from{transform:translate(-50%,-50%) scale(.25);opacity:1}to{transform:translate(-50%,-50%) scale(4);opacity:0}}
+@keyframes spark-fly{from{transform:translate(0,0) rotate(var(--angle));opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--angle));opacity:0}}
+@keyframes beam-arrive{0%{clip-path:inset(0 100% 0 0);opacity:0}25%{opacity:1}60%{clip-path:inset(-30px -30px -30px 0);opacity:1}100%{opacity:0}}
+@keyframes slash-cut{from{transform:translate(-50%,-50%) rotate(-25deg) scaleX(.1);opacity:1}to{transform:translate(-50%,-50%) rotate(-25deg) scaleX(1.6);opacity:0}}
+@keyframes damage-rise{0%{transform:translate(-50%,-50%) scale(1.25);opacity:0}15%{opacity:1}70%{opacity:1}100%{transform:translate(-50%,-150%) scale(.9);opacity:0}}
+@keyframes label-rise{0%{transform:translate(-50%,-20%);opacity:0}15%,70%{opacity:1}100%{transform:translate(-50%,-160%);opacity:0}}
+@keyframes verdict{0%{transform:translate(-50%,-50%) scale(1.25);opacity:0}18%,75%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-65%);opacity:0}}
+@keyframes fracture{0%{transform:translate(-50%,-50%) scale(.2) rotate(-20deg);opacity:1}100%{transform:translate(-50%,-50%) scale(1.5) rotate(20deg);opacity:0}}
+@keyframes guard-in{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}30%,60%{opacity:.75}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1)}}
+@keyframes ally-lunge{45%{transform:translate(33px,-5px) rotate(2deg)}}
+@keyframes enemy-lunge{45%{transform:translate(-22px,2px) rotate(-2deg)}}
+@keyframes unit-hit{20%{filter:brightness(1.8) sepia(.2);transform:translate(9px,-2px)}65%{transform:translate(-4px,0)}}
+@keyframes field-shake{25%{transform:translate(-4px,1px)}70%{transform:translate(3px,-1px)}}
+.reduce-motion .fx-ring,.reduce-motion .fx-slash,.reduce-motion .fx-fracture,.reduce-motion .fx-beam{display:none}
+.reduce-motion .fx-number,.reduce-motion .fx-link-label,.reduce-motion .fx-verdict{transform:translate(-50%,-100%)}
+.reduce-motion .field-hero.fx-lunge,.reduce-motion .enemy.fx-lunge,.reduce-motion .field-hero.fx-hit,.reduce-motion .enemy.fx-hit,.reduce-motion .fx-shake{animation:none!important}

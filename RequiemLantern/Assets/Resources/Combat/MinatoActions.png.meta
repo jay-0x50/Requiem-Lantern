@@ -1,0 +1,548 @@
+fileFormatVersion: 2
+guid: 262f0177bc3e4d449910315ac0c37ebe
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6067334661282144816
+    second: MinatoActions_0
+  - first:
+      213: 1726908343633972334
+    second: MinatoActions_1
+  - first:
+      213: -1619899705402002694
+    second: MinatoActions_2
+  - first:
+      213: -3986989720271317800
+    second: MinatoActions_3
+  - first:
+      213: -1441591764924545526
+    second: MinatoActions_4
+  - first:
+      213: 9159461382040060760
+    second: MinatoActions_5
+  - first:
+      213: 2424884800973270746
+    second: MinatoActions_6
+  - first:
+      213: -5502114540103748966
+    second: MinatoActions_7
+  - first:
+      213: 7190057037958846948
+    second: MinatoActions_8
+  - first:
+      213: 892022683523294928
+    second: MinatoActions_9
+  - first:
+      213: -9118344934204124591
+    second: MinatoActions_10
+  - first:
+      213: -5114758986495415315
+    second: MinatoActions_11
+  - first:
+      213: 949470025473967704
+    second: MinatoActions_12
+  - first:
+      213: 2561251759896096961
+    second: MinatoActions_13
+  - first:
+      213: 7701021422068541875
+    second: MinatoActions_14
+  - first:
+      213: 8778811485799465036
+    second: MinatoActions_15
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationMethod: 0
+  spriteTessellationDetail: -1
+  spriteGeometrySubdivision: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: MinatoActions_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1013
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03223237ab0833450800000000000000
+      internalID: 6067334661282144816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_1
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 501
+        width: 413
+        height: 509
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6c06fd2df537f710800000000000000
+      internalID: 1726908343633972334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_2
+      rect:
+        serializedVersion: 2
+        x: 454
+        y: 503
+        width: 539
+        height: 507
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af2f0cfecc5f489e0800000000000000
+      internalID: -1619899705402002694
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_3
+      rect:
+        serializedVersion: 2
+        x: 1334
+        y: 981
+        width: 37
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d4181039fd5ba8c0800000000000000
+      internalID: -3986989720271317800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_4
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 943
+        width: 23
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a064b8c7def6efbe0800000000000000
+      internalID: -1441591764924545526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_5
+      rect:
+        serializedVersion: 2
+        x: 1000
+        y: 511
+        width: 521
+        height: 465
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 853086a1991fc1f70800000000000000
+      internalID: 9159461382040060760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_6
+      rect:
+        serializedVersion: 2
+        x: 46
+        y: 847
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ade614ff0ebe6a120800000000000000
+      internalID: 2424884800973270746
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_7
+      rect:
+        serializedVersion: 2
+        x: 492
+        y: 749
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a92ba9b2aff84a3b0800000000000000
+      internalID: -5502114540103748966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_8
+      rect:
+        serializedVersion: 2
+        x: 990
+        y: 719
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e9955e08c638c360800000000000000
+      internalID: 7190057037958846948
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_9
+      rect:
+        serializedVersion: 2
+        x: 442
+        y: 577
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d62ffe87e9116c00800000000000000
+      internalID: 892022683523294928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 465
+        width: 5
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 152d749e791257180800000000000000
+      internalID: -9118344934204124591
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_11
+      rect:
+        serializedVersion: 2
+        x: 30
+        y: 0
+        width: 531
+        height: 482
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: deb243a0dc9b409b0800000000000000
+      internalID: -5114758986495415315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_12
+      rect:
+        serializedVersion: 2
+        x: 564
+        y: 30
+        width: 439
+        height: 482
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 856c14925f13d2d00800000000000000
+      internalID: 949470025473967704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_13
+      rect:
+        serializedVersion: 2
+        x: 1032
+        y: 21
+        width: 487
+        height: 467
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c073f0d7e46b8320800000000000000
+      internalID: 2561251759896096961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_14
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 327
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b9a11e7e268fda60800000000000000
+      internalID: 7701021422068541875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MinatoActions_15
+      rect:
+        serializedVersion: 2
+        x: 574
+        y: 71
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c404231c88a94d970800000000000000
+      internalID: 8778811485799465036
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      MinatoActions_0: 6067334661282144816
+      MinatoActions_1: 1726908343633972334
+      MinatoActions_10: -9118344934204124591
+      MinatoActions_11: -5114758986495415315
+      MinatoActions_12: 949470025473967704
+      MinatoActions_13: 2561251759896096961
+      MinatoActions_14: 7701021422068541875
+      MinatoActions_15: 8778811485799465036
+      MinatoActions_2: -1619899705402002694
+      MinatoActions_3: -3986989720271317800
+      MinatoActions_4: -1441591764924545526
+      MinatoActions_5: 9159461382040060760
+      MinatoActions_6: 2424884800973270746
+      MinatoActions_7: -5502114540103748966
+      MinatoActions_8: 7190057037958846948
+      MinatoActions_9: 892022683523294928
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,0 +1,3 @@
+PASS: 10 fresh screenshots; title, story, hub, roster, stages, battle, windup, impact, recoil, victory.
+Actual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact, weapon clash captured; round 2 returned with synchronized HP/gauges.
+Reward granted once and persisted to isolated smoke-progress.xml.

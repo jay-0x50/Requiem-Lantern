@@ -1,0 +1,9 @@
+Generated with built-in image_gen (no external image API key). Working assets are copied into RequiemLantern/Assets/Resources/Art.
+
+Background.png — precise-object-edit. Edit target: 이미지/UI, UX/타이틀UI.png. Remove all typography, interface, title graphics and the floating lantern logo. Preserve the detailed dark navy ruined gothic coastal city, stone road, mist and physical amber lanterns. Remove moon and stars for starless eternal night. Add a distant lighthouse with one dim amber light. Leave the center road open for battle sprites. No people, creatures, UI, logo or text. Landscape 16:9.
+
+Anger.png — stylized-concept. Full-body transparent enemy sprite: grief stage Anger. Faceless towering shadow creature formed from broken black cathedral plates and smoky tendrils, asymmetrical massive arm, shoulder armor, long legs, visible violet chest core. Three-quarter facing left. Clean anime linework, soft cel shading, painterly surfaces, navy/black/violet. No gore, text, ground, cast shadow or UI. Full body with margins, real alpha. Portrait 2:3.
+
+Keep.png — stylized-concept. Reference style: 이미지/UI, UX/메뉴UI.png. Create a new clean interior plate inside a ruined coastal lighthouse in eternal starless night. Worn cylindrical stone interior, cracked gothic windows, sea fog and frozen ruins outside, beams, brass mechanisms, map table on right, soup cans and bowls, small amber lanterns, blankets and repaired wood. Keep foreground left open for character UI. Quiet sanctuary and fragile hope; navy and muted teal shadows with amber warmth. Detailed anime game background. No person, animal, text, interface or icons. Landscape 16:9.
+
+These are early production assets for the playable prototype. Original source images remain unchanged. Character prompts and exact cutout references are recorded separately in Art/Characters.

@@ -1,0 +1,68 @@
+{
+  "blend": "requiem_lantern_pilot.blend",
+  "blender": "5.2.0 LTS",
+  "type": "2.5D deformable illustration billboard",
+  "fps": 24,
+  "idle_period_frames": 96,
+  "camera": "front orthographic",
+  "texture_alpha": "straight",
+  "characters": [
+    {
+      "id": "kai",
+      "name": "카이",
+      "height": 1.68,
+      "role": "등불지기",
+      "color": [
+        0.949,
+        0.647,
+        0.255
+      ],
+      "mesh_vertices": 1617,
+      "bones": 5,
+      "actions": {
+        "Idle": "kai_Idle",
+        "Resonance": "kai_Resonance",
+        "HitReact": "kai_HitReact"
+      },
+      "cutout": "Art/Characters/Cutouts/kai.png"
+    },
+    {
+      "id": "lian",
+      "name": "리안",
+      "height": 1.72,
+      "role": "광휘 / 수호자",
+      "color": [
+        0.949,
+        0.647,
+        0.255
+      ],
+      "mesh_vertices": 1617,
+      "bones": 5,
+      "actions": {
+        "Idle": "lian_Idle",
+        "Resonance": "lian_Resonance",
+        "HitReact": "lian_HitReact"
+      },
+      "cutout": "Art/Characters/Cutouts/lian.png"
+    },
+    {
+      "id": "minato",
+      "name": "미나토",
+      "height": 1.58,
+      "role": "물결 / 치유사",
+      "color": [
+        0.35,
+        0.72,
+        0.71
+      ],
+      "mesh_vertices": 1617,
+      "bones": 5,
+      "actions": {
+        "Idle": "minato_Idle",
+        "Resonance": "minato_Resonance",
+        "HitReact": "minato_HitReact"
+      },
+      "cutout": "Art/Characters/Cutouts/minato.png"
+    }
+  ]
+}

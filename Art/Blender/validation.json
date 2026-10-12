@@ -1,0 +1,105 @@
+{
+  "file": "Art\\Blender\\requiem_lantern_cast.blend",
+  "blender": "5.2.0 LTS",
+  "characters": [
+    {
+      "id": "kai",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "kai_Idle",
+        "kai_Resonance",
+        "kai_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 6.542551996523494e-19,
+      "max_idle_movement_m": 0.007336735337045318,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "lian",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "lian_Idle",
+        "lian_Resonance",
+        "lian_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 6.698327763787966e-19,
+      "max_idle_movement_m": 0.0074226891420495905,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "sera",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "sera_Idle",
+        "sera_Resonance",
+        "sera_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 6.3478345314516795e-19,
+      "max_idle_movement_m": 0.007229314332542089,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "minato",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "minato_Idle",
+        "minato_Resonance",
+        "minato_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 6.153114294695258e-19,
+      "max_idle_movement_m": 0.007122183489511988,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "noa",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "noa_Idle",
+        "noa_Resonance",
+        "noa_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 6.85410319162112e-19,
+      "max_idle_movement_m": 0.0075090018657059015,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "heidel",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "heidel_Idle",
+        "heidel_Resonance",
+        "heidel_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 5.919453330024517e-19,
+      "max_idle_movement_m": 0.00699422884154,
+      "foot_movement_m": 0.0
+    },
+    {
+      "id": "orphe",
+      "bones": 5,
+      "vertices": 1617,
+      "actions": [
+        "orphe_Idle",
+        "orphe_Resonance",
+        "orphe_HitReact"
+      ],
+      "texture_packed": true,
+      "loop_seam_delta_m": 7.321429492601113e-19,
+      "max_idle_movement_m": 0.007768686883464422,
+      "foot_movement_m": 0.0
+    }
+  ],
+  "result": "PASS"
+}

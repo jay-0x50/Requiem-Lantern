@@ -1,0 +1,670 @@
+{
+  "result": "PASS",
+  "method": "Read-only alpha, rectangle and pivot analysis; PNG files were not altered. Foot positions manually registered from sole pixel bands.",
+  "assets": [
+    {
+      "asset": "Lian",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.6371618906656901,
+      "frames": [
+        {
+          "index": 0,
+          "rect": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            88,
+            76,
+            442,
+            480
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            275,
+            480
+          ]
+        },
+        {
+          "index": 1,
+          "rect": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            65,
+            74,
+            430,
+            480
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "footInFrame": [
+            260,
+            480
+          ]
+        },
+        {
+          "index": 2,
+          "rect": [
+            1024,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            18,
+            117,
+            481,
+            480
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "footInFrame": [
+            236,
+            480
+          ]
+        },
+        {
+          "index": 3,
+          "rect": [
+            0,
+            512,
+            565,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            50,
+            87,
+            545,
+            432
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            270,
+            432
+          ]
+        },
+        {
+          "index": 4,
+          "rect": [
+            565,
+            512,
+            459,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            28,
+            32,
+            377,
+            435
+          ],
+          "edgeMaxAlpha": [
+            1,
+            0,
+            1,
+            0
+          ],
+          "footInFrame": [
+            211,
+            435
+          ]
+        },
+        {
+          "index": 5,
+          "rect": [
+            1024,
+            512,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            52,
+            51,
+            473,
+            433
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            344,
+            433
+          ]
+        }
+      ],
+      "passNoOpaqueBorder": true
+    },
+    {
+      "asset": "Sera",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.6915365854899088,
+      "frames": [
+        {
+          "index": 0,
+          "rect": [
+            0,
+            0,
+            560,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            79,
+            101,
+            514,
+            460
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            251,
+            460
+          ]
+        },
+        {
+          "index": 1,
+          "rect": [
+            560,
+            0,
+            464,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            74,
+            90,
+            398,
+            462
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "footInFrame": [
+            229,
+            462
+          ]
+        },
+        {
+          "index": 2,
+          "rect": [
+            1024,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            68,
+            122,
+            471,
+            462
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            244,
+            462
+          ]
+        },
+        {
+          "index": 3,
+          "rect": [
+            0,
+            512,
+            560,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            46,
+            109,
+            532,
+            420
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            231,
+            420
+          ]
+        },
+        {
+          "index": 4,
+          "rect": [
+            560,
+            512,
+            496,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            50,
+            81,
+            456,
+            421
+          ],
+          "edgeMaxAlpha": [
+            0,
+            1,
+            1,
+            0
+          ],
+          "footInFrame": [
+            194,
+            421
+          ]
+        },
+        {
+          "index": 5,
+          "rect": [
+            1056,
+            512,
+            480,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            47,
+            45,
+            427,
+            423
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            224,
+            423
+          ]
+        }
+      ],
+      "passNoOpaqueBorder": true
+    },
+    {
+      "asset": "Anger",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.7285137176513672,
+      "frames": [
+        {
+          "index": 0,
+          "rect": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            82,
+            71,
+            461,
+            468
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            301,
+            468
+          ]
+        },
+        {
+          "index": 1,
+          "rect": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            99,
+            79,
+            431,
+            469
+          ],
+          "edgeMaxAlpha": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "footInFrame": [
+            265,
+            469
+          ]
+        },
+        {
+          "index": 2,
+          "rect": [
+            1024,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            8,
+            94,
+            460,
+            468
+          ],
+          "edgeMaxAlpha": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            294,
+            468
+          ]
+        },
+        {
+          "index": 3,
+          "rect": [
+            0,
+            512,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            52,
+            129,
+            492,
+            428
+          ],
+          "edgeMaxAlpha": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "footInFrame": [
+            338,
+            428
+          ]
+        },
+        {
+          "index": 4,
+          "rect": [
+            512,
+            512,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            91,
+            59,
+            449,
+            431
+          ],
+          "edgeMaxAlpha": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            291,
+            431
+          ]
+        },
+        {
+          "index": 5,
+          "rect": [
+            1024,
+            512,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            73,
+            63,
+            449,
+            431
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            244,
+            431
+          ]
+        }
+      ],
+      "passNoOpaqueBorder": true
+    },
+    {
+      "asset": "Minato",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5604559580485026,
+      "frames": [
+        {
+          "index": 0,
+          "rect": [
+            0,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            66,
+            18,
+            430,
+            496
+          ],
+          "edgeMaxAlpha": [
+            1,
+            0,
+            1,
+            1
+          ],
+          "footInFrame": [
+            276,
+            496
+          ]
+        },
+        {
+          "index": 1,
+          "rect": [
+            512,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            43,
+            28,
+            453,
+            496
+          ],
+          "edgeMaxAlpha": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "footInFrame": [
+            295,
+            496
+          ]
+        },
+        {
+          "index": 2,
+          "rect": [
+            1024,
+            0,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            12,
+            75,
+            486,
+            496
+          ],
+          "edgeMaxAlpha": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "footInFrame": [
+            238,
+            496
+          ]
+        },
+        {
+          "index": 3,
+          "rect": [
+            0,
+            512,
+            560,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            40,
+            41,
+            519,
+            474
+          ],
+          "edgeMaxAlpha": [
+            1,
+            1,
+            0,
+            1
+          ],
+          "footInFrame": [
+            284,
+            474
+          ]
+        },
+        {
+          "index": 4,
+          "rect": [
+            560,
+            512,
+            464,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            40,
+            13,
+            380,
+            476
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            227,
+            476
+          ]
+        },
+        {
+          "index": 5,
+          "rect": [
+            1024,
+            512,
+            512,
+            512
+          ],
+          "alpha64BBoxInFrame": [
+            63,
+            45,
+            454,
+            475
+          ],
+          "edgeMaxAlpha": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "footInFrame": [
+            325,
+            475
+          ]
+        }
+      ],
+      "passNoOpaqueBorder": true
+    }
+  ]
+}

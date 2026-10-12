@@ -1,0 +1,5 @@
+FAIL: screen tour
+System.Exception: Screen capture returned no usable texture for 01-title.
+  at RequiemLantern.Presentation.LanternApp.WriteSmokeScreenshot (System.String directory, System.String name) [0x00024] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\RequiemLantern\Assets\Scripts\Presentation\LanternBootstrap.cs:157 
+  at RequiemLantern.Presentation.LanternApp+<Capture>d__117.MoveNext () [0x00068] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\RequiemLantern\Assets\Scripts\Presentation\LanternBootstrap.cs:148 
+  at RequiemLantern.Presentation.LanternApp+<SmokeTour>d__112.MoveNext () [0x000f1] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\RequiemLantern\Assets\Scripts\Presentation\LanternBootstrap.cs:43 

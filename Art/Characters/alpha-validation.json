@@ -1,0 +1,90 @@
+{
+  "result": "PASS",
+  "cutouts": [
+    {
+      "file": "heidel.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "kai.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "lian.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "minato.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "noa.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "orphe.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    {
+      "file": "sera.png",
+      "size": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    }
+  ],
+  "sampled_idle_frames": 56
+}

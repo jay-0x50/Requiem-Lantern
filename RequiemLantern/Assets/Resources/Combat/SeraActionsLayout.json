@@ -1,0 +1,67 @@
+{
+  "bodyHeight": 360,
+  "facing": "right",
+  "atlasWidth": 1536,
+  "atlasHeight": 1024,
+  "coordinateSystem": "Pixels measured from top left of the whole PNG; footX and footY are absolute, not frame-relative.",
+  "frames": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 560,
+      "height": 512,
+      "footX": 251,
+      "footY": 460,
+      "pose": "idle"
+    },
+    {
+      "x": 560,
+      "y": 0,
+      "width": 464,
+      "height": 512,
+      "footX": 789,
+      "footY": 462,
+      "pose": "windup"
+    },
+    {
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "footX": 1268,
+      "footY": 462,
+      "pose": "swing",
+      "contactX": 1465,
+      "contactY": 423
+    },
+    {
+      "x": 0,
+      "y": 512,
+      "width": 560,
+      "height": 512,
+      "footX": 231,
+      "footY": 932,
+      "pose": "followthrough",
+      "contactX": 527,
+      "contactY": 894
+    },
+    {
+      "x": 560,
+      "y": 512,
+      "width": 496,
+      "height": 512,
+      "footX": 754,
+      "footY": 933,
+      "pose": "recovery"
+    },
+    {
+      "x": 1056,
+      "y": 512,
+      "width": 480,
+      "height": 512,
+      "footX": 1280,
+      "footY": 935,
+      "pose": "hit"
+    }
+  ]
+}

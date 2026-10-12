@@ -1,0 +1,51 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "mode": "background-extraction",
+  "transparent_background": true,
+  "generated_date": "2026-10-01",
+  "note": "Each source was inspected before editing. Invariant preservation requested; small generated edge/lighting changes remain possible.",
+  "assets": [
+    {
+      "id": "lian",
+      "source": "이미지/캐릭터/영등/리안.png",
+      "output": "Art/Characters/Cutouts/lian.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Lian, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including gaps between legs, arms, shield, and torn coat strips. Preserve the exact same character identity, face, hair, facial expression, full body proportions, pose, clothing, intricate coat patterns, glass lighthouse shield, boots, colors, painterly anime linework, lighting and composition. Keep every fine hair strand, coat tassel and complete boot visible. Do not redraw or redesign the character. No scenery, no ground shadow, no text. This is a clean alpha cutout of the existing artwork."
+    },
+    {
+      "id": "kai",
+      "source": "이미지/캐릭터/영등/주인공.png",
+      "output": "Art/Characters/Cutouts/kai.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Kai, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including gaps between legs, arms, lantern and torn coat strips. Preserve exact character identity, face, hairstyle, tired expression, scarf, neutral body proportions, pose, weathered clothing patterns, brass lantern and delicate golden light threads, boots, cold colors, painterly anime linework, lighting and full-body composition. Preserve the transparent glow of the lantern. Do not redesign or repaint the character. Keep hair and both boots entirely visible with a small transparent margin. No scenery, no ground shadow, no text. Clean alpha cutout of the existing artwork."
+    },
+    {
+      "id": "minato",
+      "source": "이미지/캐릭터/영등/미나토.png",
+      "output": "Art/Characters/Cutouts/minato.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Minato, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including all gaps between legs, arms, medical lantern and torn coat strips. Preserve exact identity, sleepy face, teal hairstyle, body proportions, pose, coat patterns, stethoscope, glowing turquoise lantern, boots, colors, painterly anime linework and composition. Keep every fine hair and coat tassel and both complete boots visible. Do not redraw or redesign the figure; keep the reference body shape unchanged. No scenery, no ground shadow, no text. Clean alpha cutout of existing artwork."
+    },
+    {
+      "id": "sera",
+      "source": "이미지/캐릭터/영등/세라.png",
+      "output": "Art/Characters/Cutouts/sera.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Sera, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including fine gaps between legs, fingers, sword and torn coat strips. Preserve the exact face, grin, red ponytail, strong body, pose, black and orange worn costume, long cracked glowing sword, fire embers, complete boots, thin anime linework and detailed painting. Keep original composition and scale. Do not redraw or redesign. Preserve entire hair, sword tip and both boots without cropping. No background scene or ground shadow, no text. Clean alpha cutout of existing artwork."
+    },
+    {
+      "id": "noa",
+      "source": "이미지/캐릭터/영등/노아.png",
+      "output": "Art/Characters/Cutouts/noa.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Noa, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including gaps between legs, arms and all torn coat strips. Preserve exact character identity, pale face, subtle smile, black and purple hair, violet eyes, slender body proportions, pose, dark worn robes, small brass bells, purple shadow ribbons around hands, boots, painterly anime linework, colors and composition. Keep fine hair strands, both complete boots and shadow ribbons fully visible. Do not redraw or redesign the character. No scenery, no ground shadow, no text. Clean alpha cutout of existing artwork."
+    },
+    {
+      "id": "heidel",
+      "source": "이미지/캐릭터/잔화/하이델.png",
+      "output": "Art/Characters/Cutouts/heidel.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Heidel, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including gaps between boots, fingers, mechanical crossbow, strings and worn coat strips. Preserve exact character identity, mature face, brown bob haircut, brass goggles, compact sturdy body proportions, neutral expression, pose, layered practical clothing, tool pouches, backpack, detailed blue crystal mechanical crossbow, boots, linework, textures, colors and composition. Keep all crossbow strings and crystal tips and both complete boots fully visible. Do not redraw or redesign the character. No scenery, no ground shadow, no text. Clean alpha cutout of existing artwork."
+    },
+    {
+      "id": "orphe",
+      "source": "이미지/캐릭터/등화/오르페.png",
+      "output": "Art/Characters/Cutouts/orphe.png",
+      "prompt": "Use case: background-extraction. Edit target: the attached full-body character artwork, Orphe, for a Unity 2D game. Remove ONLY the flat gray background and make it truly transparent, including gaps between arms, bell staff, dangling bells, chain, long silver hair and robe strips. Preserve exact identity, gentle closed-eye smile, long silver hair, pale face, tall slender body proportions, pose, intricate dark ceremonial robes, small bronze bells, entire tall bell staff and its ornaments, boots, painterly anime linework, colors and composition. Keep the top and bottom of the staff, all hair, robe hem and both boots fully visible. Do not redraw or redesign the character. No scenery, no ground shadow, no text. Clean alpha cutout of existing artwork."
+    }
+  ]
+}

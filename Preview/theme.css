@@ -1,0 +1,352 @@
+/* Shared visual skin. Load after style.css; combat effects remain independent. */
+:root {
+  --lantern-ivory: #eee1cb;
+  --lantern-gold: #c8a66b;
+  --lantern-gold-light: #ffe0a2;
+  --lantern-ink: #0c1421;
+}
+
+/* Keep existing absolute positioning on battle targets and other controls. */
+:where(button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"])) {
+  position: relative;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]) {
+  --button-cut: 10px;
+  --button-edge: linear-gradient(135deg, #b59a69, #62563f 28%, #aa9062 51%, #514837 76%, #b09b72);
+  --button-fill: linear-gradient(180deg, #1d2a3bf2, #101927f7 52%, #111a27fc);
+  --button-trim: #d2b47a45;
+  isolation: isolate;
+  border: 0;
+  border-radius: 0;
+  color: var(--lantern-ivory);
+  background: var(--button-edge);
+  clip-path: polygon(var(--button-cut) 0, calc(100% - var(--button-cut)) 0, 100% var(--button-cut), 100% calc(100% - var(--button-cut)), calc(100% - var(--button-cut)) 100%, var(--button-cut) 100%, 0 calc(100% - var(--button-cut)), 0 var(--button-cut));
+  text-shadow: 0 1px 3px #0009;
+  letter-spacing: .035em;
+  box-shadow: inset 0 0 15px #d6b37815;
+  transition: color .18s ease, filter .18s ease, box-shadow .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"])::before,
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"])::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"])::before {
+  inset: 1px;
+  z-index: -2;
+  background: var(--button-fill);
+  clip-path: polygon(calc(var(--button-cut) - 1px) 0, calc(100% - var(--button-cut) + 1px) 0, 100% calc(var(--button-cut) - 1px), 100% calc(100% - var(--button-cut) + 1px), calc(100% - var(--button-cut) + 1px) 100%, calc(var(--button-cut) - 1px) 100%, 0 calc(100% - var(--button-cut) + 1px), 0 calc(var(--button-cut) - 1px));
+  transition: box-shadow .18s ease;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"])::after {
+  inset: 5px;
+  z-index: -1;
+  border: 1px solid var(--button-trim);
+  background:
+    linear-gradient(135deg, transparent 43%, #f1d59a9c 48% 52%, transparent 57%) top left / 9px 9px,
+    linear-gradient(45deg, transparent 43%, #f1d59a9c 48% 52%, transparent 57%) top right / 9px 9px,
+    linear-gradient(45deg, transparent 43%, #f1d59a9c 48% 52%, transparent 57%) bottom left / 9px 9px,
+    linear-gradient(135deg, transparent 43%, #f1d59a9c 48% 52%, transparent 57%) bottom right / 9px 9px;
+  background-repeat: no-repeat;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+}
+
+#game button.primary:not(.dialogue, .ally-target),
+#game button.slot.active {
+  --button-edge: linear-gradient(125deg, #ffdea0, #b98742 24%, #f2d18e 51%, #927448 77%, #f6d99e);
+  --button-fill: linear-gradient(180deg, #39404a, #1c2938 42%, #1d2632 75%, #3b352d);
+  --button-trim: #f1d19375;
+  color: #fff0cd;
+  font-weight: 500;
+}
+
+#game .hub-card.primary .num,
+#game .hub-card.primary .arrow { color: #e6c48a; }
+#game .hub-card.primary small { color: #c0c4ca; }
+
+@media (hover: hover) {
+  #game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):hover:not(:disabled) {
+    --button-edge: linear-gradient(115deg, #fff3c4, #d7a952 30%, #fff0b8 51%, #cb9d4e 75%, #fff0b8);
+    --button-fill: linear-gradient(180deg, #675336, #34352f 35%, #202e3a 66%, #59432b);
+    --button-trim: #ffe0a8b0;
+    color: #fff2ce;
+    filter: brightness(1.14);
+    box-shadow: inset 0 0 22px #ffd17b65;
+    text-shadow: 0 0 13px #f9c57572, 0 1px 3px #000a;
+  }
+  #game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):hover:not(:disabled)::before {
+    box-shadow: inset 0 0 19px #ffd38442;
+  }
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):active:not(:disabled) {
+  --button-edge: linear-gradient(125deg, #f3caa0, #b47a60 27%, #dbaa83 52%, #6d3f3b 77%, #cf9e78);
+  --button-fill: linear-gradient(180deg, #462c34, #3c222b 48%, #281c28 76%, #55352f);
+  --button-trim: #e2b08b70;
+  color: #f1d7c4;
+  filter: brightness(.92);
+  box-shadow: inset 0 3px 16px #120713aa;
+  text-shadow: 0 1px 2px #100711;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):focus-visible {
+  --button-edge: #ffebbf;
+  --button-trim: #fff0c9;
+  outline: none;
+}
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):focus-visible::after {
+  border-width: 2px;
+}
+
+#game button:not(.dialogue, .ally-target, .hit-target, [data-ui="hit-target"]):disabled {
+  --button-edge: linear-gradient(135deg, #6d7075, #3b4049 40%, #707177 75%, #454b55);
+  --button-fill: linear-gradient(180deg, #252c36, #1c232e 70%, #242c37);
+  --button-trim: #a9a9a526;
+  opacity: 1;
+  color: #7e8794;
+  filter: none;
+  cursor: default;
+  box-shadow: none;
+  text-shadow: 0 1px 2px #0006;
+}
+#game button:disabled::after { opacity: .45; }
+
+#game .skills button { --button-cut: 6px; letter-spacing: 0; }
+#game .skills button::after { inset: 3px; opacity: .7; }
+#game button.back { --button-cut: 8px; }
+#game .slot { letter-spacing: 0; }
+#game button.intent {
+  --button-edge: linear-gradient(130deg, #a598b9, #554d68 35%, #9a87b6 70%, #4b455b);
+  --button-fill: linear-gradient(180deg, #292739f5, #181c2bf7 80%, #282234f9);
+  --button-trim: #b39acd3a;
+  letter-spacing: 0;
+}
+
+/* Cinematic story composition, aligned to the 1600 × 900 design canvas. */
+.story .story-top {
+  top: 34px;
+  left: 48px;
+  right: 48px;
+  align-items: flex-start;
+  z-index: 6;
+}
+.story-location {
+  position: relative;
+  min-width: 316px;
+  padding: 13px 34px 18px 25px;
+  background: linear-gradient(90deg, #0a121fe8, #101c2aca 74%, #101c2a00);
+  border-left: 1px solid #c3a26b9c;
+}
+.story-location::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -5px;
+  width: 9px;
+  height: 9px;
+  background: #c8a66b;
+  transform: rotate(45deg);
+  box-shadow: 0 0 13px #e9bf7173;
+}
+.story-location::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, #ba9a65ba, #bd9b6359 65%, transparent);
+}
+.story-caption {
+  display: block;
+  font-size: 12px;
+  letter-spacing: .17em;
+  color: #c6ad83;
+  line-height: 1.6;
+}
+.story-location strong {
+  display: block;
+  margin-top: 7px;
+  color: #e9dfcd;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: .06em;
+  text-shadow: 0 1px 10px #000a;
+}
+.story-controls,
+.story-top .controls {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.story .story-top button {
+  min-height: 46px;
+  min-width: 84px;
+  padding: 9px 23px;
+  font-size: 15px;
+}
+.story .story-hero {
+  left: 94px;
+  top: 56px;
+  width: 730px;
+  height: 818px;
+  object-position: center bottom;
+  filter: drop-shadow(0 6px 35px #020813b8);
+  z-index: 2;
+}
+.story .story-hero.is-listening {
+  filter: brightness(.7) saturate(.85) drop-shadow(0 6px 35px #020813b8);
+}
+
+#game .dialogue,
+#game .dialogue:hover:not(:disabled),
+#game .dialogue:active:not(:disabled) {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  width: 100%;
+  min-height: 246px;
+  padding: 47px 124px 52px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, #09132100, #091321bf 15%, #0a1420e8 53%, #0b1420f5 94%);
+  color: var(--lantern-ivory);
+  text-align: left;
+  text-shadow: 0 2px 6px #000c;
+  isolation: isolate;
+  cursor: pointer;
+  z-index: 8;
+  transition: none;
+  outline-offset: -9px;
+}
+#game .dialogue::before {
+  content: "";
+  position: absolute;
+  inset: -55px 0 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 18% 76%, #60728421, transparent 50%),
+    radial-gradient(ellipse at 73% 80%, #32455530, transparent 55%),
+    linear-gradient(180deg, transparent 2%, #0b14203b 25%, #0c14238f 65%, #0a121e9c);
+  z-index: -1;
+}
+.dialogue-ornament {
+  position: absolute;
+  top: 14px;
+  left: 52px;
+  right: 52px;
+  height: 19px;
+  display: block;
+  pointer-events: none;
+}
+.dialogue-ornament::before,
+.dialogue-ornament::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  width: calc(50% - 22px);
+  height: 1px;
+}
+.dialogue-ornament::before {
+  left: 0;
+  background: linear-gradient(90deg, transparent, #bca57985 35%, #dfc493b0);
+}
+.dialogue-ornament::after {
+  right: 0;
+  background: linear-gradient(90deg, #dfc493b0, #bca57985 65%, transparent);
+}
+.dialogue-ornament i {
+  position: absolute;
+  left: calc(50% - 5px);
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #d3b47bbd;
+  transform: rotate(45deg);
+  box-shadow: 0 0 14px #dbb46c25;
+}
+.dialogue-ornament i::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: #ecd39a;
+}
+.dialogue .speaker {
+  color: #e7c58b;
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  margin-bottom: 16px;
+  line-height: 1.35;
+}
+.dialogue .speaker::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 17px;
+  margin-right: 14px;
+  vertical-align: -1px;
+  background: linear-gradient(180deg, #e6c38c, #a17b486e);
+  clip-path: polygon(50% 0, 100% 30%, 100% 70%, 50% 100%, 0 70%, 0 30%);
+}
+.dialogue .words {
+  display: block;
+  min-height: 83px;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: .01em;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+.dialogue .next {
+  right: 63px;
+  bottom: 19px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #c6b18b;
+  font-size: 13px;
+  letter-spacing: .1em;
+}
+.dialogue .next i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-right: 1px solid #e2c18a;
+  border-bottom: 1px solid #e2c18a;
+  transform: rotate(45deg) translateY(-2px);
+}
+.story-page { color: #83909f; font-size: 11px; letter-spacing: .08em; }
+#game .dialogue.is-narration {
+  padding: 74px 185px 52px;
+  text-align: center;
+}
+.dialogue.is-narration .speaker { display: none; }
+.dialogue.is-narration .words {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 114px;
+  color: #e0dbcf;
+  font-size: 25px;
+  line-height: 1.9;
+  letter-spacing: .035em;
+}
+.story .blackout { background: #050b14f2; }
+.story footer {
+  background: #080f19f7;
+  border-top-color: #c6a06728;
+  color: #8996a5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #game button { transition: none !important; }
+}

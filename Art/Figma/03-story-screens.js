@@ -1,0 +1,52 @@
+// Append to 02-common.js; screens 1—3.
+const title=frame('01 · 타이틀 / 마지막 불씨',100,100);
+art(title,0,1030,0,810,1080).opacity=.65;
+gradient(title,830,0,1090,1080,true,1,0.1);
+gradient(title,1030,640,890,440,false,0,1);
+rule(title,64,64,480,'amber');
+await txt(title,'World','태양이 꺼진 세계, 영야',64,83,660,22,'muted');
+lantern(title,360,230,116);
+await txt(title,'Korean title','레퀴엠 랜턴',104,464,790,82,'ivory',true);
+const en=await txt(title,'English title','R E Q U I E M   L A N T E R N',110,600,790,23,'amber');
+await txt(title,'Theme','기억이 사라져도, 빛은 이어진다.',110,661,780,28,'ivory',true);
+await button(title,'등불을 밝히다  →',110,772,480,0);
+await txt(title,'Secondary actions','기록 불러오기     ·     설정',110,880,650,22,'muted');
+await txt(title,'Quiet opening','바람, 얼음, 그리고 희미한 숨소리.',110,988,780,18,'muted');
+await txt(title,'Version','v0.2  ·  마지막 불씨',1490,988,366,18,'muted');
+
+const hub=frame('02 · 등대 요새 / 돌아올 곳',2100,100);
+await header(hub,'BEACON KEEP','등대 요새','등불지기 카이  ·  생존자 4명');
+art(hub,1,64,183,675,746);
+gradient(hub,64,620,675,309,false,0,1);
+await txt(hub,'Companion label','오늘의 동행',96,786,500,18,'amber');
+await txt(hub,'Companion name','리안',96,819,500,42,'ivory',true);
+await txt(hub,'Companion quote','“…살아 있으면, 그걸로 됐어.”',96,882,580,23,'ivory');
+const status=stack(hub,'Keep status',795,194,1055,165,'HORIZONTAL',65);
+await stat(status,'요새의 빛','작은 불씨',0,0,260,'amber');await stat(status,'재건 단계','01 / 03',0,0,245);await stat(status,'오늘의 기록','첫 번째 식사',0,0,325);
+rule(hub,795,335,1060);
+await txt(hub,'Current story label','계속되는 이야기',795,372,950,18,'amber');
+await txt(hub,'Current story title','제1장  ·  꺼진 등대',795,416,980,46,'ivory',true);
+await txt(hub,'Current story summary','오래 비어 있던 식탁에 네 사람의 온기가 모인다.\n꺼진 등대가 다시 빛날 수 있을까.',795,500,960,26,'muted');
+await button(hub,'이야기 계속  →',795,621,485,0);await button(hub,'출격 준비',1305,621,550,1);
+rule(hub,795,749,1060);
+const tasks=stack(hub,'Small warmth',795,785,1040,140,'VERTICAL',14);
+await txt(tasks,'Daily heading','오늘의 작은 온기',0,0,1040,25,'ivory');
+await txt(tasks,'Daily task','미나토가 물을 데우고 있습니다. 식탁에 들러 보세요.',0,0,1040,24,'muted');
+await txt(tasks,'Daily availability','유대 이야기  ·  첫 식사',0,0,1040,20,'amber');
+await footer(hub,'등대 요새');
+
+const vn=frame('03 · 스토리 / 리안과의 첫 만남',4100,100);
+for(let i=0;i<7;i++){rect(vn,'Ruined pillar',120+i*278,80+(i%2)*55,58,670,'navy').opacity=.55;rule(vn,125+i*278,120,110,'line');}
+art(vn,1,965,10,860,1148).opacity=.87;
+gradient(vn,760,0,1160,1080,true,1,.08);gradient(vn,0,570,1920,510,false,0,1);
+await txt(vn,'Scene chapter','PROLOGUE  /  마지막 불씨',64,48,1120,21,'amber');
+await txt(vn,'Narration','무너진 시가지 지하.\n\n얼어붙은 공기 사이로\n누군가의 목소리가 들렸다.',115,245,740,37,'ivory',true);
+await txt(vn,'Sound cue','—  바람 소리, 잠시 침묵',117,505,740,21,'muted');
+const controls=stack(vn,'Story controls',1200,48,650,50,'HORIZONTAL',30);for(const x of ['기록','자동','건너뛰기'])await txt(controls,'Control / '+x,x,0,0,160,20,'ivory');
+rect(vn,'Dialogue backdrop',64,738,1792,278,'night','line').opacity=.94;
+rect(vn,'Speaker accent',64,738,5,278,'amber');
+await txt(vn,'Speaker','리안',108,768,600,31,'amber');
+await txt(vn,'Dialogue','…움직이지 마. 그림자가 소리에 반응해.',108,841,1620,38,'ivory');
+await txt(vn,'Continue hint','화면을 눌러 계속',1560,951,248,18,'muted');
+diamond(vn,1814,975,11,'amber');
+return {createdNodeIds:created,mutatedNodeIds:mutated,screens,fontFamilies:[...new Set(page.findAllWithCriteria({types:['TEXT']}).map(t=>typeof t.fontName==='object'?t.fontName.family:'mixed'))]};
