@@ -9,6 +9,18 @@ namespace RequiemLantern.Editor
 {
     public static class ProjectSetup
     {
+        [MenuItem("Requiem Lantern/Open Main Scene")]
+        public static void OpenMainScene()
+        {
+            const string path="Assets/Scenes/Main.unity";
+            if(!File.Exists(path))throw new System.IO.FileNotFoundException("Main scene is missing.",path);
+            if(EditorApplication.isPlayingOrWillChangePlaymode)return;
+            var current=EditorSceneManager.GetActiveScene();
+            if(current.path!=path){
+                if(!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())return;
+                EditorSceneManager.OpenScene(path);
+            }
+        }
         [MenuItem("Requiem Lantern/Prepare Project")]
         public static void Prepare()
         {

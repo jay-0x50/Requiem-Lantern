@@ -35,3 +35,11 @@ QA/**/preview-before.json
 !.env.example
 *.user
 *.suo
+# Generated if the repository parent is opened in Unity by mistake.
+/Library/
+/Temp/
+/Packages/
+/ProjectSettings/
+/UserSettings/
+/.vsconfig
+/*.slnx
