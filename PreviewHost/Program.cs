@@ -23,25 +23,33 @@ namespace RequiemLantern.Preview
         public string SkillId { get; set; }
         public LinkKind Kind { get; set; }
         public string TargetId { get; set; }
+        public string StageId { get; set; }
+        public string ExpectedPhase { get; set; }
         public Dictionary<string, IgniteGrade> Grades { get; set; }
     }
 
     internal static class Program
     {
-        private const string Origin = "http://127.0.0.1:8127";
+        private static string Origin = "http://127.0.0.1:8127";
         private static readonly JsonSerializerOptions Json = new JsonSerializerOptions
         { IncludeFields = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() } };
         private static BattleEngine battle = BattleEngine.CreatePrototype();
         private static ProgressService progress;
         private static SaveStore saves;
         private static string root;
+        private static readonly CampaignSession campaign = new CampaignSession();
 
         private static async Task Main(string[] args)
         {
             root = args.Length > 0 ? System.IO.Path.GetFullPath(args[0]) : LocateWorkspace();
             if (!Directory.Exists(System.IO.Path.Combine(root, "RequiemLantern", "Assets"))) throw new InvalidOperationException("Workspace root is missing RequiemLantern/Assets.");
-            saves = new SaveStore(System.IO.Path.Combine(root, "PreviewHost", ".local", "progress.xml"));
+            if (args.Length > 2) {
+                int port; if (!int.TryParse(args[2], out port) || port < 1024 || port > 65535) throw new ArgumentException("Invalid preview port.");
+                Origin = "http://127.0.0.1:" + port;
+            }
+            saves = new SaveStore(args.Length > 1 ? System.IO.Path.GetFullPath(args[1]) : System.IO.Path.Combine(root, "PreviewHost", ".local", "progress.xml"));
             progress = new ProgressService(saves.Load());
+            battle = BattleEngine.CreatePrototype(progress.Data);
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseUrls(Origin);
             var app = builder.Build();
@@ -102,8 +110,25 @@ namespace RequiemLantern.Preview
                 try { action = JsonSerializer.Deserialize<ActionRequest>(body, Json); }
                 catch (JsonException) { await RespondJson(context, Snapshot("요청 형식을 확인해 주세요.", null), 400); return; }
                 string error = null; RewardData reward = null; bool persist = false;
+                string actionName = action == null ? "" : action.Action;
+                bool battleAction = new[] { "recommend", "link", "remove", "clear", "reuse", "resolve", "next", "lantern", "restart" }.Contains(actionName);
+                if (battleAction && campaign.Active != null && (campaign.Replay || campaign.Phase != CampaignPhase.Battle)) {
+                    await RespondJson(context, Snapshot("전투 스테이지의 전투 단계에서 실행해 주세요.", null), 400); return;
+                }
                 switch (action == null ? "" : action.Action)
                 {
+                    case "stage-enter":
+                    case "stage-replay":
+                        if (campaign.Enter(action.StageId, progress.Data, actionName == "stage-replay", out error) && campaign.Phase == CampaignPhase.Battle)
+                            battle = CampaignBattleFactory.Create(campaign.Active, progress.Data);
+                        break;
+                    case "stage-story":
+                        if (campaign.Active == null || campaign.Active.Id != action.StageId ||
+                            (!string.IsNullOrEmpty(action.ExpectedPhase) && action.ExpectedPhase != campaign.Phase.ToString())) error = "진행 중인 스토리와 요청이 일치하지 않습니다.";
+                        else if (campaign.FinishStory(progress.Data, out persist, out error) && campaign.Phase == CampaignPhase.Battle)
+                            battle = CampaignBattleFactory.Create(campaign.Active, progress.Data);
+                        break;
+                    case "stage-exit": campaign.Exit(); break;
                     case "recommend": battle.RecommendLinks(); break;
                     case "link": battle.TryLink(action.ActorId, action.Slot, action.SkillId, action.Kind, action.TargetId, out error); break;
                     case "remove": battle.RemoveLink(action.ActorId, action.Slot); break;
@@ -111,10 +136,20 @@ namespace RequiemLantern.Preview
                     case "reuse": battle.ReusePreviousLinks(); break;
                     case "resolve": battle.ResolveRound(action.Grades); break;
                     case "next": battle.BeginNextRound(); break;
-                    case "restart": battle.Restart(); break;
+                    case "restart":
+                        if (campaign.Active != null) battle = CampaignBattleFactory.Create(campaign.Active, progress.Data);
+                        else battle = BattleEngine.CreatePrototype(progress.Data);
+                        break;
                     case "lantern": battle.TryLantern(action.ActorId, out error); break;
                     case "prologue": progress.MarkPrologueComplete(); persist = true; break;
-                    case "reward": if (!progress.ClaimVictory(battle, out reward)) error = "승리 후 한 번만 보상을 받을 수 있습니다."; else persist = true; break;
+                    case "reward":
+                        if (campaign.Active != null) persist = campaign.AcceptVictory(battle, progress, out reward, out error);
+                        else if (!progress.ClaimVictory(battle, out reward)) error = "승리 후 한 번만 보상을 받을 수 있습니다."; else persist = true;
+                        break;
+                    case "synchronize":
+                        if (campaign.Phase == CampaignPhase.Battle && battle.State.Outcome == BattleOutcome.Ongoing) error = "출격을 마친 뒤 잔영을 동기화해 주세요.";
+                        else if (progress.Synchronize(action.ActorId, out error)) { persist = true; progress.ApplyToBattle(battle.State); }
+                        break;
                     case "repair": if (progress.RepairKeep(out error)) persist = true; break;
                     default: error = "알 수 없는 동작입니다."; break;
                 }
@@ -137,9 +172,17 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
+                application = "RequiemLantern", runtimeRevision = "campaign-sanity-v1",
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 characterStories = CharacterStoryCatalog.All,
+                campaign = new {
+                    chapters = CampaignCatalog.Chapters.Select(chapter => new { chapter.Number, chapter.Title, chapter.Summary,
+                        stages = chapter.Stages.Select(stage => new { stage.Id, stage.Number, stage.Title, stage.Summary, stage.Location, stage.Kind, stage.KindLabel,
+                            stage.Chapter, stage.Participants, stage.Party, stage.EnemyName, stage.EnemyArt, stage.IsBoss, stage.HumanEnemy, stage.MusicId,
+                            stage.HasBattle, unlocked = CampaignRules.IsUnlocked(progress.Data, stage), cleared = CampaignRules.IsCleared(progress.Data, stage) }) }),
+                    activeStage = campaign.Active, phase = campaign.Phase, replay = campaign.Replay, currentStory = campaign.CurrentStory
+                },
                 warning = saves.LastWarning, error, reward
             };
         }

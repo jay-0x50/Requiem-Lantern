@@ -298,6 +298,116 @@ async function main() {
   assert.equal(env.game.innerHTML,markup);assert.equal(env.run('page'),'character-stories');
   pass('character story route shows chapter context, returns after skip and never marks prologue or rewards');
 
+
+  function campaignFixture(e) {
+    const chapters = JSON.parse(fs.readFileSync(path.join(__dirname, '../기획서/메인스토리/campaign.json'), 'utf8')).chapters;
+    for (const chapter of chapters) for (const stage of chapter.stages) { stage.unlocked = stage.id === 'c1s01'; stage.cleared = false; }
+    e.run('data.campaign=' + JSON.stringify({ chapters, activeStage: null, phase: 'None', replay: false, currentStory: [] }));
+    return chapters;
+  }
+  env = environment();
+  const chapters = campaignFixture(env);
+  env.context.showStages();
+  assert.equal((env.game.innerHTML.match(/data-action="chapter:/g) || []).length, 5);
+  assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g) || []).length, 10);
+  assert.ok(env.game.innerHTML.includes('이야기 + 전투'));
+  assert.ok(!env.game.innerHTML.includes('준비 중'));
+  env.context.showStages(3, chapters[2].stages[8].id);
+  assert.ok(env.game.innerHTML.includes('침묵의 기록관'));
+  assert.ok(env.game.innerHTML.includes('stage-enter:c3s09" disabled'));
+  assert.ok(env.game.innerHTML.includes('이브'));
+  pass('campaign map displays all five chapters, ten stages, stage types and locked human finale details');
+
+  env = environment();campaignFixture(env);
+  env.run(`tone=()=>{};globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{speaker:'카이',text:'꺼지지 않은 불',portrait:'Kai',listenerPortrait:'Lian',caption:'1-1 · 첫 불씨'}];return true;};`);
+  await env.click('begin');
+  assert.equal(env.context.stageCalls[0].action,'stage-enter');assert.equal(env.context.stageCalls[0].stageId,'c1s01');
+  assert.equal(env.run('storyKey'),'stage:c1s01:BeforeStory');
+  assert.ok(env.game.innerHTML.includes('story-listener'));assert.ok(env.game.innerHTML.includes('1-1 · 첫 불씨'));
+  pass('first start enters campaign 1-1 and dialogue displays the listening companion');
+
+  env = environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{speaker:'리안',text:'뒤로 물러서.',portrait:'Lian'}];routeCampaign();globalThis.finishCalls=[];command=(action,args)=>{finishCalls.push({action,...args});return new Promise(done=>globalThis.releaseStory=()=>{data.campaign.phase='Battle';done(true);});};`);
+  const finish = env.context.finishStory();
+  await env.context.finishStory();
+  assert.equal(env.context.finishCalls.length,1);assert.equal(env.context.finishCalls[0].stageId,'c1s02');
+  env.context.releaseStory();await finish;
+  assert.equal(env.run('page'),'battle');assert.equal(env.context.finishCalls[0].action,'stage-story');
+  pass('double skip sends stage-story once and mixed stage opens its battle after the response');
+
+  env = environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'첫 이야기'}];routeCampaign();command=()=>new Promise(done=>globalThis.releaseStory=()=>{data.campaign.phase='Complete';done(true);});`);
+  const staleFinish=env.context.finishStory();
+  env.context.showHub();env.context.releaseStory();await staleFinish;
+  assert.equal(env.run('page'),'hub');
+  pass('pending story completion never navigates over a newer screen');
+
+  env = environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'첫 이야기'}];routeCampaign();globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.chapters[0].stages[0].cleared=true;data.campaign.chapters[0].stages[1].unlocked=true;data.campaign.phase='Complete';return true;};`);
+  await env.context.finishStory();
+  assert.equal(env.run('page'),'stages');assert.equal(env.run('selectedStage'),'c1s02');
+  assert.deepEqual(Array.from(env.context.stageCalls).map(c=>c.action),['stage-story']);
+  pass('story-only completion selects the newly unlocked stage without requesting battle rewards');
+
+  env = environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[6];data.campaign.replay=true;data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'함께 먹은 저녁'}];routeCampaign();globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.phase='Complete';return true;};`);
+  await env.context.finishStory();
+  assert.equal(env.run('page'),'stages');assert.equal(env.run('selectedStage'),'c1s07');
+  assert.deepEqual(Array.from(env.context.stageCalls).map(c=>c.action),['stage-story']);
+  env.context.showArchive();assert.ok(!env.game.innerHTML.includes('go:characterStories'));
+  pass('stage replay returns to its chapter without rewards and archive uses main campaign records');
+
+  env = environment();campaignFixture(env);
+  env.run(`data.battle.outcome='Victory';data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='AfterStory';showResult();`);
+  assert.ok(env.game.innerHTML.includes('data-action="campaign-story"'));assert.ok(!env.game.innerHTML.includes('story:epilogue'));
+  pass('mixed stage result continues into its own after-story');
+
+  env = environment();
+  env.run(`data.battle.allies[0].syncLevel=0;data.battle.allies[0].slotCount=1;data.battle.allies[0].sanity=-20;data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:1,slots:1,kind:'Attack'});showBattle();`);
+  assert.ok(env.game.innerHTML.includes('정신력 -20'));assert.ok(env.game.innerHTML.includes('점등 10%'));
+  assert.ok(env.game.innerHTML.includes('3스킬 · 세 번째 불 · 잠김'));assert.ok(env.game.innerHTML.includes('skill:lian_third" title="동기화 1 필요" disabled'));
+  assert.equal((env.game.innerHTML.match(/data-action="slot:lian:/g)||[]).length,1);
+  env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].sanity=20;showBattle();`);
+  assert.ok(!env.game.innerHTML.includes('세 번째 불 · 잠김'));assert.ok(env.game.innerHTML.includes('점등 90%'));
+  pass('sanity probability bounds, synchronization-locked third skill and single-slot actor appear correctly');
+
+  env = environment();
+  env.run(`data.battle.allies[0].skills.push({id:'lian_evade',name:'회피',kind:'Evade',cost:0,slots:1});selectedSkill='lian_evade';globalThis.defenseCall=null;command=async(action,args)=>{defenseCall={action,...args};return true;};showBattle=()=>{};`);
+  await env.context.linkTarget('lian');
+  assert.equal(env.context.defenseCall.kind,'Guard');
+  assert.deepEqual(Array.from(env.context.validDropTargets(env.run("skill('lian','lian_evade')"))),['lian','minato']);
+  pass('evasion uses defense links and supports only living allies');
+
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='Battle';page='battle';globalThis.exitCalls=[];command=(action,args)=>{exitCalls.push({action,...args});return new Promise(done=>globalThis.releaseExit=()=>{data.campaign.activeStage=null;data.campaign.phase='None';done(true);});};tone=()=>{};`);
+  const retreat=env.context.go('hub');
+  await env.context.go('archive');await env.click('character:0');
+  assert.equal(env.context.exitCalls.length,1);assert.equal(env.run('page'),'battle');
+  assert.equal(env.context.exitCalls[0].action,'stage-exit');assert.equal(env.context.exitCalls[0].stageId,'c1s02');
+  env.context.releaseExit();await retreat;
+  assert.equal(env.run('page'),'hub');assert.equal(env.run('data.campaign.activeStage'),null);
+  pass('retreat exits the API campaign session once and blocks competing navigation while pending');
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='AfterStory';data.battle.outcome='Victory';showResult();globalThis.exitCalls=[];command=async(action,args)=>{exitCalls.push({action,...args});if(action==='stage-exit'){data.campaign.activeStage=null;data.campaign.phase='None';}else if(action==='stage-enter'){data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='AfterStory';data.campaign.currentStory=[{text:'전투 뒤의 약속'}];}return true;};`);
+  await env.context.go('hub');await env.context.enterCampaign('c1s02');
+  assert.equal(env.run('page'),'story');assert.equal(env.run('storyKey'),'stage:c1s02:AfterStory');
+  assert.deepEqual(Array.from(env.context.exitCalls).map(c=>c.action),['stage-exit','stage-enter']);
+  pass('leaving a won mixed stage permits saved after-story resume without restart or reward requests');
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'출격 전'}];routeCampaign();globalThis.exitCalls=[];command=async(action,args)=>{exitCalls.push({action,...args});data.campaign.activeStage=null;return true;};`);
+  env.events.keydown({code:'Escape'});await Promise.resolve();await Promise.resolve();
+  assert.equal(env.run('page'),'hub');assert.equal(env.context.exitCalls[0].action,'stage-exit');
+  pass('Escape from a stage story exits its API session before returning to the keep');
+
+
+  env=environment();campaignFixture(env);
+  env.run(`data.progress.prologueCompleted=true;data.campaign.activeStage=data.campaign.chapters[0].stages[3];data.campaign.phase='Battle';page='title';tone=()=>{};globalThis.exitCalls=[];command=async(action,args)=>{exitCalls.push({action,...args});data.campaign.activeStage=null;return true;};`);
+  await env.click('begin');assert.equal(env.run('page'),'hub');assert.equal(env.context.exitCalls[0].action,'stage-exit');
+  pass('returning from reloaded title also clears an active server battle before opening the keep');
+
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 

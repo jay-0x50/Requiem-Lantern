@@ -18,6 +18,14 @@ namespace RequiemLantern.Core
         public List<string> ClearedStages = new List<string>();
         public List<string> ClaimedBattles = new List<string>();
         public List<string> RewardedStages = new List<string>();
+        public List<CharacterProgress> Characters = new List<CharacterProgress>();
+    }
+
+    [Serializable]
+    public sealed class CharacterProgress
+    {
+        public string Id;
+        public int Level = 1, SyncLevel;
     }
 
     [Serializable]
@@ -31,7 +39,40 @@ namespace RequiemLantern.Core
     public sealed class ProgressService
     {
         public ProgressData Data { get; private set; }
-        public ProgressService(ProgressData data) { Data = data ?? new ProgressData(); }
+        public const int SynchronizationCost = 10;
+        public ProgressService(ProgressData data)
+        {
+            Data = data ?? new ProgressData();
+            Data.Characters = Data.Characters ?? new List<CharacterProgress>();
+            Data.ClearedStages = Data.ClearedStages ?? new List<string>();
+            Data.RewardedStages = Data.RewardedStages ?? new List<string>();
+            Data.ClaimedBattles = Data.ClaimedBattles ?? new List<string>();
+        }
+        public CharacterProgress GetCharacter(string id)
+        {
+            if (!PrototypeData.IsCharacter(id)) return null;
+            var value = Data.Characters.FirstOrDefault(x => x.Id == id);
+            if (value == null) { value = new CharacterProgress { Id = id }; Data.Characters.Add(value); }
+            return value;
+        }
+        public bool Synchronize(string id, out string error)
+        {
+            error = null;
+            if (!PrototypeData.IsCharacter(id)) { error = "동기화할 잔영을 선택해 주세요."; return false; }
+            var existing = Data.Characters.FirstOrDefault(x => x.Id == id);
+            if (existing != null && existing.SyncLevel >= 1) { error = "이미 동기화하여 3스킬을 개방했습니다."; return false; }
+            if (Data.LanternFragments < SynchronizationCost) { error = "동기화에 등불 조각 " + SynchronizationCost + "개가 필요합니다."; return false; }
+            var value = GetCharacter(id); Data.LanternFragments -= SynchronizationCost; value.SyncLevel = 1; return true;
+        }
+        public void ApplyToBattle(BattleState state)
+        {
+            if (state == null) return;
+            foreach (var unit in state.Allies)
+            {
+                var value = GetCharacter(unit.Id); if (value != null) unit.SyncLevel = value.SyncLevel;
+                unit.Sanity = BattleRules.ClampSanity(unit.Sanity);
+            }
+        }
         public void MarkPrologueComplete() { Data.PrologueCompleted = true; }
         public bool ClaimVictory(BattleEngine battle, out RewardData reward, bool deferStageClear = false)
         {
@@ -94,6 +135,8 @@ namespace RequiemLantern.Core
                 if (data == null || data.Version != 1 || data.Coins < 0 || data.KeepLevel < 1 || data.KeepLevel > 3) throw new InvalidOperationException("Unsupported or invalid save.");
                 data.ClearedStages = data.ClearedStages ?? new List<string>(); data.ClaimedBattles = data.ClaimedBattles ?? new List<string>();
                 data.RewardedStages = data.RewardedStages ?? new List<string>();
+                data.Characters = data.Characters ?? new List<CharacterProgress>();
+                if (data.LanternFragments < 0 || data.MemoryFragments < 0 || data.Characters.Any(x => x == null || !PrototypeData.IsCharacter(x.Id) || x.Level < 1 || x.SyncLevel < 0) || data.Characters.GroupBy(x => x.Id).Any(x => x.Count() > 1)) throw new InvalidOperationException("Invalid character growth.");
                 return data;
             }
         }

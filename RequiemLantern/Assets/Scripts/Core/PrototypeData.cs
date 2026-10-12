@@ -6,36 +6,81 @@ namespace RequiemLantern.Core
     /// <summary>Provisional balance values. Names, elements and roles follow the supplied design.</summary>
     public static class PrototypeData
     {
-        public static BattleState CreateBattle()
+        public static BattleState CreateBattle(ProgressData progress = null, int? seed = null)
         {
-            var state = new BattleState { BattleId = Guid.NewGuid().ToString("N") };
-            var lian = Ally("lian", "리안", "수호자", Element.Radiance, 150, 12);
-            lian.Skills.Add(Attack("lian_glimmer", "잔광", Element.Radiance, 0, 1, 12, 6, 6));
-            lian.Skills.Add(Attack("lian_breakthrough", "방벽 돌파", Element.Radiance, 2, 1, 12, 9, 9, 9));
-            lian.Skills.Add(new SkillData { Id = "lian_guard", Name = "빛의 호위", Element = Element.Radiance, Kind = SkillKind.Guard, Cost = 1, Speed = 18 });
-            lian.Skills.Add(Attack("lian_crescendo", "고조", Element.Radiance, 3, 2, 12, 10, 10, 10, 12, 14));
-            var sera = Ally("sera", "세라", "돌격수", Element.Flame, 110, 14);
-            sera.Attack = 12;
-            sera.Skills.Add(Attack("sera_glimmer", "잔광", Element.Flame, 0, 1, 14, 6, 7));
-            var slash = Attack("sera_slash", "화염 베기", Element.Flame, 1, 1, 14, 8, 10); slash.PartDamage = 10;
-            sera.Skills.Add(slash);
-            sera.Skills.Add(Attack("sera_crescendo", "고조", Element.Flame, 3, 2, 14, 7, 9, 11, 14));
-            var minato = Ally("minato", "미나토", "치유사", Element.Tide, 100, 10);
-            minato.Skills.Add(Attack("minato_glimmer", "잔광", Element.Tide, 0, 1, 10, 5, 6));
-            minato.Skills.Add(new SkillData { Id = "minato_heal", Name = "치유 등불", Element = Element.Tide, Kind = SkillKind.Heal, Cost = 1, Speed = 15, Heal = 30 });
-            minato.Skills.Add(new SkillData { Id = "minato_care", Name = "응급 처치", Element = Element.Tide, Kind = SkillKind.Heal, Cost = 0, Speed = 10, Heal = 12 });
-            state.Allies.AddRange(new[] { lian, sera, minato });
-            var anger = new UnitState { Id = "anger", Name = "분노", Role = "그림자 군체", IsEnemy = true, Element = Element.Shadow, Hp = 360, MaxHp = 360, Attack = 12, Defense = 2, Speed = 11, Rift = 125, MaxRift = 125 };
+            var state = new BattleState { BattleId = Guid.NewGuid().ToString("N"), RandomSeed = seed ?? Guid.NewGuid().GetHashCode() };
+            foreach (string id in new[] { "lian", "sera", "minato" })
+            {
+                var growth = progress == null || progress.Characters == null ? null : progress.Characters.Find(x => x.Id == id);
+                state.Allies.Add(CreateCharacter(id, growth == null ? 0 : growth.SyncLevel));
+            }
+            var anger = new UnitState { Id = "anger", Name = "분노", Portrait = "Anger", Role = "그림자 군체", IsEnemy = true, Element = Element.Shadow, Hp = 360, MaxHp = 360, Attack = 12, Defense = 2, Speed = 11, Rift = 125, MaxRift = 125 };
             anger.Parts.Add(new PartState { Id = "anger_arm", Name = "팔", Hp = 40, MaxHp = 40 });
             anger.Parts.Add(new PartState { Id = "anger_core", Name = "핵", Hp = 72, MaxHp = 72 });
             state.Enemies.Add(anger);
             return state;
         }
 
+        public static UnitState CreateCharacter(string id, int syncLevel = 0)
+        {
+            UnitState unit;
+            switch (id)
+            {
+                case "lian":
+                    unit = Ally(id, "리안", "수호자", Element.Radiance, 150, 12);
+                    unit.Skills.Add(Attack("lian_glimmer", "잔광", unit.Element, 1, 0, 1, 12, 6, 4, 2));
+                    unit.Skills.Add(Attack("lian_breakthrough", "방벽 돌파", unit.Element, 2, 2, 1, 12, 9, 4, 3));
+                    unit.Skills.Add(Attack("lian_crescendo", "고조", unit.Element, 3, 3, 2, 12, 15, 5, 4));
+                    unit.Skills.Add(Defense("lian_guard", "빛의 호위", unit.Element, SkillKind.Guard, 18, 6, 4, 2));
+                    break;
+                case "sera":
+                    unit = Ally(id, "세라", "돌격수", Element.Flame, 110, 14); unit.Attack = 12;
+                    unit.Skills.Add(Attack("sera_glimmer", "잔광", unit.Element, 1, 0, 1, 14, 5, 4, 2));
+                    var slash = Attack("sera_slash", "화염 베기", unit.Element, 2, 1, 1, 14, 8, 5, 2); slash.PartDamage = 22; unit.Skills.Add(slash);
+                    unit.Skills.Add(Attack("sera_crescendo", "고조", unit.Element, 3, 3, 2, 14, 13, 6, 4));
+                    unit.Skills.Add(Defense("sera_evade", "불꽃 걸음", unit.Element, SkillKind.Evade, 18, 7, 4, 2));
+                    break;
+                case "minato":
+                    unit = Ally(id, "미나토", "치유사", Element.Tide, 100, 10);
+                    unit.Skills.Add(Attack("minato_glimmer", "잔광", unit.Element, 1, 0, 1, 10, 5, 3, 2));
+                    unit.Skills.Add(Healing("minato_heal", "치유 등불", unit.Element, 2, 1, 15, 12, 5, 3, 2));
+                    unit.Skills.Add(Healing("minato_care", "생명의 파도", unit.Element, 3, 2, 15, 28, 8, 5, 3));
+                    unit.Skills.Add(Defense("minato_guard", "물결 방벽", unit.Element, SkillKind.Guard, 18, 5, 3, 2));
+                    break;
+                case "noa":
+                    unit = Ally(id, "노아", "기록자", Element.Shadow, 120, 13);
+                    unit.Skills.Add(Attack("noa_glimmer", "그림자 자국", unit.Element, 1, 0, 1, 13, 6, 3, 2));
+                    unit.Skills.Add(Attack("noa_script", "지워진 기록", unit.Element, 2, 1, 1, 13, 8, 4, 3));
+                    unit.Skills.Add(Attack("noa_crescendo", "되찾은 이름", unit.Element, 3, 3, 2, 13, 14, 5, 4));
+                    unit.Skills.Add(Defense("noa_evade", "그림자 접기", unit.Element, SkillKind.Evade, 18, 6, 5, 2));
+                    break;
+                case "heidel":
+                    unit = Ally(id, "하이델", "관측자", Element.Frost, 120, 11);
+                    unit.Skills.Add(Attack("heidel_glimmer", "서리 측정", unit.Element, 1, 0, 1, 11, 6, 3, 2));
+                    unit.Skills.Add(Attack("heidel_calibrate", "균열 조율", unit.Element, 2, 1, 1, 11, 9, 4, 2));
+                    unit.Skills.Add(Attack("heidel_crescendo", "관측의 끝", unit.Element, 3, 3, 2, 11, 15, 5, 4));
+                    unit.Skills.Add(Defense("heidel_counter", "역상 보정", unit.Element, SkillKind.Counter, 18, 6, 4, 2));
+                    break;
+                default: throw new ArgumentException("Unknown character: " + id, "id");
+            }
+            unit.SyncLevel = Math.Max(0, syncLevel); return unit;
+        }
+
+        public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel"; }
         private static UnitState Ally(string id, string name, string role, Element element, int hp, int speed)
-        { return new UnitState { Id = id, Name = name, Role = role, Portrait = id, Element = element, Hp = hp, MaxHp = hp, Speed = speed }; }
-        private static SkillData Attack(string id, string name, Element element, int cost, int slots, int speed, params int[] hits)
-        { return new SkillData { Id = id, Name = name, Element = element, Cost = cost, Slots = slots, Speed = speed, HitPowers = hits, Kind = SkillKind.Attack }; }
+        { return new UnitState { Id = id, Name = name, Role = role, Portrait = id, Element = element, Hp = hp, MaxHp = hp, Speed = speed, Sanity = 0 }; }
+        private static SkillData Attack(string id, string name, Element element, int number, int cost, int slots, int speed, int basePower, int flamePower, int flames)
+        {
+            return new SkillData { Id = id, Name = name, Number = number, RequiredSyncLevel = number == 3 ? 1 : 0, Element = element, Cost = cost, Slots = slots, Speed = speed,
+                BasePower = basePower, FlamePower = flamePower, FlameCount = flames, HitPowers = DisplayHits(basePower, flamePower, flames), Kind = SkillKind.Attack,
+                RiftDamage = number == 3 ? 30 : number == 2 ? 14 : 9, PartDamage = number == 3 ? 32 : number == 2 ? 22 : 14 };
+        }
+        private static SkillData Defense(string id, string name, Element element, SkillKind kind, int speed, int basePower, int flamePower, int flames)
+        { return new SkillData { Id = id, Name = name, Element = element, Kind = kind, Cost = 0, Speed = speed, BasePower = basePower, FlamePower = flamePower, FlameCount = flames, HitPowers = DisplayHits(basePower, flamePower, flames) }; }
+        private static SkillData Healing(string id, string name, Element element, int number, int cost, int speed, int heal, int basePower, int flamePower, int flames)
+        { return new SkillData { Id = id, Name = name, Number = number, RequiredSyncLevel = number == 3 ? 1 : 0, Element = element, Kind = SkillKind.Heal, Cost = cost, Speed = speed, Heal = heal, BasePower = basePower, FlamePower = flamePower, FlameCount = flames, HitPowers = DisplayHits(basePower, flamePower, flames) }; }
+        private static int[] DisplayHits(int basePower, int flamePower, int flames)
+        { var values = new int[flames]; for (int i = 0; i < flames; i++) values[i] = basePower + flamePower * (i + 1); return values; }
     }
 
     [Serializable]

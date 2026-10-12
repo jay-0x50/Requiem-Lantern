@@ -91,24 +91,19 @@ namespace RequiemLantern.Core
     }
     public static class CampaignBattleFactory
     {
-        public static BattleEngine Create(StageData stage)
+        public static BattleEngine Create(StageData stage, ProgressData progress = null, int? seed = null)
         {
             if(stage == null || !stage.HasBattle)throw new ArgumentException("Battle stage required.");
-            Func<BattleState> factory = () => Build(stage);
+            Func<BattleState> factory = () => Build(stage, progress, seed);
             var battle = new BattleEngine(factory(),factory);
             battle.BeginCampaign(); return battle;
         }
-        static BattleState Build(StageData stage)
+        static BattleState Build(StageData stage, ProgressData progress, int? seed)
         {
-            var state = PrototypeData.CreateBattle();
+            var state = PrototypeData.CreateBattle(progress, seed);
             state.StageId = stage.Id; state.StageName = stage.Number + "  " + stage.Title;
-            state.Allies.RemoveAll(u => !stage.Party.Contains(u.Id));
-            foreach(string id in stage.Party.Where(id => id == "noa" || id == "heidel")){
-                var ally = new UnitState { Id=id, Name=id=="noa"?"노아":"하이델", Role=id=="noa"?"조율 지원":"방호 지원", Portrait=id=="noa"?"Noa":"Heidel",
-                    Hp=120, MaxHp=120, Speed=14, Element=id=="noa"?Element.Shadow:Element.Frost, IsSupport=true };
-                ally.Skills.Add(new SkillData { Id=id+"_guard",Name=id=="noa"?"그림자 호위":"방호 조율",Kind=SkillKind.Guard,Cost=0,Speed=16,Element=ally.Element });
-                state.Allies.Add(ally);
-            }
+            state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
+            if(progress != null)new ProgressService(progress).ApplyToBattle(state);
             if(state.Allies.Count == 0 || state.Allies.Count > 3)throw new InvalidOperationException("Campaign party must have one to three allies.");
             var enemy=state.Enemies[0];enemy.Name=stage.EnemyName;enemy.Portrait=stage.EnemyArt;enemy.IsHuman=stage.HumanEnemy;
             if(stage.Id=="chapter1_beacon_defense")return state; // Preserve the previously delivered fight and reward identity.

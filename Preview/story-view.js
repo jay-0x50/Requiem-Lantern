@@ -12,7 +12,7 @@ globalThis.RequiemStoryView = (() => {
   };
   const portraitSpeakers = {
     lian: '리안', sera: '세라', minato: '미나토', heidel: '하이델',
-    noa: '노아', kai: '카이', orphe: '오르페'
+    noa: '노아', kai: '카이', orphe: '오르페', rowan: '로웬', ellen: '엘렌', eve: '이브'
   };
 
   function listeningPortrait(html) {
@@ -25,7 +25,7 @@ globalThis.RequiemStoryView = (() => {
   }
 
   function render({ line = {}, key = '', index = 0, total = 0, auto = false,
-    portraitHtml = '', footerHtml = '', location = '', caption = '' } = {}) {
+    portraitHtml = '', listenerHtml = '', footerHtml = '', location = '', caption = '' } = {}) {
     const chapter = chapters[key] || { caption: 'REQUIEM LANTERN · 기억', location: '영야의 폐허' };
     const place = location || (line.background === 'keep' ? '등대 요새' : chapter.location);
     const speaker = String(line.speaker || '').trim();
@@ -36,6 +36,7 @@ globalThis.RequiemStoryView = (() => {
     const count = total > 0 ? `${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}` : '';
     // portraitHtml and footerHtml are trusted markup produced by the existing app helpers.
     return `${line.background === 'black' ? '<div class="blackout"></div>' : ''}
+      ${listenerHtml}
       ${portrait}
       <div class="story-top">
         <div class="story-location">

@@ -33,7 +33,13 @@ JSON 키는 camelCase, enum은 문자열이다.
 {"action":"resolve","grades":{"lian:0":"Perfect","sera:0":"Good","sera:1":"Miss"}}
 ```
 
-지원 action: `recommend`, `link`, `remove`, `clear`, `reuse`, `resolve`, `next`, `restart`, `lantern`, `prologue`, `reward`, `repair`.
+지원 action: `recommend`, `link`, `remove`, `clear`, `reuse`, `resolve`, `next`, `restart`, `lantern`, `prologue`, `reward`, `repair`, `stage-enter`, `stage-replay`, `stage-story`, `stage-exit`, `synchronize`.
+
+스테이지 요청에는 `stageId`를 전달한다. `stage-story`에는 `expectedPhase`도 전달해 중복 완료와 오래된 화면의 요청을 막는다. `campaign` 응답은 5개 장의 스테이지 목록과 해금·완료 상태, 진행 중 스테이지, `BeforeStory / Battle / AfterStory / Complete` 단계, 현재 대본을 제공한다. 혼합 스테이지의 보상은 승리 때 지급하며 완료 표시는 후속 대화가 끝난 뒤 저장한다. 승리 후 종료했다면 재진입 시 후속 대화부터 이어진다.
+
+`synchronize`는 `actorId`에 해당하는 잔영의 동기화 1을 등불 조각 10개로 개방한다. `progress.characters`의 레벨·동기화 값은 별도로 저장한다. 전투 중에는 동기화할 수 없다.
+
+격리 검수는 `dotnet PreviewHost.dll "프로젝트 경로" "격리 저장 경로" 8128`처럼 저장 경로와 포트를 추가로 지정한다. 기본 실행은 기존 8127과 개인 저장 파일을 사용한다.
 
 상태 응답 구조:
 

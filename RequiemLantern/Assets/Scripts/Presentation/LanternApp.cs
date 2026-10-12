@@ -99,6 +99,7 @@ namespace RequiemLantern.Presentation
         }
         RawImage Character(Transform p,string id,float x,float y,float w,float h,bool sway=true)
         {
+            id=ArtId(id);
             string name=Texture(id)?id:id+"_Reference";var im=Picture(p,id+" portrait",name,x,y,w,h);
             if(sway&&!reducedMotion)im.gameObject.AddComponent<IdleSway>().Phase=x*.01f;
             return im;

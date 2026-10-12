@@ -1,0 +1,14 @@
+PASS browser QA on isolated port 8128
+5 chapters x 10 stage nodes; locked chapter buttons verified.
+1-1 story completion unlocks 1-2.
+1-2 solo battle won in 3 rounds; +40 coins/+2 fragments; sanity +2/+4 and enemy -2/-4 reflected after playback.
+After-story completion unlocks 1-3; story-only completion opens 1-4 without reward.
+1-4 Sera/Lian companion portrait conversation verified.
+Manual Lian clash observed alternating contests before 2 consecutive wins; visible action atlas screenshots captured.
+Power text rounded to one decimal; final roll labels fit on one line.
+Synchronization button correctly disabled with 2 fragments; third skills locked.
+Replay 1-2 plays 14 combined lines without battle or currency changes.
+Retreat modal returns to hub through stage-exit; reload title also exits active API battle.
+No console errors/warnings.
+No original 8127 save modifications.
+Latest CSS hides enemy HUD during resolving to keep roll powers unobstructed.

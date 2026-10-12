@@ -74,3 +74,11 @@
 .reduce-motion .fx-ring,.reduce-motion .fx-slash,.reduce-motion .fx-fracture,.reduce-motion .fx-beam{display:none}
 .reduce-motion .fx-number,.reduce-motion .fx-link-label,.reduce-motion .fx-verdict{transform:translate(-50%,-100%)}
 .reduce-motion .field-hero.fx-lunge,.reduce-motion .enemy.fx-lunge,.reduce-motion .field-hero.fx-hit,.reduce-motion .enemy.fx-hit,.reduce-motion .fx-shake{animation:none!important}
+
+.flame-roll{position:absolute;width:555px;padding:14px 22px;background:#0a1421f3;border:1px solid #c2a47780;transform:translateX(-50%);z-index:16;box-shadow:0 9px 24px #0007;pointer-events:none}
+.flame-roll-title{color:#c7b48f;font-size:12px;letter-spacing:.08em;margin-bottom:9px}
+.flame-roll-side{display:flex;align-items:center;gap:14px;min-height:39px;border-top:1px solid #c7b28d30;padding:7px 0}
+.flame-roll-side small{font-size:12px;line-height:1.35;color:#c3cbd5;flex:0 0 240px}.flame-roll-side strong{color:#f7d498;font-size:28px;margin-left:auto;font-family:Georgia,serif;line-height:1}
+.flame-roll-side.darkness strong{color:#cbb5f0}.rolled-flames{display:flex;gap:9px}.rolled-flames .flame{width:17px;height:23px}.flame-roll .flame.off{opacity:.65}
+
+.resolving .enemy-stats{opacity:0}

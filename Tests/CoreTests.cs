@@ -14,8 +14,21 @@ internal static class CoreTests
             Equal("난타", b.State.Intents[0].Name); Equal(2, b.State.Intents[0].HitPowers.Length); Equal(3, b.State.Intents[1].HitPowers.Length);
             Equal(2, b.State.Allies[0].SlotCount);
         });
-        Test("slot occupancy, replacement and budget are atomic", () => {
-            var b = BattleEngine.CreatePrototype(); string error;
+        Test("fresh characters have sanity zero, three numbered skills and one defense", () => {
+            foreach (string id in new[] { "lian", "sera", "minato", "noa", "heidel" }) {
+                var unit = PrototypeData.CreateCharacter(id); Equal(0, unit.Sanity); Equal(0, unit.SyncLevel);
+                Equal("1,2,3", string.Join(",", unit.Skills.Where(x=>x.Number>0).Select(x=>x.Number)));
+                Equal(1, unit.Skills.Count(BattleRules.IsDefensive)); True(unit.Skills.All(x=>BattleRules.Flames(x)>=1));
+                False(BattleRules.IsSkillUnlocked(unit,unit.Skills.Single(x=>x.Number==3)));
+                True(BattleRules.IsSkillUnlocked(PrototypeData.CreateCharacter(id,1),unit.Skills.Single(x=>x.Number==3)));
+            }
+            Equal(SkillKind.Evade,PrototypeData.CreateCharacter("sera").Skills.Single(BattleRules.IsDefensive).Kind);
+            Equal(SkillKind.Counter,PrototypeData.CreateCharacter("heidel").Skills.Single(BattleRules.IsDefensive).Kind);
+        });
+        Test("slot occupancy, synchronization lock and budget are atomic", () => {
+            var b = BattleEngine.CreatePrototype(seed:1); string error;
+            False(b.TryLink("lian",0,"lian_crescendo",LinkKind.Strike,"anger",out error)); Equal(0,b.State.Links.Count);
+            b.Unit("lian").SyncLevel=1;
             True(b.TryLink("lian", 0, "lian_crescendo", LinkKind.Strike, "anger", out error)); Equal(3, b.PlannedCost);
             False(b.TryLink("sera", 0, "sera_slash", LinkKind.Strike, "anger", out error)); Equal(1, b.State.Links.Count);
             True(b.TryLink("lian", 1, "lian_glimmer", LinkKind.Strike, "anger", out error)); Equal(0, b.PlannedCost); Equal(1, b.State.Links.Count);
@@ -32,39 +45,58 @@ internal static class CoreTests
             True(b.TryLink("minato", 0, "minato_heal", LinkKind.Support, "lian", out error));
             False(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Support, "lian", out error));
         });
-        Test("power, speed tie-break and complete tie", () => {
-            Equal(1, BattleRules.CompareHit(10, 1, 9, 100)); Equal(1, BattleRules.CompareHit(9, 12, 9, 11));
-            Equal(-1, BattleRules.CompareHit(9, 11, 9, 12)); Equal(0, BattleRules.CompareHit(9, 12, 9, 12));
-            var b = Fixture(new[] { 9 }, new[] { 9 }, 12, 12); Link(b); b.ResolveRound();
-            Equal(100, b.Unit("hero").Hp); Equal(300, b.Unit("enemy").Hp); True(b.State.Events.Any(x => x.Type == "Tie"));
+        Test("sanity chances clamp at ten and ninety percent for both sides", () => {
+            Equal(.1,BattleRules.FlameChance(-20)); Equal(.5,BattleRules.FlameChance(0)); Equal(.9,BattleRules.FlameChance(20));
+            Equal(.1,BattleRules.FlameChance(-200));Equal(.9,BattleRules.FlameChance(200));
+            var b = Fixture(6,6,1,new ScriptedRandom(.89,.91,.89,.91));
+            b.Unit("hero").Sanity=20;b.Unit("enemy").Sanity=20; Link(b);b.ResolveRound();
+            var roll=b.State.Events.First(x=>x.Type=="FlameRoll");True(roll.FlameStates[0]);False(roll.EnemyFlameStates[0]);
+            Equal(20,b.Unit("hero").Sanity);Equal(18,b.Unit("enemy").Sanity);
         });
-        Test("unpaired hits land after paired hits", () => {
-            var b = Fixture(new[] { 8, 8, 8 }, new[] { 9, 9 }, 12, 11); Link(b); b.ResolveRound();
-            Equal(82, b.Unit("hero").Hp); Equal(292, b.Unit("enemy").Hp);
+        Test("speed orders actions but cannot break equal-power clashes", () => {
+            Equal(1,BattleRules.CompareHit(10,1,9,100));Equal(0,BattleRules.CompareHit(9,12,9,11));Equal(0,BattleRules.CompareHit(9,11,9,12));
+            var random=new ScriptedRandom();var b=Fixture(6,6,1,random);b.Unit("hero").Speed=99;Link(b);b.ResolveRound();
+            Equal(100,b.Unit("hero").Hp);Equal(300,b.Unit("enemy").Hp);
+            Equal(64,b.State.Events.Count(x=>x.Type=="Tie"));Equal(128,random.Calls);
+            True(b.State.Events.Any(x=>x.Type=="Stalemate"));False(b.State.Events.Any(x=>x.Type=="Damage"));
         });
-        Test("perfect ignition reverses clash", () => {
-            var b = Fixture(new[] { 9, 9, 9 }, new[] { 10, 10 }, 12, 11); Link(b); b.ResolveRound(IgniteGrade.Perfect);
-            Equal(100, b.Unit("hero").Hp); Equal(267, b.Unit("enemy").Hp); Equal(13, b.State.Lantern);
+        Test("alternating clash victories continue until two consecutive wins", () => {
+            var random=new ScriptedRandom(0,.99,.99,0,0,.99,0,.99);var b=Fixture(6,6,1,random);Link(b);b.ResolveRound();
+            Equal("1,-1,1,1",string.Join(",",b.State.Events.Where(x=>x.Type=="Clash").Select(x=>x.Amount)));
+            Equal("1,1,1,2",string.Join(",",b.State.Events.Where(x=>x.Type=="Clash").Select(x=>x.WinnerStreak)));
+            Equal(100,b.Unit("hero").Hp);Equal(288,b.Unit("enemy").Hp);Equal(8,random.Calls);
+            Equal(2,b.Unit("hero").Sanity);Equal(-2,b.Unit("enemy").Sanity);
+            Equal(1,b.State.Events.Count(x=>x.Type=="Damage"));
+            True(b.State.Events.FindIndex(x=>x.Type=="ClashWin")<b.State.Events.FindIndex(x=>x.Type=="Damage"));
         });
-        Test("clash binds earlier enemy attack", () => {
-            var b = Fixture(new[] { 12, 12 }, new[] { 9, 9 }, 5, 20); Link(b); b.ResolveRound();
-            Equal(100, b.Unit("hero").Hp); Equal(276, b.Unit("enemy").Hp);
+        Test("a tie resets the streak and only the final winning roll deals damage", () => {
+            var b=Fixture(6,6,1,new ScriptedRandom(0,.99,.99,.99,0,.99,0,.99));Link(b);b.ResolveRound();
+            Equal("1,0,1,2",string.Join(",",b.State.Events.Where(x=>x.Type=="Clash"||x.Type=="Tie").Select(x=>x.WinnerStreak)));
+            Equal(288,b.Unit("enemy").Hp);Equal(100,b.Unit("hero").Hp);
         });
-        Test("per-slot ignition grades are independent", () => {
-            var b = Fixture(new[] { 8 }, new[] { 9 }, 12, 11); string error;
-            True(b.TryLink("hero", 0, "hit", LinkKind.Strike, "enemy", out error));
-            True(b.TryLink("hero", 1, "hit", LinkKind.Strike, "enemy", out error)); b.State.Intents.Clear();
-            b.ResolveRound(new Dictionary<string, IgniteGrade> { { "hero:0", IgniteGrade.Perfect }, { "hero:1", IgniteGrade.Miss } });
-            Equal(284, b.Unit("enemy").Hp); Equal(0, b.State.IgniteChain); Equal(3, b.State.Lantern);
+        Test("enemy two consecutive wins allow one attack and lower ally sanity", () => {
+            var b=Fixture(6,6,1,new ScriptedRandom(.99,0,.99,0));Link(b);b.ResolveRound();
+            Equal(88,b.Unit("hero").Hp);Equal(300,b.Unit("enemy").Hp);Equal(-2,b.Unit("hero").Sanity);Equal(2,b.Unit("enemy").Sanity);
+            var win=b.State.Events.Single(x=>x.Type=="ClashWin");Equal("enemy",win.ActorId);Equal("hero",win.TargetId);
         });
-        Test("area forecast finishes after its clash opponent falls", () => {
-            var b = Fixture(new[] { 1 }, new[] { 20, 20, 20 }, 12, 11); b.Unit("hero").Hp = 5;
-            b.State.Intents[0].Kind = IntentKind.Area;
-            b.State.Allies.Add(new UnitState { Id = "other", Name = "동료", Element = Element.Flame, Hp = 100, MaxHp = 100, Defense = 0 });
-            Link(b); b.ResolveRound(); Equal(40, b.Unit("other").Hp);
+        Test("unopposed skill rolls once and total power does not multiply by flames", () => {
+            var random=new ScriptedRandom(0,0,0,0,0);var b=Fixture(4,6,5,random);b.State.Intents.Clear();string error;
+            True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));b.ResolveRound();
+            Equal(266,b.Unit("enemy").Hp);Equal(5,random.Calls);Equal(1,b.State.Events.Count(x=>x.Type=="Damage"));
         });
-        Test("unopposed forecast deals damage", () => {
-            var b = Fixture(new[] { 1 }, new[] { 9, 9 }, 12, 11); b.ResolveRound(); Equal(82, b.Unit("hero").Hp);
+        Test("per-slot ignition grades remain independent of light rolls", () => {
+            var b=Fixture(8,9,1,new ScriptedRandom());b.State.Intents.Clear();string error;
+            True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));True(b.TryLink("hero",1,"hit",LinkKind.Strike,"enemy",out error));
+            b.ResolveRound(new Dictionary<string,IgniteGrade>{{"hero:0",IgniteGrade.Perfect},{"hero:1",IgniteGrade.Miss}});
+            Equal(284,b.Unit("enemy").Hp);Equal(0,b.State.IgniteChain);Equal(3,b.State.Lantern);
+        });
+        Test("winning area intent applies the final roll to each target once", () => {
+            var b=Fixture(1,20,1,new ScriptedRandom());b.Unit("hero").Hp=5;b.State.Intents[0].Kind=IntentKind.Area;
+            b.State.Allies.Add(new UnitState{Id="other",Name="동료",Element=Element.Flame,Hp=100,MaxHp=100,Defense=0});
+            Link(b);b.ResolveRound();Equal(80,b.Unit("other").Hp);Equal(-3,b.Unit("other").Sanity);
+        });
+        Test("unopposed forecast rolls once", () => {
+            var b=Fixture(1,9,1,new ScriptedRandom(0));b.ResolveRound();Equal(85,b.Unit("hero").Hp);
         });
         Test("part break cancels forecast and redirects clash", () => {
             var b = BattleEngine.CreatePrototype(); b.Unit("anger").Parts[0].Hp = 1; string error;
@@ -108,9 +140,21 @@ internal static class CoreTests
             True(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Strike, "anger", out error)); b.ResolveRound();
             Equal(0, b.State.Gloom); True(b.State.Events.Any(x => x.Type == "Resonance" && x.Message.Contains("정화")));
         });
-        Test("auto clears within five rounds at Good", () => {
+        Test("steam reduces explicit enemy flame count before its next roll", () => {
+            var b=Fixture(6,6,1,new ScriptedRandom());var intent=b.State.Intents[0];intent.FlameCount=3;intent.HitPowers=new[]{6,6,6};
+            var other=new UnitState{Id="other",Name="물결 잔영",Element=Element.Tide,Hp=100,MaxHp=100,Defense=0};
+            other.Skills.Add(new SkillData{Id="water",Name="물결",Element=Element.Tide,BasePower=6,FlamePower=2,FlameCount=1,Speed=13,RiftDamage=0});
+            b.State.Allies.Add(other);string error;True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));True(b.TryLink("other",0,"water",LinkKind.Strike,"enemy",out error));
+            b.ResolveRound();Equal(2,intent.FlameCount);Equal(2,b.State.Events.Single(x=>x.Type=="FlameRoll"&&x.ActorId=="enemy").FlameStates.Length);
+            True(b.State.Events.Any(x=>x.Type=="Resonance"&&x.Message.Contains("증기")));
+        });
+        Test("losing at minimum sanity and winning at maximum stay within limits", () => {
+            var b=Fixture(1,20,1,new ScriptedRandom());b.Unit("hero").Sanity=-20;b.Unit("enemy").Sanity=20;Link(b);b.ResolveRound();
+            Equal(-20,b.Unit("hero").Sanity);Equal(20,b.Unit("enemy").Sanity);
+        });
+        Test("auto clears with locked skill3 at Good", () => {
             var b = PlayAuto(); Console.WriteLine("  auto rounds=" + b.State.Round + " surviving=" + b.State.Allies.Count(x => x.Alive));
-            Equal(BattleOutcome.Victory, b.State.Outcome); True(b.State.Round <= 5);
+            Equal(BattleOutcome.Victory, b.State.Outcome); True(b.State.Round <= 12); False(b.State.Links.Any(x=>b.Skill(x.ActorId,x.SkillId).Number==3));
         });
         Test("recommendation budgets and determinism", () => {
             string first = TraceAuto(); for (int i = 0; i < 100; i++) Equal(first, TraceAuto());
@@ -138,6 +182,38 @@ internal static class CoreTests
                 File.WriteAllText(s.Path, "corrupt"); Equal(120, s.Load().Coins); True(s.LastWarning != null);
                 File.Delete(s.Path); Equal(120, s.Load().Coins);
             } finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+        });
+        Test("synchronization is atomic, persistent and independent of character level", () => {
+            var p=new ProgressService(new ProgressData());string error;False(p.Synchronize("lian",out error));Equal(0,p.Data.Characters.Count);
+            p.Data.LanternFragments=10;False(p.Synchronize("missing",out error));Equal(10,p.Data.LanternFragments);
+            True(p.Synchronize("lian",out error));Equal(0,p.Data.LanternFragments);Equal(1,p.GetCharacter("lian").SyncLevel);Equal(1,p.GetCharacter("lian").Level);
+            p.Data.LanternFragments=10;False(p.Synchronize("lian",out error));Equal(10,p.Data.LanternFragments);
+            var b=BattleEngine.CreatePrototype(p.Data,1234);True(BattleRules.IsSkillUnlocked(b.Unit("lian"),b.Skill("lian","lian_crescendo")));
+            b.Unit("lian").Sanity=-20;string old=b.State.BattleId;b.Restart();Equal(0,b.Unit("lian").Sanity);Equal(1,b.Unit("lian").SyncLevel);True(old!=b.State.BattleId);
+            var d=Path.Combine(Directory.GetCurrentDirectory(),"Tests","test-output","sync-"+Guid.NewGuid().ToString("N"));
+            try { var save=new SaveStore(Path.Combine(d,"progress.xml"));save.Save(p.Data);var loaded=new ProgressService(save.Load());Equal(1,loaded.GetCharacter("lian").SyncLevel);Equal(1,loaded.GetCharacter("lian").Level); }
+            finally { if(Directory.Exists(d))Directory.Delete(d,true); }
+        });
+        Test("recommendation and previews refuse locked skills without spending RNG", () => {
+            var b=BattleEngine.CreatePrototype(seed:1234);b.RecommendLinks();False(b.State.Links.Any(x=>b.Skill(x.ActorId,x.SkillId).RequiredSyncLevel>0));
+            var preview=b.Preview(new LinkCommand{ActorId="lian",SkillId="lian_crescendo",TargetId=b.State.Intents[0].Id,Kind=LinkKind.Clash});
+            True(preview.Summary.Contains("잠금"));Equal(PreviewGrade.Disadvantage,preview.Grade);
+            var random=new ScriptedRandom();var fixture=Fixture(6,6,1,random);fixture.Preview(new LinkCommand{ActorId="hero",SkillId="hit",TargetId="forecast"});Equal(0,random.Calls);
+        });
+        Test("lit guard flames strengthen mitigation", () => {
+            Func<double,int> run=roll=> { var b=Fixture(6,20,1,new ScriptedRandom(roll,.99));var hero=b.Unit("hero");
+                hero.Skills.Add(new SkillData{Id="guard",Name="방벽",Kind=SkillKind.Guard,Speed=30,BasePower=5,FlamePower=10,FlameCount=1});string error;
+                True(b.TryLink("hero",0,"guard",LinkKind.Guard,"hero",out error));b.ResolveRound();return hero.Hp; };
+            True(run(0)>run(.99));
+        });
+        Test("evade compares rolled defense and counter retaliates once after contact", () => {
+            var b=Fixture(6,8,1,new ScriptedRandom(0,.99));var hero=b.Unit("hero");
+            hero.Skills.Add(new SkillData{Id="evade",Name="회피",Kind=SkillKind.Evade,Speed=30,BasePower=6,FlamePower=6,FlameCount=1});string error;
+            True(b.TryLink("hero",0,"evade",LinkKind.Guard,"hero",out error));b.ResolveRound();Equal(100,hero.Hp);True(b.State.Events.Any(x=>x.Type=="Evade"));
+            b=Fixture(6,8,1,new ScriptedRandom(0,.99));hero=b.Unit("hero");
+            hero.Skills.Add(new SkillData{Id="counter",Name="반격",Kind=SkillKind.Counter,Element=Element.Flame,Speed=30,BasePower=6,FlamePower=6,FlameCount=1,RiftDamage=0});
+            True(b.TryLink("hero",0,"counter",LinkKind.Guard,"hero",out error));b.ResolveRound();Equal(93,hero.Hp);Equal(288,b.Unit("enemy").Hp);
+            Equal(1,b.State.Events.Count(x=>x.Type=="Counter"));True(b.State.Events.FindIndex(x=>x.Type=="Damage")<b.State.Events.FindIndex(x=>x.Type=="Counter"));
         });
         Test("story preserves names, quotations and prototype flags", () => {
             True(StoryCatalog.Prologue.Any(x => x.Speaker == "리안" && x.Text == "…움직이지 마. 그림자가 소리에 반응해." && !x.IsPrototype));
@@ -169,27 +245,33 @@ internal static class CoreTests
         Console.WriteLine("PASS: " + passed + " tests");
     }
 
-    private static BattleEngine Fixture(int[] allyHits, int[] enemyHits, int allySpeed, int enemySpeed)
+    private sealed class ScriptedRandom : IBattleRandom
     {
-        var state = new BattleState(); state.Gloom = 0;
-        var hero = new UnitState { Id = "hero", Name = "테스트 잔영", Element = Element.Flame, Hp = 100, MaxHp = 100, Attack = 10, Defense = 0, Speed = allySpeed };
-        hero.Skills.Add(new SkillData { Id = "hit", Name = "시험", Element = Element.Flame, HitPowers = allyHits, Speed = allySpeed, RiftDamage = 0 });
-        var enemy = new UnitState { Id = "enemy", Name = "테스트 군체", IsEnemy = true, Element = Element.Flame, Hp = 300, MaxHp = 300, Attack = 10, Defense = 0, Rift = 100, MaxRift = 100, Speed = enemySpeed };
-        state.Allies.Add(hero); state.Enemies.Add(enemy);
-        state.Intents.Add(new IntentState { Id = "forecast", ActorId = "enemy", TargetId = "hero", Name = "시험 예고선", HitPowers = enemyHits, Element = Element.Flame, Speed = enemySpeed });
-        return new BattleEngine(state);
+        private readonly Queue<double> values; public int Calls;
+        public ScriptedRandom(params double[] values) { this.values=new Queue<double>(values); }
+        public double NextDouble() { Calls++;return values.Count>0?values.Dequeue():.99; }
+    }
+    private static BattleEngine Fixture(int allyBase,int enemyBase,int flames,IBattleRandom random)
+    {
+        var state=new BattleState{Gloom=0};
+        var hero=new UnitState{Id="hero",Name="테스트 잔영",Element=Element.Flame,Hp=100,MaxHp=100,Attack=10,Defense=0,Speed=12};
+        hero.Skills.Add(new SkillData{Id="hit",Name="시험",Element=Element.Flame,BasePower=allyBase,FlamePower=6,FlameCount=flames,Speed=12,RiftDamage=0});
+        var enemy=new UnitState{Id="enemy",Name="테스트 군체",IsEnemy=true,Element=Element.Flame,Hp=300,MaxHp=300,Attack=10,Defense=0,Rift=100,MaxRift=100,Speed=11};
+        state.Allies.Add(hero);state.Enemies.Add(enemy);
+        state.Intents.Add(new IntentState{Id="forecast",ActorId="enemy",TargetId="hero",Name="시험 예고선",BasePower=enemyBase,FlamePower=6,FlameCount=1,Element=Element.Flame,Speed=11});
+        return new BattleEngine(state,null,random);
     }
     private static void Link(BattleEngine b) { string error; True(b.TryLink("hero", 0, "hit", LinkKind.Clash, "forecast", out error)); }
     private static BattleEngine PlayAuto()
     {
-        var b = BattleEngine.CreatePrototype();
+        var b = BattleEngine.CreatePrototype(seed:1234);
         for (int i = 0; i < 15 && b.State.Outcome == BattleOutcome.Ongoing; i++)
         { b.RecommendLinks(); True(b.PlannedCost <= b.State.Ember); b.ResolveRound(); b.BeginNextRound(); }
         return b;
     }
     private static string TraceAuto()
     {
-        var b = BattleEngine.CreatePrototype(); var trace = new List<string>();
+        var b = BattleEngine.CreatePrototype(seed:1234); var trace = new List<string>();
         for (int i = 0; i < 15 && b.State.Outcome == BattleOutcome.Ongoing; i++)
         { b.RecommendLinks(); True(b.PlannedCost <= b.State.Ember); b.ResolveRound(); trace.AddRange(b.State.Events.Select(x => x.Message)); b.BeginNextRound(); }
         return string.Join("|", trace);

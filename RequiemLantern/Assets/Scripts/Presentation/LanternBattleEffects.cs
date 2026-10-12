@@ -13,6 +13,7 @@ namespace RequiemLantern.Presentation
     {
         bool resolving;
         string activeClashActor;
+        RectTransform activeFlameRoll;
         RectTransform dragVisuals;
         RingGraphic dragHalo;
         Text dragHint;
@@ -40,6 +41,7 @@ namespace RequiemLantern.Presentation
         void SyncBattlePresentation()
         {
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))RefreshHealth(unit.Id,unit.Hp);
+            foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))RefreshSanity(unit.Id,unit.Sanity);
             var enemy=battle.State.Enemies[0];var rift=screen.Find("Enemy rift");
             if(rift)rift.GetComponent<Text>().text=$"균열 {enemy.Rift} / {enemy.MaxRift}";
             foreach(var part in enemy.Parts)if(part.Destroyed)ShowPartBroken(part.Id);
@@ -139,8 +141,9 @@ namespace RequiemLantern.Presentation
             if(e.Type=="Ignite")activeClashActor=battle.Intent(e.TargetId)!=null?e.ActorId:null;
             if(e.Type=="Relink"||e.Type=="Illusion")activeClashActor=null;
             status.text=e.Message;
-            bool clashHit=e.Type=="Damage"&&!string.IsNullOrEmpty(activeClashActor)&&(e.ActorId==activeClashActor||e.TargetId==activeClashActor);
-            if(e.Type=="Damage"||e.Type=="Tie")yield return PresentMelee(e,layer,status,version,clashHit||e.Type=="Tie");
+            if(e.Type=="Sanity")RefreshSanity(e.ActorId,e.ActorSanity);
+            if(e.Type=="FlameRoll")yield return PresentFlameRoll(e,layer,version);
+            else if(e.Type=="Damage"||e.Type=="Tie"||e.Type=="Clash")yield return PresentMelee(e,layer,status,version,e.Type=="Tie"||e.Type=="Clash");
             else yield return PresentBattleSignal(e,layer,status,version);
             if(e.Type=="Clash"||e.Type=="ClashWin")activeClashActor=null;
         }
@@ -148,7 +151,37 @@ namespace RequiemLantern.Presentation
         string CombatArt(string id)
         {
             var unit=battle.Unit(id);
-            return unit!=null&&unit.IsEnemy?"Anger":ArtId(id);
+            return unit!=null&&!string.IsNullOrEmpty(unit.Portrait)?ArtId(unit.Portrait):ArtId(id);
+        }
+        void RefreshSanity(string id,int sanity)
+        {
+            var label=screen.Find("Sanity "+id);
+            if(label)label.GetComponent<Text>().text="정신력 "+sanity.ToString("+0;-0;0")+"  ·  "+(50+2*Mathf.Clamp(sanity,-20,20))+"%";
+        }
+        IEnumerator PresentFlameRoll(BattleEvent e,RectTransform layer,int version)
+        {
+            if(activeFlameRoll){activeFlameRoll.gameObject.SetActive(false);Destroy(activeFlameRoll.gameObject);}
+            activeFlameRoll=MakeRect(layer,"Flame roll",704,152,840,164);
+            Box(activeFlameRoll,"Roll glass",0,0,840,164,new Color(.017f,.026f,.047f,.95f));
+            var actor=battle.Unit(e.ActorId);var target=battle.Unit(e.TargetId);
+            DrawRollSide(activeFlameRoll,actor,e.FlameStates,e.ActorPower,e.ActorSanity,22);
+            if(e.EnemyFlameStates!=null&&e.EnemyFlameStates.Length>0)DrawRollSide(activeFlameRoll,target,e.EnemyFlameStates,e.TargetPower,e.TargetSanity,444);
+            Label(activeFlameRoll,"Roll index",e.ClashIndex>0?e.ClashIndex+"차 맞불":"위력 점화",328,125,184,28,17,Gold,TextAnchor.MiddleCenter);
+            RefreshSanity(e.ActorId,e.ActorSanity);if(target!=null)RefreshSanity(target.Id,e.TargetSanity);
+            float duration=autoMode?.18f:.30f;
+            for(float t=0;t<duration;t+=Time.unscaledDeltaTime){if(version!=screenVersion||!layer)yield break;yield return null;}
+        }
+        void DrawRollSide(Transform parent,UnitState unit,bool[] flames,float power,int sanity,float x)
+        {
+            if(unit==null)return;bool dark=unit.IsEnemy;
+            Label(parent,"Roll actor "+unit.Id,unit.Name+" · 정신력 "+sanity.ToString("+0;-0;0"),x,9,370,30,20,dark?Hex("BFA2EF"):Gold);
+            int count=flames==null?0:flames.Length;
+            for(int i=0;i<count;i++){
+                var icon=MakeRect(parent,"Flame "+unit.Id+" "+i,x+i*62,49,44,57).gameObject.AddComponent<FlameGraphic>();
+                icon.Lit=flames[i];icon.color=flames[i]?(dark?Hex("B99AFF"):Hex("FFC472")):Hex("404755");icon.raycastTarget=false;
+                Label(parent,"Flame state "+unit.Id+" "+i,flames[i]?"점화":"소등",x+i*62-3,106,53,23,13,flames[i]?(dark?Hex("D9C8FA"):Gold):Muted,TextAnchor.MiddleCenter);
+            }
+            Label(parent,"Roll power "+unit.Id,power.ToString("0.#"),x+258,42,111,62,43,dark?Hex("D9C8FA"):Ivory,TextAnchor.MiddleRight);
         }
         static float Smooth(float value){return Mathf.SmoothStep(0,1,Mathf.Clamp01(value));}
 
@@ -181,7 +214,7 @@ namespace RequiemLantern.Presentation
                 attacker=new CombatPosePlayer(fx,actorImage,CombatArt(actor.Id),!actor.IsEnemy,actor.IsEnemy?520:480,"Duel attacker");
                 defender=new CombatPosePlayer(fx,targetImage,CombatArt(target.Id),!target.IsEnemy,target.IsEnemy?520:480,"Duel defender");
                 int facing=actor.IsEnemy?-1:1;
-                bool lowClash=clash&&(actor.Id=="sera"||target.Id=="sera");
+                bool lowClash=clash&&(actor.Id=="sera"||target.Id=="sera")&&(attacker.HasAtlas&&defender.HasAtlas);
                 int attackContactPose=lowClash&&actor.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 int defendContactPose=lowClash&&target.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 Vector2 attackContact=attacker.ContactOffset(attackContactPose),defendContact=defender.ContactOffset(defendContactPose);
@@ -210,12 +243,13 @@ namespace RequiemLantern.Presentation
                     var shard=Box(contactRoot,"Metal spark "+i,contact.x,contact.y,9+(i%3)*3,2,Color.clear);
                     shard.rectTransform.localRotation=Quaternion.Euler(0,0,-angle*Mathf.Rad2Deg);sparks.Add(shard);
                 }
-                var feedback=Label(fx,"Battle feedback",damage?"−"+e.Amount:"상 쇄",contact.x-180,contact.y-132,360,88,damage?58:40,Color.clear,TextAnchor.MiddleCenter);
+                var feedback=Label(fx,"Battle feedback",damage?"−"+e.Amount:e.Type=="Tie"?"동 률":e.WinnerStreak+"연승",contact.x-180,contact.y-132,360,88,damage?58:40,Color.clear,TextAnchor.MiddleCenter);
                 status.transform.SetAsLastSibling();
                 float speed=autoMode?.72f:1;
                 float approach=(reducedMotion?.10f:.25f)*speed,windup=.16f*speed,swing=.11f*speed;
                 float contactAt=approach+windup+swing,hold=.045f,follow=.12f*speed,recoil=.11f*speed,recover=.18f*speed;
                 float recoilAt=contactAt+hold+follow,recoverAt=recoilAt+recoil,duration=recoverAt+recover;
+                if(clash){approach=(reducedMotion?.06f:.15f)*speed;windup=.10f*speed;swing=.08f*speed;hold=.045f;follow=.06f*speed;recoil=.05f*speed;recover=.10f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
                 Action impact=()=>{
                     if(applied||version!=screenVersion)return;applied=true;
                     if(damage&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);
@@ -287,7 +321,7 @@ namespace RequiemLantern.Presentation
         {
             if(version!=screenVersion||!layer)yield break;
             var actor=battle.Unit(e.ActorId);var target=battle.Unit(e.TargetId);
-            bool damage=e.Type=="Damage",heal=e.Type=="Heal",guard=e.Type=="Guard";
+            bool damage=e.Type=="Damage",heal=e.Type=="Heal",guard=e.Type=="Guard"||e.Type=="Evade"||e.Type=="EvadeFail"||e.Type=="Counter";
             bool summary=e.Type=="Clash"||e.Type=="ClashWin",shatter=e.Type=="PartBreak"||e.Type=="Rift",resonance=e.Type=="Resonance"||e.Type=="Lantern";
             Color color=heal?Teal:guard?Hex("A7D4E9"):actor!=null?ElementColor(actor.Element):Gold;
             Vector2 source=BattlePoint(e.ActorId,new Vector2(960,480)),destination=BattlePoint(e.TargetId,new Vector2(1155,510));
@@ -306,9 +340,10 @@ namespace RequiemLantern.Presentation
             else if(heal||guard){
                 if(heal){support=Thread(fx,"Healing light",source,source,color,false,3);support.Glow=true;}
                 ring=Ring(fx,guard?"Guard seal":"Healing seal",point.x-58,point.y-58,116,color,3);
-                number=Label(fx,"Battle feedback",heal?"+"+e.Amount:"호 위",point.x-160,point.y-132,320,85,39,color,TextAnchor.MiddleCenter);
+                string defenseText=e.Type=="Evade"?"회 피":e.Type=="EvadeFail"?"회피 실패":e.Type=="Counter"?"반 격":actor!=null&&actor.Skills.Any(s=>s.Kind==SkillKind.Evade)?"회피 준비":actor!=null&&actor.Skills.Any(s=>s.Kind==SkillKind.Counter)?"반격 준비":"호 위";
+                number=Label(fx,"Battle feedback",heal?"+"+e.Amount:defenseText,point.x-160,point.y-132,320,85,39,color,TextAnchor.MiddleCenter);
             }
-            else if(summary){number=Label(fx,"Clash result",e.Type=="ClashWin"?"맞불 우세":"맞불 종료",point.x-230,point.y-160,460,85,38,Gold,TextAnchor.MiddleCenter);duration=autoMode?.20f:.30f;}
+            else if(summary){number=Label(fx,"Clash result",e.Type=="ClashWin"?"2연승 · 공격권 확보":"맞불 종료",point.x-270,point.y-160,540,85,34,Gold,TextAnchor.MiddleCenter);duration=autoMode?.20f:.30f;}
             else if(shatter||resonance){
                 if(e.Type=="PartBreak")ShowPartBroken(e.TargetId);
                 if(e.Type=="Rift"){var rift=screen.Find("Enemy rift");if(rift)rift.GetComponent<Text>().text="균열 · 행동 중단";}
@@ -316,7 +351,7 @@ namespace RequiemLantern.Presentation
                 ring=Ring(fx,"Expanding seal",point.x-42,point.y-42,84,color,3);
                 number=Label(fx,"Break feedback",e.Type=="PartBreak"?"부위 파괴":e.Type=="Rift"?"균 열":e.Type=="Lantern"?"등불 해방":"공 명",point.x-220,point.y-150,440,95,44,color,TextAnchor.MiddleCenter);duration=autoMode?.37f:.56f;
             }
-            else if(e.Type=="DefeatUnit")number=Label(fx,"Fallen",target!=null&&target.IsEnemy?"어둠 소멸":"전투불능",point.x-190,point.y-132,380,70,31,Muted,TextAnchor.MiddleCenter);
+            else if(e.Type=="DefeatUnit")number=Label(fx,"Fallen",target!=null&&target.IsEnemy?(target.IsHuman?"제 압":"어둠 소멸"):"전투불능",point.x-190,point.y-132,380,70,31,Muted,TextAnchor.MiddleCenter);
             else if(damage)number=Label(fx,"Battle feedback","−"+e.Amount,point.x-170,point.y-134,340,90,52,color,TextAnchor.MiddleCenter);
             else{if(e.Type=="Cancel")FadeIntent(e.TargetId);duration=autoMode?.07f:.14f;}
             if(shatter)PlayCombatSound("impact");else if(heal||guard||resonance)Tone("fx_"+e.Type,heal?880:740,.18f,.1f);

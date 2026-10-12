@@ -350,3 +350,55 @@
 @media (prefers-reduced-motion: reduce) {
   #game button { transition: none !important; }
 }
+
+/* The campaign is a sequence of scenes and battles; each chapter stays readable
+   on the fixed 1600 x 900 game canvas. */
+.chapter-tabs{position:absolute;left:75px;right:75px;top:123px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.chapter-tabs button{height:78px;text-align:left;padding:13px 22px}
+.chapter-tabs small{display:block;font-size:11px;letter-spacing:.14em;color:#a7b2bf}
+.chapter-tabs strong{display:block;font-size:20px;font-weight:500;margin-top:6px}
+.chapter-tabs .primary small{color:#e6cda1}
+.campaign-heading{position:absolute;left:90px;right:95px;top:223px}
+.campaign-heading p{font-size:16px;color:#b6bfcb;line-height:1.6;margin:8px 0}
+.campaign-map{position:absolute;left:75px;top:312px;width:1035px;display:grid;grid-template-columns:repeat(5,1fr);gap:21px 16px}
+.campaign-node{height:212px;padding:20px 17px;text-align:left;position:relative;display:flex;flex-direction:column;align-items:flex-start;background:#101b29ec!important}
+.campaign-node .stage-node-number{font-family:Georgia,serif;font-size:28px;color:#e6c38c}
+.campaign-node .stage-node-kind{font-size:11px;color:#91a7bc;letter-spacing:.02em;margin-top:10px}
+.campaign-node strong{font-size:19px;font-weight:500;line-height:1.4;word-break:keep-all;margin-top:12px}
+.campaign-node small{font-size:11px;color:#c1a77b;margin-top:auto}
+.campaign-node.locked{opacity:.48}.campaign-node.locked.selected{opacity:.85}
+.campaign-node.selected{border-color:#efc47a!important;background:#293445f0!important;box-shadow:inset 0 0 30px #c7a46922,0 0 15px #e1b57617}
+.campaign-node.cleared .stage-node-number,.campaign-node.cleared small{color:#88c1b7}
+.campaign-detail{position:absolute;top:312px;left:1140px;width:385px;min-height:445px;padding:27px 27px 25px;background:#0b1421f5;border:1px solid #89714780}
+.campaign-detail h2{font-size:30px;font-weight:500;line-height:1.35;margin:19px 0 11px;word-break:keep-all}
+.campaign-detail .eyebrow{font-size:11px;letter-spacing:.1em}
+.stage-place{font-size:14px;color:#d3b98d}
+.campaign-detail p{font-size:16px;color:#b2bfce;line-height:1.8;word-break:keep-all;margin:22px 0}
+.stage-cast{font-size:13px;color:#d2c6b2;line-height:1.65;border-top:1px solid #7e6a4345;padding-top:15px}
+.stage-opponent{font-size:12px;color:#8f9fb5;line-height:1.8;margin-top:15px}
+.stage-status{display:block;color:#a5b2c2;font-size:12px;margin:21px 0 15px}
+.campaign-detail button{width:100%;height:57px;font-size:17px}.campaign-detail .stage-replay{height:41px;margin-top:10px;font-size:14px}
+.campaign-archive{position:absolute;left:115px;right:115px;top:155px}
+.campaign-archive h1{font-size:45px;font-weight:400;margin:18px 0 13px}
+.campaign-archive>p{color:#a7b5c7;font-size:19px}
+.archive-stage-list{height:475px;overflow:auto;margin-top:28px;padding-right:25px;display:grid;grid-template-columns:1fr 1fr;gap:16px 30px;align-items:start}
+.archive-stage-list section{background:#0c1725de;padding:17px 20px}
+.archive-stage-list h2{font-size:19px;font-weight:500;color:#d4b883;margin:0 0 15px}
+.archive-stage-list button{display:flex;align-items:center;gap:18px;width:100%;height:47px;text-align:left;padding:9px 18px;margin:8px 0}
+.archive-stage-list button span{color:#d4b883;font-size:13px;min-width:32px}.archive-stage-list button strong{font-size:16px;font-weight:400}.archive-stage-list button small{margin-left:auto;font-size:11px;color:#95a7bd}
+.story .story-listener{right:55px;left:auto;top:110px;width:590px;height:695px;opacity:.35;filter:brightness(.7) saturate(.6) drop-shadow(0 8px 25px #000);z-index:1}
+.story .story-hero{z-index:2}
+.character-growth{display:flex;align-items:center;gap:16px;margin-top:15px;border-top:1px solid #7b674e55;padding-top:13px;font-size:15px;color:#d2ba93;flex-wrap:wrap}
+.character-growth small{font-size:12px;color:#a8b7ca}.character-growth button{height:43px;padding:0 17px;font-size:13px}
+.roster-info{top:137px}.roster-info h1{margin-top:20px;margin-bottom:8px;font-size:59px}.roster-info .bio{font-size:19px;padding-top:20px;margin-top:20px}.roster-info blockquote{font-size:21px;margin:20px 0}.roster-tabs{margin-top:18px;gap:9px}.roster-tabs button{min-width:140px;height:43px}
+.fighter-sanity{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#d6b983;font-size:12px}.fighter-sanity small{font-size:10px;color:#91a3b9}
+.fighter .slots{margin-top:12px}.fighter .slot-wrap:only-child{width:100%}
+.enemy-sanity{color:#bbabd8;font-size:12px;margin-top:8px}.enemy.human-enemy{height:423px;top:200px}
+.flame-badges{display:inline-flex;align-items:center;gap:5px;margin:4px 0}
+.flame{display:inline-block;width:11px;height:15px;border:1px solid #b597666e;border-radius:70% 25% 55% 45%;transform:rotate(-24deg);background:#28303b;flex-shrink:0}
+.flame.on{background:linear-gradient(30deg,#ef8950,#ffe6a5);border-color:#ffe8b5;box-shadow:0 0 10px #ffb064aa}
+.flame.off{background:#273342;opacity:.6}.darkness .flame{border-color:#b69fd873}.darkness .flame.on{background:linear-gradient(30deg,#675397,#dbc3ff);border-color:#ddc8ff;box-shadow:0 0 12px #b691ffaa}
+.intent .flame-badges{position:absolute;right:15px;bottom:12px}.intent small{max-width:230px}
+.skill-panel{flex:1;min-width:350px}.skill-panel .skill-title{font-size:12px;margin-bottom:8px}.skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.skills button{height:40px;font-size:11px;padding:5px 10px;display:flex;align-items:center;justify-content:space-between;gap:5px}.skills button span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.skills .flame-badges{margin:0;gap:3px}.skills .flame{width:7px;height:10px}.skills button small{font-size:9px;white-space:nowrap}.skill-actions{margin-top:8px}.skill-actions button{height:36px;font-size:14px}
+
+.enemy-stats{z-index:6;pointer-events:none}.enemy-stats .name,.enemy-sanity,.enemy-stats small{text-shadow:0 2px 4px #000,0 0 6px #000}

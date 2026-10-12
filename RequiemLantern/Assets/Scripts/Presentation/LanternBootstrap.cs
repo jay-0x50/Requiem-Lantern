@@ -80,8 +80,29 @@ namespace RequiemLantern.Presentation
             // Deterministic visual capture; the user's PlayerPrefs are never written.
             assisted=true;autoMode=false;reducedMotion=false;
             yield return Capture(directory,"01-title");
-            StartStory(StoryCatalog.Prologue,ShowHub);storyIndex=6;DrawStory();revealed=999;
-            yield return Capture(directory,"02-story");ShowHub();yield return Capture(directory,"03-hub");
+            EnterCampaignStage(CampaignCatalog.Chapters[0].Stages[0].Id);revealed=999;
+            yield return Capture(directory,"02-story");FinishCurrentStory();
+            var firstChapter=CampaignCatalog.Chapters[0];
+            if(!CampaignRules.IsCleared(progress.Data,firstChapter.Stages[0])||progress.Data.Coins!=0||!CampaignRules.IsUnlocked(progress.Data,firstChapter.Stages[1]))
+                throw new Exception("Story-only stage did not complete freely and unlock stage 1-2.");
+            yield return Capture(directory,"12-campaign-map");
+            EnterCampaignStage(firstChapter.Stages[1].Id);FinishCurrentStory();
+            if(page!="battle"||battle.State.Allies.Count!=1||campaign.Phase!=CampaignPhase.Battle)throw new Exception("Mixed stage 1-2 did not enter its solo Lian battle.");
+            yield return Capture(directory,"13-campaign-solo-battle");
+            while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=12){
+                battle.RecommendLinks();battle.ResolveRound(IgniteGrade.Good);
+                if(battle.State.Outcome==BattleOutcome.Ongoing)battle.BeginNextRound();
+            }
+            if(battle.State.Outcome!=BattleOutcome.Victory)throw new Exception("Campaign solo tutorial did not reach victory.");
+            ShowResult();
+            if(CampaignRules.IsCleared(progress.Data,firstChapter.Stages[1])||campaign.Phase!=CampaignPhase.AfterStory)throw new Exception("Mixed stage completed before its after-story.");
+            ContinueCampaign();revealed=999;yield return Capture(directory,"14-campaign-after-story");FinishCurrentStory();
+            if(!CampaignRules.IsCleared(progress.Data,firstChapter.Stages[1])||!CampaignRules.IsUnlocked(progress.Data,firstChapter.Stages[2]))throw new Exception("Mixed stage after-story did not complete/unlock its successor.");
+            var meal=firstChapter.Stages[6];CampaignRules.Complete(progress.Data,meal);
+            int coinsBeforeReplay=progress.Data.Coins;
+            EnterCampaignStage(meal.Id,true);storyIndex=1;DrawStory();revealed=999;yield return Capture(directory,"15-campaign-ensemble");FinishCurrentStory();
+            if(progress.Data.Coins!=coinsBeforeReplay||page!="stages")throw new Exception("Campaign replay changed rewards or did not return to the map.");
+            ShowHub();yield return Capture(directory,"03-hub");
             ShowRoster(0);yield return Capture(directory,"04-roster");
             ShowCharacterStories();yield return Capture(directory,"08-character-stories");
             foreach(var entry in CharacterStoryCatalog.All){
@@ -98,8 +119,9 @@ namespace RequiemLantern.Presentation
                 yield return Capture(directory,"10-"+entry.Id+"-ending");NextStory();
                 if(page!="character-stories")throw new Exception("Character story did not return to its selection screen: "+entry.Id);
             }
-            if(progress.Data.Coins!=0||progress.Data.PrologueCompleted)throw new Exception("Reading character stories unexpectedly changed progress or rewards.");
+            if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Reading archived character drafts unexpectedly changed rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
+            int coinsBeforeLegacy=progress.Data.Coins;
             StartBattle();battle.RecommendLinks();DrawBattle();yield return Capture(directory,"06-battle");
             smokePhase="first round battlefield effects (60 second deadline)";
             smokeDeadline=Time.realtimeSinceStartup+60;
@@ -118,14 +140,16 @@ namespace RequiemLantern.Presentation
                 var number=feedback?feedback.GetComponent<Text>():null;
                 var marker=damage?damage.GetComponent<CombatPhaseMarker>():null;
                 var contact=damage?damage.Find("Weapon contact"):null;
-                if(!capturedWindup&&marker&&marker.Phase=="windup"&&(!requiresClash||marker.Clash)){
+                if(!capturedWindup&&marker&&marker.Phase=="windup"){
                     if(!marker.AtlasActive||!marker.Attacker||marker.Attacker.uvRect.width>=.5f)throw new Exception("Melee is missing its attack pose atlas.");
                     if(damage.GetComponentsInChildren<ThreadGraphic>().Length!=0)throw new Exception("Melee still contains a travelling light beam.");
                     testedMelee=marker;windupUv=marker.Attacker.uvRect;windupHealth=visibleHealth.Values.Sum();
                     yield return new WaitForEndOfFrame();
                     WriteSmokeScreenshot(directory,"06a-windup");capturedWindup=true;
                 }
-                if(marker&&marker.Clash&&contact&&number&&number.color.a>.35f)sawClash=true;
+                var clashFx=overlay?(overlay.Find("FX Clash")??overlay.Find("FX Tie")):null;
+                var clashFeedback=clashFx?clashFx.Find("Battle feedback"):null;
+                if(clashFeedback&&clashFeedback.GetComponent<Text>().color.a>.35f&&clashFx.Find("Weapon contact"))sawClash=true;
                 if(initialHealth.Any(pair=>visibleHealth.TryGetValue(pair.Key,out var hp)&&hp<pair.Value))sawHealthChange=true;
                 if(!capturedImpact&&marker&&marker==testedMelee&&number&&number.color.a>.35f&&contact){
                     if(marker.Attacker.uvRect==windupUv)throw new Exception("Attack never changed from its windup pose at contact.");
@@ -160,17 +184,17 @@ namespace RequiemLantern.Presentation
             }
             if(battle.State.Outcome!=BattleOutcome.Victory)throw new Exception("Smoke battle failed to reach victory.");
             ShowResult();yield return Capture(directory,"07-result");
-            if(progress.Data.Coins!=120)throw new Exception("Smoke reward was not granted exactly once.");
-            if(save.Load().Coins!=120)throw new Exception("Smoke reward was not persisted to the isolated save.");
+            if(progress.Data.Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not granted exactly once.");
+            if(save.Load().Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not persisted to the isolated save.");
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
                 "08-character-stories","09-lian-story","10-lian-ending","09-sera-story","10-sera-ending","09-noa-story","10-noa-ending",
-                "11-lian-human","11-sera-human","11-noa-human"};
+                "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
-                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty fresh screenshots.");yield return null;
+                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-four fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 20 fresh screenshots; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.\nRowan, Ellen and Eve speaker labels displayed; character stories returned to selection after reading and did not change progress/rewards.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 24 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.\nRowan, Ellen and Eve speaker labels displayed; archived character drafts returned to selection without changing rewards. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
         }
         bool FreshSmokeScreenshot(string path)

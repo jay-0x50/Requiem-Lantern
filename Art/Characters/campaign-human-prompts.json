@@ -1,0 +1,29 @@
+{
+  "tool": "built-in image_gen",
+  "use": "Campaign human antagonist cutouts",
+  "eveFollowup": "Remove the gray-black vignette and ambient backdrop; retain the complete human character, clothing, bell, baton and boots; actual transparent cutout saved as Resources/Art/Eve.png.",
+  "prompts": [
+    [
+      "Rowan",
+      "Use case: stylized-concept. Create ONE new full-body transparent PNG character sprite for the 2D dark fantasy game Requiem Lantern. Attached Lian and Orphe images are STYLE REFERENCES ONLY: match their refined anime painterly linework, elaborate weathered dark navy and gold clothing, realistic cloth detailing and tall full-body cutout format, but make a distinct human man Rowan, age32, short ash brown hair, tired stern gray eyes, a small healed brow scar, navy blockade guard captain uniform with bronze keys and lantern insignia, faded crimson half-cape, left arm carrying a modest metal buckler and right hand lowered short sword. He once guarded the same lighthouse as Lian but now commands a cruel human blockade. Show conflicted restrained severity without supernatural mutation. Idle three-quarter frontal pose, full boots and complete weapon inside frame, centered with transparent padding all around. Sharp readable face, no text, no background, no floor, no glow effects. Actual transparent alpha. This is a new character; do not copy Lian's face or white hair."
+    ],
+    [
+      "Ellen",
+      "Use case: stylized-concept. Create ONE new full-body transparent PNG anime painterly character sprite for Requiem Lantern, matching attached Orphe and Noa STYLE references ONLY, finely detailed weathered dark fantasy fashion with tasteful bronze gold accents. Ellen: human woman age26, warm chestnut shoulder length hair tied with a visible faded BLUE RIBBON, amber brown eyes, expression once gentle now composed and defensive, practical charcoal merchant officer coat, desaturated burgundy waistcoat, belt with stamped ration permits and closed brass seal case, gloves, boots. Right hand holds a short utilitarian saber lowered; left hand holds a brass square seal. She grew up as a caretaker friend of Sera at an orphanage and is now an enforcer of an abusive supply monopoly. No monstrous features or magical aura. Tall full-body centered idle three-quarter frontal pose, all shoes and saber inside frame with clear transparent padding. Show an individual human friend turned foe. No text, no background, no floor, no logos. Actual transparent alpha."
+    ],
+    [
+      "Eve",
+      "Use case: stylized-concept. Create ONE new full-body transparent PNG anime painterly character sprite for Requiem Lantern; attached Noa and Orphe are STYLE references only, match elaborate weathered black robes and delicate bronze embroidery. Eve is a distinct HUMAN woman age25, short straight smoke silver bob, serious violet gray eyes, a fine round wire eyeglass chain, a church scribe robe asymmetrical charcoal and pale ash sleeves, restrained muted lavender lining, several handwritten-looking but unreadable record pages in a closed leather ledger at her hip. Left hand cradles a small brass hand bell; right hand holds a dark metal ceremonial baton lowered, no gigantic weapon. Former close friend who protected Noa as a novice, now a ruthless church administrator who erases people's identities. Calm regretful expression, human not monster, no supernatural fog. Entire full-body silhouette and boots fully in frame, centered three-quarter frontal idle pose with transparent margin around. No text, no background, no floor, actual transparent alpha. Distinct face and silhouette from Noa and Orphe."
+    ],
+    [
+      "HumanGuard",
+      "Use case: stylized-concept. ONE full-body transparent PNG human enemy soldier sprite for dark fantasy game Requiem Lantern. Match the painterly anime detail and muted dark navy bronze costume of attached Lian/Orphe style references, but character is an anonymous adult human guard in utilitarian navy coat, bronze reinforced shoulder plates, dark half helmet that leaves tired human eyes and lower face visible, brown utility belts, heavy leather boots, small shield in left hand and lowered short spear in right. Restrained practical equipment, supply blockade and church hired guard, no monster shapes, no glowing eyes, no supernatural tentacles. Full-body centered three-quarter frontal pose, whole spear and feet within frame, transparent padding around entire subject. No text, no floor, no background. Actual transparent alpha."
+    ]
+  ],
+  "sources": {
+    "Rowan": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-3cccc37f-2656-4c7a-89ae-44ce7d2ace72.png",
+    "Ellen": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-171ee8a5-c48c-45a0-8516-637b0bec6c86.png",
+    "Eve": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-7ca878b9-356a-43f4-b480-91190665569e.png",
+    "HumanGuard": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-d741a6db-22c5-49b0-9569-dc71cbdfe944.png"
+  }
+}

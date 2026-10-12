@@ -186,7 +186,7 @@ async function main() {
 
   env = environment();
   const tie = env.fx.play([
-    event('Ignite', '1:anger_arm', 100), event('Tie', 'anger'), event('Clash', 'anger', 0)
+    event('Ignite', '1:anger_arm', 100), event('Tie', 'anger'), event('Stalemate', 'anger', 0)
   ], copy(env.initial));
   await env.drain(); assert.equal(await tie, true);
   assert.equal(env.fx.units.get('anger').hp, 190); assert.equal(env.fx.units.get('lian').hp, 80);
@@ -347,7 +347,7 @@ async function main() {
     [...final.allies, ...final.enemies].find(unit => unit.id === targetId).hp -= 5;
     // The ally's forecast link is also the clash context for an enemy counterattack.
     const exchange = env.fx.play([
-      event('Ignite', '1:anger_arm', 100, allyId), event('Damage', targetId, 5, actorId)
+      event('Ignite', '1:anger_arm', 100, allyId), {...event('Clash',targetId,0,actorId),winnerStreak:1}, event('ClashWin',targetId,0,actorId), event('Damage', targetId, 5, actorId)
     ], final);
     await env.until(() => env.stage.dataset.combatPhase === 'contact');
     const contactPoints = [];
@@ -470,6 +470,55 @@ async function main() {
   assert.equal(env.root.querySelectorAll('.melee-fighter').length, 0);
   assert.equal(env.fx.portrait('lian').style.visibility, '');
   pass('reduced motion preserves weapon pose sequence, contact damage and idle restoration');
+
+
+  env = environment();
+  env.initial.allies[0].sanity=0;env.initial.enemies[0].sanity=0;env.fx.attach(env.initial);
+  const roll={...event('FlameRoll','anger'),flameStates:[true,false,true],enemyFlameStates:[false,true],actorPower:12,targetPower:9.0000001,actorSanity:0,targetSanity:0,clashIndex:1};
+  const sanityFinal=copy(env.initial);sanityFinal.allies[0].sanity=5;
+  const rolling=env.fx.play([roll,event('Sanity','lian',5)],sanityFinal);
+  await env.until(()=>env.root.querySelectorAll('.flame-roll').length===1);
+  const rollCard=env.root.querySelector('.flame-roll');
+  assert.equal(rollCard.querySelectorAll('.on').length,3);assert.equal(rollCard.querySelectorAll('.off').length,2);
+  assert.equal(rollCard.querySelectorAll('strong')[0].textContent,'12');assert.equal(rollCard.querySelectorAll('strong')[1].textContent,'9');
+  assert.equal(env.fx.units.get('lian').sanity,0);assert.equal(env.fx.units.get('anger').hp,190);
+  await env.drain();assert.equal(await rolling,true);assert.equal(env.fx.units.get('lian').sanity,5);
+  pass('flame roll displays exact on/off states and both powers while sanity waits for final playback synchronization');
+
+  env = environment();
+  const contestEvents=[];
+  for(let i=1;i<=4;i++){contestEvents.push({...roll,clashIndex:i});contestEvents.push({...event('Clash','anger'),clashIndex:i,winnerStreak:i===4?2:1});}
+  contestEvents.push(event('ClashWin','anger'),event('Damage','anger',25));
+  const clashFinal=copy(env.initial);clashFinal.enemies[0].hp=165;
+  const appliedTypes=[],apply=env.fx.applyEvent.bind(env.fx);env.fx.applyEvent=e=>{appliedTypes.push(e.type);apply(e);};
+  const contested=env.fx.play(contestEvents,clashFinal,{fast:true});
+  await env.until(()=>env.impacts.filter(([kind])=>kind==='clash').length===4);
+  assert.equal(env.fx.units.get('anger').hp,190);assert.equal(appliedTypes.filter(t=>t==='Damage').length,0);
+  await env.drain();assert.equal(await contested,true);
+  assert.equal(env.impacts.filter(([kind])=>kind==='clash').length,4);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,1);
+  assert.equal(appliedTypes.filter(t=>t==='Damage').length,1);assert.equal(env.fx.units.get('anger').hp,165);
+  assert.equal(env.root.querySelectorAll('.melee-fighter').length,0);
+  pass('alternating contests clang without damage until the two-win verdict then strike exactly once');
+
+  const human=battle();human.enemies[0].isHuman=true;human.enemies[0].portrait='Eve';
+  env=environment(true,false,human);env.fx.portrait('anger').src='/art/Eve.png';
+  const humanFighter=env.fx.createFighter('anger','enemy-side');
+  assert.equal(humanFighter.atlas,false);assert.equal(humanFighter.layout,null);
+  assert.equal(humanFighter.sprite.style.backgroundImage,"url('/art/Eve.png')");env.fx.releaseMelee();
+  pass('human enemy retains its own portrait and never uses the Anger action atlas');
+
+  const support=battle();support.allies[0].id='heidel';support.allies[0].portrait='Heidel';
+  env=environment(true,false,support);env.fx.portrait('heidel').src='/art/Heidel.png';
+  const supportFighter=env.fx.createFighter('heidel','ally-side');
+  assert.equal(supportFighter.atlas,false);assert.ok(supportFighter.sprite.style.backgroundImage.includes('Heidel.png'));
+  pass('support character with no atlas uses its own portrait instead of a different character');
+
+  env=environment();
+  const interruptedClash=env.fx.play([{...event('Clash','anger'),winnerStreak:1},event('Damage','anger',25)],clashFinal);
+  await env.until(()=>env.stage.dataset.combatPhase==='contact');env.fx.clear();await env.drain();
+  assert.equal(await interruptedClash,false);assert.equal(env.fx.units.get('anger').hp,190);
+  assert.equal(env.root.querySelectorAll('.melee-fighter').length,0);assert.equal(env.fx.portrait('lian').style.visibility,'');
+  pass('cancelling a pending weapon contest restores portraits and suppresses the future strike');
 
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }

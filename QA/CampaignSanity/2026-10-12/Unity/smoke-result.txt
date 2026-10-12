@@ -1,0 +1,4 @@
+PASS: 24 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.
+Rowan, Ellen and Eve speaker labels displayed; archived character drafts returned to selection without changing rewards. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards.
+Actual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact, weapon clash captured; round 2 returned with synchronized HP/gauges.
+Reward granted once and persisted to isolated smoke-progress.xml.

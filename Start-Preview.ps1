@@ -2,13 +2,27 @@ param([switch]$NoBrowser)
 $ErrorActionPreference='Stop'
 $projectRoot=$PSScriptRoot
 $url='http://127.0.0.1:8127/'
-try {
-    $state=Invoke-RestMethod ($url+'api/state') -TimeoutSec 2
-    if ($state.battle.stageId -ne 'chapter1_beacon_defense') { throw 'Port occupied by a different service.' }
-    if (-not $NoBrowser) { Start-Process $url }
-    Write-Output "Preview is already running: $url"
-    return
-} catch { }
+$state=$null
+try { $state=Invoke-RestMethod ($url+'api/state') -TimeoutSec 2 } catch { }
+if ($state) {
+    if ($state.application -eq 'RequiemLantern' -and $state.runtimeRevision -eq 'campaign-sanity-v1') {
+        if (-not $NoBrowser) { Start-Process $url }
+        Write-Output "Preview is already running: $url"
+        return
+    }
+    $pidFile=Join-Path $projectRoot 'Logs/preview-host.pid'
+    $previousHost=$null
+    if (Test-Path -LiteralPath $pidFile) {
+        $previousPid=0
+        if ([int]::TryParse((Get-Content -LiteralPath $pidFile -Raw).Trim(),[ref]$previousPid)) {
+            $previousHost=Get-CimInstance Win32_Process -Filter "ProcessId=$previousPid" -ErrorAction SilentlyContinue
+        }
+    }
+    if (-not $previousHost -or -not $previousHost.CommandLine.Contains($projectRoot) -or -not $previousHost.CommandLine.Contains('PreviewHost.dll')) {
+        throw 'Port 8127 is occupied. Close the older preview process before starting this version.'
+    }
+    Stop-Process -Id $previousHost.ProcessId -ErrorAction Stop
+}
 $dotnet=Get-Command dotnet -ErrorAction SilentlyContinue
 if (-not $dotnet) { throw '.NET SDK 10 is required for the local preview. The Unity project can be opened separately.' }
 $output=Join-Path $projectRoot 'PreviewHost\bin\live'
