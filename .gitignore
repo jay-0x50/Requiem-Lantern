@@ -29,6 +29,7 @@ QA/**/*.xml
 QA/**/*.xml.bak
 QA/**/*.log
 QA/**/preview-before.json
+QA/**/audio-resource-inventory.json
 .vs/
 .idea/
 .env

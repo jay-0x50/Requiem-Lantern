@@ -149,7 +149,7 @@ namespace RequiemLantern.Presentation
             Label(screen,"Settings heading","편안한 속도로, 빛을 잇도록.",133,195,1700,110,57);
             SettingsRow("점화 타이밍 보조","자동으로 ‘양호’ 판정. 끄면 Space / 클릭으로 점화합니다.",390,assisted,()=>{assisted=!assisted;SaveSettings();ShowSettings();});
             SettingsRow("움직임 줄이기","캐릭터 이동, 화면 흔들림과 빛 파편을 간소화합니다.",550,reducedMotion,()=>{reducedMotion=!reducedMotion;SaveSettings();ShowSettings();});
-            SettingsRow("효과음","연결, 점화, 장면 전환의 유리종 음색을 재생합니다.",710,sound,()=>{sound=!sound;SaveSettings();ShowSettings();});
+            SettingsRow("효과음","무기 충돌, 타격, 불씨와 장비 효과음을 재생합니다.",710,sound,()=>{sound=!sound;SaveSettings();ShowSettings();});
             Footer("설정과 진행 상황은 이 기기에 저장됩니다");
         }
         void SettingsRow(string title,string help,int y,bool on,Action change)

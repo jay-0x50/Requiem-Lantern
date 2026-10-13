@@ -31,7 +31,7 @@ namespace RequiemLantern.Presentation
         public RawImage Attacker, Defender;
         public Vector2 ActorFoot, ContactPoint;
         public bool AtlasActive, FrameLayoutActive, Clash;
-        public int Pose, SkillNumber;
+        public int Pose, SkillNumber, ContactSoundCount;
         public string SkillId;
     }
 

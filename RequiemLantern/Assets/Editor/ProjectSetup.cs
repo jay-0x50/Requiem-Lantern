@@ -50,7 +50,7 @@ namespace RequiemLantern.Editor
         [MenuItem("Requiem Lantern/Build Windows Preview")]
         public static void BuildWindows()
         {
-            Prepare();ValidateStoryArt();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
+            Prepare();ValidateStoryArt();ValidateCombatAudio();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName=Path.Combine(folder,"RequiemLantern.exe"),
                 target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
@@ -72,6 +72,14 @@ namespace RequiemLantern.Editor
                     Debug.Log("STORY_ART_IMPORT: "+id+"; file="+File.Exists(path)+"; asset="+(main?main.GetType().Name:"missing")+"; resource="+(texture?texture.name:"missing"));
                 }
                 if(!texture)throw new System.Exception("Story art cannot be loaded: Art/"+id);
+            }
+        }
+        static void ValidateCombatAudio()
+        {
+            foreach(string family in RequiemLantern.Presentation.CombatAudioBank.Families)for(int i=1;i<=3;i++){
+                string path="Audio/Combat/"+family+"_"+i.ToString("00");
+                var clip=Resources.Load<AudioClip>(path);
+                if(!clip||clip.samples<1||clip.channels!=2)throw new System.Exception("Combat audio cannot be loaded: "+path);
             }
         }
     }

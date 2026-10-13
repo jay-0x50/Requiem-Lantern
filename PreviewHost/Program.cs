@@ -163,6 +163,8 @@ namespace RequiemLantern.Preview
             { await ServeFile(context, System.IO.Path.Combine(root, "RequiemLantern", "Assets", "Resources", "Art"), path.Substring(5), new[] { ".png", ".jpg", ".jpeg", ".webp" }, false); return; }
             if (path.StartsWith("/combat/", StringComparison.Ordinal))
             { await ServeFile(context, System.IO.Path.Combine(root, "RequiemLantern", "Assets", "Resources", "Combat"), path.Substring(8), new[] { ".png", ".json" }, false); return; }
+            if (path.StartsWith("/audio/combat/", StringComparison.Ordinal))
+            { await ServeFile(context, System.IO.Path.Combine(root, "RequiemLantern", "Assets", "Resources", "Audio", "Combat"), path.Substring(14), new[] { ".wav" }, false); return; }
             if (path.StartsWith("/fonts/", StringComparison.Ordinal))
             { await ServeFile(context, System.IO.Path.Combine(root, "RequiemLantern", "Assets", "Resources", "Fonts"), path.Substring(7), new[] { ".ttf", ".otf", ".woff", ".woff2" }, false); return; }
             await ServeFile(context, System.IO.Path.Combine(root, "Preview"), path == "/" ? "index.html" : path.TrimStart('/'), new[] { ".html", ".css", ".js", ".json", ".svg", ".png", ".webp", ".ico" }, true);
@@ -173,7 +175,7 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "character-chapters-v3",
+                application = "RequiemLantern", runtimeRevision = "physical-combat-audio-v4",
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 campaign = new {
@@ -214,6 +216,7 @@ namespace RequiemLantern.Preview
                 case ".js": return "text/javascript; charset=utf-8"; case ".json": return "application/json; charset=utf-8";
                 case ".png": return "image/png"; case ".jpg": case ".jpeg": return "image/jpeg"; case ".webp": return "image/webp";
                 case ".svg": return "image/svg+xml"; case ".ico": return "image/x-icon"; case ".ttf": return "font/ttf";
+                case ".wav": return "audio/wav";
                 case ".otf": return "font/otf"; case ".woff": return "font/woff"; case ".woff2": return "font/woff2"; default: return "application/octet-stream";
             }
         }

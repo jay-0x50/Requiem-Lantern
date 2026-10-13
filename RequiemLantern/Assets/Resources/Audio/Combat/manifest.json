@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "sampleRate": 48000,
+  "channels": 2,
+  "bitsPerSample": 16,
+  "masterSeed": 20261013,
+  "source": "Original deterministic NumPy synthesis; no recordings or external samples.",
+  "assets": [
+    {
+      "id": "clash_01",
+      "family": "clash",
+      "seed": 20268932,
+      "resourcePath": "Audio/Combat/clash_01",
+      "description": "Dry steel contact: impact noise and many short, inharmonic resonances.",
+      "duration": 0.411,
+      "peak": 0.800012,
+      "rms": 0.064864,
+      "dcOffset": 5.7e-08,
+      "sha256": "f9a68a3dcd389190d5c720d16472044e3de0fbab1d76877c80fd99417e943da5"
+    },
+    {
+      "id": "clash_02",
+      "family": "clash",
+      "seed": 20276851,
+      "resourcePath": "Audio/Combat/clash_02",
+      "description": "Dry steel contact: impact noise and many short, inharmonic resonances.",
+      "duration": 0.42,
+      "peak": 0.800012,
+      "rms": 0.043547,
+      "dcOffset": 1e-07,
+      "sha256": "52ec2a6b4877249ea8ba1ccf6145b77bc88af840c07dea319e476e87893bc5ae"
+    },
+    {
+      "id": "clash_03",
+      "family": "clash",
+      "seed": 20284770,
+      "resourcePath": "Audio/Combat/clash_03",
+      "description": "Dry steel contact: impact noise and many short, inharmonic resonances.",
+      "duration": 0.429,
+      "peak": 0.800012,
+      "rms": 0.046158,
+      "dcOffset": 5.3e-08,
+      "sha256": "59e4a914b8505b8c8cf216b413bf318b75422a14a61edae98fa4d5bb10f5d9df"
+    },
+    {
+      "id": "hit_cut_01",
+      "family": "hit_cut",
+      "seed": 20269941,
+      "resourcePath": "Audio/Combat/hit_cut_01",
+      "description": "A crisp cutting contact: rough cloth snap, leather slap and a short body hit.",
+      "duration": 0.211,
+      "peak": 0.800012,
+      "rms": 0.138229,
+      "dcOffset": 6.9e-08,
+      "sha256": "3a59424a76611fffb7be12427ec09ba1f23561c5d6d7cbedc08933757df308ac"
+    },
+    {
+      "id": "hit_cut_02",
+      "family": "hit_cut",
+      "seed": 20277860,
+      "resourcePath": "Audio/Combat/hit_cut_02",
+      "description": "A crisp cutting contact: rough cloth snap, leather slap and a short body hit.",
+      "duration": 0.22,
+      "peak": 0.800012,
+      "rms": 0.130334,
+      "dcOffset": 6e-09,
+      "sha256": "ab07c67bac0e81df21b1499f1a9993c2a05cccc1d65147d51c1d948f3433b969"
+    },
+    {
+      "id": "hit_cut_03",
+      "family": "hit_cut",
+      "seed": 20285779,
+      "resourcePath": "Audio/Combat/hit_cut_03",
+      "description": "A crisp cutting contact: rough cloth snap, leather slap and a short body hit.",
+      "duration": 0.229,
+      "peak": 0.800012,
+      "rms": 0.140411,
+      "dcOffset": 2e-07,
+      "sha256": "e46d0148e406ad9b61b7fbace55fb3b7416ab3d165fa26639b1696ea1293de2d"
+    },
+    {
+      "id": "hit_blunt_01",
+      "family": "hit_blunt",
+      "seed": 20270950,
+      "resourcePath": "Audio/Combat/hit_blunt_01",
+      "description": "A close punch: broad mid-low body, skin/leather snap and no ringing tail.",
+      "duration": 0.251,
+      "peak": 0.800012,
+      "rms": 0.149846,
+      "dcOffset": 4.3e-08,
+      "sha256": "39a47685a9b571940fee95aae7b9e91b34f93a904b047916463accc258ec0352"
+    },
+    {
+      "id": "hit_blunt_02",
+      "family": "hit_blunt",
+      "seed": 20278869,
+      "resourcePath": "Audio/Combat/hit_blunt_02",
+      "description": "A close punch: broad mid-low body, skin/leather snap and no ringing tail.",
+      "duration": 0.26,
+      "peak": 0.800012,
+      "rms": 0.14637,
+      "dcOffset": 2e-08,
+      "sha256": "aa585a0dedcf8df2b8bf1014db0338d2a449642935998a11223e647b08e0d847"
+    },
+    {
+      "id": "hit_blunt_03",
+      "family": "hit_blunt",
+      "seed": 20286788,
+      "resourcePath": "Audio/Combat/hit_blunt_03",
+      "description": "A close punch: broad mid-low body, skin/leather snap and no ringing tail.",
+      "duration": 0.269,
+      "peak": 0.800012,
+      "rms": 0.134532,
+      "dcOffset": 7.8e-08,
+      "sha256": "7a1092bf7bafe9b498928eb856bcba8d86297a26d987c8860d5cdc8617d02d56"
+    },
+    {
+      "id": "hit_heavy_01",
+      "family": "hit_heavy",
+      "seed": 20271959,
+      "resourcePath": "Audio/Combat/hit_heavy_01",
+      "description": "A heavy shield/hammer contact: low body, rough crack and a short roomless thud.",
+      "duration": 0.381,
+      "peak": 0.800012,
+      "rms": 0.17362,
+      "dcOffset": 4.2e-08,
+      "sha256": "5cfdeb8c1c3b7abbdc9205395844972ac9ca63b5b1be5fdb3e2edf2ac3d25124"
+    },
+    {
+      "id": "hit_heavy_02",
+      "family": "hit_heavy",
+      "seed": 20279878,
+      "resourcePath": "Audio/Combat/hit_heavy_02",
+      "description": "A heavy shield/hammer contact: low body, rough crack and a short roomless thud.",
+      "duration": 0.39,
+      "peak": 0.800012,
+      "rms": 0.166664,
+      "dcOffset": 3.3e-08,
+      "sha256": "ea9e195d30850d044fda2a0525c7915959d47788822c651315cbc54a178c199b"
+    },
+    {
+      "id": "hit_heavy_03",
+      "family": "hit_heavy",
+      "seed": 20287797,
+      "resourcePath": "Audio/Combat/hit_heavy_03",
+      "description": "A heavy shield/hammer contact: low body, rough crack and a short roomless thud.",
+      "duration": 0.399,
+      "peak": 0.800012,
+      "rms": 0.161277,
+      "dcOffset": 3e-09,
+      "sha256": "bb46c9d6639a2b4848694ee48a0d768e43b9007e2881f94e1629be9c4dbd2c4a"
+    },
+    {
+      "id": "swing_01",
+      "family": "swing",
+      "seed": 20272968,
+      "resourcePath": "Audio/Combat/swing_01",
+      "description": "An unpitched weapon rush: filtered air, fast rise, no tonal glide.",
+      "duration": 0.201,
+      "peak": 0.800012,
+      "rms": 0.127549,
+      "dcOffset": 1.9e-08,
+      "sha256": "77043d7a563c80c76df643f03e4949fedeb0a15ca065bbf0d24cdb3e88a39896"
+    },
+    {
+      "id": "swing_02",
+      "family": "swing",
+      "seed": 20280887,
+      "resourcePath": "Audio/Combat/swing_02",
+      "description": "An unpitched weapon rush: filtered air, fast rise, no tonal glide.",
+      "duration": 0.21,
+      "peak": 0.800012,
+      "rms": 0.131556,
+      "dcOffset": 4.5e-08,
+      "sha256": "a5ff384d1bd101f64a42f3e2d613aac318aec3f84c55db9008fa3bc6b30bde52"
+    },
+    {
+      "id": "swing_03",
+      "family": "swing",
+      "seed": 20288806,
+      "resourcePath": "Audio/Combat/swing_03",
+      "description": "An unpitched weapon rush: filtered air, fast rise, no tonal glide.",
+      "duration": 0.219,
+      "peak": 0.800012,
+      "rms": 0.148985,
+      "dcOffset": 1.34e-07,
+      "sha256": "09bceec446574214ebca737ac34693e99a46a1af7b30b7fc96ca3af9106af9f2"
+    },
+    {
+      "id": "brace_01",
+      "family": "brace",
+      "seed": 20273977,
+      "resourcePath": "Audio/Combat/brace_01",
+      "description": "A shield brace: grip friction, wooden/metal knock and a small buckle rattle.",
+      "duration": 0.261,
+      "peak": 0.800012,
+      "rms": 0.091063,
+      "dcOffset": 1.5e-08,
+      "sha256": "35586314d1d98c1abd2133528665a2b1d4ca1150da89eefc94f872bfe7188f77"
+    },
+    {
+      "id": "brace_02",
+      "family": "brace",
+      "seed": 20281896,
+      "resourcePath": "Audio/Combat/brace_02",
+      "description": "A shield brace: grip friction, wooden/metal knock and a small buckle rattle.",
+      "duration": 0.27,
+      "peak": 0.800012,
+      "rms": 0.073609,
+      "dcOffset": 1.7e-07,
+      "sha256": "2d71a6de563d52e5c08bcdea5d3b916deae9347f47bdbe257f31ffd6bba619b3"
+    },
+    {
+      "id": "brace_03",
+      "family": "brace",
+      "seed": 20289815,
+      "resourcePath": "Audio/Combat/brace_03",
+      "description": "A shield brace: grip friction, wooden/metal knock and a small buckle rattle.",
+      "duration": 0.279,
+      "peak": 0.800012,
+      "rms": 0.079164,
+      "dcOffset": 3.4e-08,
+      "sha256": "afda01ab564cb3aa2e36daec6cb296366c9984be4bbccadb75f18f0c6ddeb053"
+    },
+    {
+      "id": "ignite_01",
+      "family": "ignite",
+      "seed": 20274986,
+      "resourcePath": "Audio/Combat/ignite_01",
+      "description": "A tiny dry flint/coal click followed by two low-volume crackles.",
+      "duration": 0.121,
+      "peak": 0.629994,
+      "rms": 0.037318,
+      "dcOffset": 2.233e-06,
+      "sha256": "3a0a8ac60682141539314a1cec7f6087d0ecc81d11e4b255e977e08d58c25e09"
+    },
+    {
+      "id": "ignite_02",
+      "family": "ignite",
+      "seed": 20282905,
+      "resourcePath": "Audio/Combat/ignite_02",
+      "description": "A tiny dry flint/coal click followed by two low-volume crackles.",
+      "duration": 0.13,
+      "peak": 0.629994,
+      "rms": 0.038925,
+      "dcOffset": 1.511e-06,
+      "sha256": "ec828083722198d1aa37d3d52ea5c0902bc107009afca6c4d1e7e91109aad4a5"
+    },
+    {
+      "id": "ignite_03",
+      "family": "ignite",
+      "seed": 20290824,
+      "resourcePath": "Audio/Combat/ignite_03",
+      "description": "A tiny dry flint/coal click followed by two low-volume crackles.",
+      "duration": 0.139,
+      "peak": 0.629994,
+      "rms": 0.0387,
+      "dcOffset": 2.79e-06,
+      "sha256": "289cabcb380016c8655b73dbd812a706babf11c600ca68a7f5943ce38e014cbf"
+    },
+    {
+      "id": "break_01",
+      "family": "break",
+      "seed": 20275995,
+      "resourcePath": "Audio/Combat/break_01",
+      "description": "A fracture: short crack, low body and irregular falling fragments.",
+      "duration": 0.591,
+      "peak": 0.800012,
+      "rms": 0.093303,
+      "dcOffset": 9.5e-08,
+      "sha256": "8468e7ce4047a8f03a7e3e668c09c924499581b57c68aa3933f3fc0758b5b0a1"
+    },
+    {
+      "id": "break_02",
+      "family": "break",
+      "seed": 20283914,
+      "resourcePath": "Audio/Combat/break_02",
+      "description": "A fracture: short crack, low body and irregular falling fragments.",
+      "duration": 0.6,
+      "peak": 0.800012,
+      "rms": 0.092975,
+      "dcOffset": 5.8e-08,
+      "sha256": "ba27fdd5b006219290ace7ba583f5f3dd50e7d3d8b67c372e3e9de70d1e24b10"
+    },
+    {
+      "id": "break_03",
+      "family": "break",
+      "seed": 20291833,
+      "resourcePath": "Audio/Combat/break_03",
+      "description": "A fracture: short crack, low body and irregular falling fragments.",
+      "duration": 0.609,
+      "peak": 0.800012,
+      "rms": 0.077157,
+      "dcOffset": 3.1e-08,
+      "sha256": "8a79dd6c423eb93c68d7456cc1361a1666707fa2040f85c25f61cd0eca58fd05"
+    }
+  ],
+  "audition": {
+    "path": "Art/Audio/combat-audition.wav",
+    "duration": 6.798,
+    "timeline": [
+      {
+        "id": "swing_01",
+        "start": 0.275,
+        "duration": 0.201
+      },
+      {
+        "id": "clash_01",
+        "start": 0.751,
+        "duration": 0.411
+      },
+      {
+        "id": "clash_02",
+        "start": 1.437,
+        "duration": 0.42
+      },
+      {
+        "id": "hit_cut_01",
+        "start": 2.132,
+        "duration": 0.211
+      },
+      {
+        "id": "hit_blunt_01",
+        "start": 2.618,
+        "duration": 0.251
+      },
+      {
+        "id": "hit_blunt_02",
+        "start": 3.144,
+        "duration": 0.26
+      },
+      {
+        "id": "hit_heavy_01",
+        "start": 3.679,
+        "duration": 0.381
+      },
+      {
+        "id": "hit_heavy_02",
+        "start": 4.335,
+        "duration": 0.39
+      },
+      {
+        "id": "brace_01",
+        "start": 5.0,
+        "duration": 0.261
+      },
+      {
+        "id": "ignite_01",
+        "start": 5.536,
+        "duration": 0.121
+      },
+      {
+        "id": "break_01",
+        "start": 5.932,
+        "duration": 0.591
+      }
+    ]
+  }
+}

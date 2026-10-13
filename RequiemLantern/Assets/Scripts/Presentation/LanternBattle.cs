@@ -160,7 +160,7 @@ namespace RequiemLantern.Presentation
         {
             if(page!="battle"||overlay||resolving)return;
             var skill=battle.Skill(selectedActor,selectedSkill);LinkKind kind=skill.Kind==SkillKind.Heal?LinkKind.Support:(skill.Kind==SkillKind.Guard||skill.Kind==SkillKind.Evade||skill.Kind==SkillKind.Counter)?LinkKind.Guard:battle.Intent(id)!=null?LinkKind.Clash:LinkKind.Strike;
-            if(battle.TryLink(selectedActor,selectedSlot,selectedSkill,kind,id,out string error,selectedCard)){Tone("link",880,.2f,.13f);DrawBattle();if(anchors.TryGetValue(id,out var end))StartCoroutine(ConnectionPulse(slotAnchors[selectedActor+":"+selectedSlot],end,kind==LinkKind.Support?Teal:Gold,screenVersion));}else Notify(error);
+            if(battle.TryLink(selectedActor,selectedSlot,selectedSkill,kind,id,out string error,selectedCard)){DrawBattle();PlayCombatSound("brace",false,.45f);if(anchors.TryGetValue(id,out var end))StartCoroutine(ConnectionPulse(slotAnchors[selectedActor+":"+selectedSlot],end,kind==LinkKind.Support?Teal:Gold,screenVersion));}else Notify(error);
         }
         Vector2 Pointer(PointerEventData e){RectTransformUtility.ScreenPointToLocalPointInRectangle(screen,e.position,null,out var p);return new Vector2(p.x,-p.y);}
         Vector2 ToMesh(Vector2 p){return new Vector2(p.x,-p.y);}
@@ -215,7 +215,7 @@ namespace RequiemLantern.Presentation
                 }
                 var grade=ignitionTapped?BattleRules.GradeTiming((ignitionTimestamp-began-1.1f)*1000,battle.State.Gloom,false,battle.State.LanternQueued):IgniteGrade.Miss;
                 grades[link.ActorId+":"+link.Slot]=grade;Label(overlay,"Timing result",grade==IgniteGrade.Perfect?"점 화":grade==IgniteGrade.Good?"양 호":"빗나감",620,496,680,80,58,Gold,TextAnchor.MiddleCenter);
-                Tone("ignite"+grade,grade==IgniteGrade.Perfect?1046:523,.38f,.25f);yield return new WaitForSecondsRealtime(.48f);if(version!=screenVersion)yield break;if(overlay)Destroy(overlay.gameObject);overlay=null;
+                PlayCombatSound("ignite",false,.6f);yield return new WaitForSecondsRealtime(.48f);if(version!=screenVersion)yield break;if(overlay)Destroy(overlay.gameObject);overlay=null;
             }
             if(version!=screenVersion)yield break;
             var events=battle.ResolveRound(link=>grades.TryGetValue(link.ActorId+":"+link.Slot,out var grade)?grade:IgniteGrade.Good).ToList();

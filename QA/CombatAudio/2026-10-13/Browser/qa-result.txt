@@ -1,0 +1,23 @@
+Physical combat audio browser QA — 2026-10-13
+Host: http://127.0.0.1:8128/; revision physical-combat-audio-v4
+Save: QA/CombatAudio/2026-10-13/Browser/progress.xml
+Actual UI only; no game actions or save changes on live 8127.
+
+PASS — First real title click starts preload. The supported pageAssets resource inventory observed all 24 /audio/combat/{family}_01..03.wav fetch requests; no resource/console errors or warnings.
+PASS — Story-only 1-1 finishes and 1-2 mixed-stage before-story gate opens the actual solo Lian battle.
+PASS — AI suggestion links real S1 clash plus S2 arm attack. First round plays through flame suspense, repeated physical weapon exchanges, attack and recovery.
+PASS — Contact locator was reached; the immediate following recoil still showed enemy HP 65/65, so the initial weapon clash did not reduce HP. The saved physical-fighter image shows the following second flame contest.
+PASS — Playback ends in round 2 with enemy HP44/65, arm4/26, Lian150/150, sanity+2/-2 and no browser errors. Interactions re-enable after playback.
+PASS — Retreat leaves the battle session and returns to the keep with coins0/fragments0. User progress was untouched.
+PASS — Automated isolated Web Audio regression8 cases: decode/cache, variants/families, missing/pending quiet fallback, mute/cancel, no tonal combat fallback, 8-voice cap, gain balancing/onended, quiet level clamp. Automated browser presentation37 + preview40 cases also pass (85 total).
+PASS — JS syntax and owned-file whitespace checks.
+
+Evidence:
+audio-resource-inventory.json — actual observed 24 sample requests
+01-battle-ready.png — initial battle
+02-first-contact.png / 03-first-contact.png — physical exchange captures; best image03
+04-round-complete.png — enemy HP and card refill after authoritative playback
+
+Limitation: no hardware audio listening or hidden audio-state inspection was performed. Subjective sound quality is reviewable in Art/Audio/combat-audition.wav. Decode/cache/voice timing is tested with isolated Web Audio stubs; actual browser resource loading and combat behavior were checked through supported UI/resource APIs.
+
+QA tab1516714914 remains isolated until root restarts live8127 and requests final navigation.

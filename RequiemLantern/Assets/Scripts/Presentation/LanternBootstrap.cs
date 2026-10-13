@@ -78,7 +78,14 @@ namespace RequiemLantern.Presentation
             File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"RUNNING: Unity screen and battlefield effects smoke tour.\n");
             save=new SaveStore(Path.Combine(directory,"smoke-progress.xml"));progress=new ProgressService(new ProgressData());
             // Deterministic visual capture; the user's PlayerPrefs are never written.
-            assisted=true;autoMode=false;reducedMotion=false;
+            assisted=true;autoMode=false;reducedMotion=false;sound=true;
+            if(combatAudio==null||combatAudio.MissingCount!=0)throw new Exception("Combat PCM assets are missing.");
+            int beforeMuted=combatAudio.PlayedCount;
+            if(combatAudio.Play("clash",false,true)||combatAudio.PlayedCount!=beforeMuted||combatAudio.ActiveCount!=0)
+                throw new Exception("Muted combat audio created an active voice.");
+            if(!combatAudio.Play("clash",true))throw new Exception("Combat PCM did not preload for playback.");
+            combatAudio.Update(false);
+            if(combatAudio.ActiveCount!=0)throw new Exception("Muting did not stop active combat audio.");
             yield return Capture(directory,"01-title");
             EnterCampaignStage(CampaignCatalog.Chapters[0].Stages[0].Id);revealed=999;
             yield return Capture(directory,"02-story");FinishCurrentStory();
@@ -212,6 +219,7 @@ namespace RequiemLantern.Presentation
                 var marker=damage?damage.GetComponent<CombatPhaseMarker>():null;
                 var contact=damage?damage.Find("Weapon contact"):null;
                 if(!capturedWindup&&marker&&marker.Phase=="windup"){
+                    if(marker.ContactSoundCount!=0)throw new Exception("A contact sound played before weapon contact.");
                     if(!marker.AtlasActive||!marker.Attacker||marker.Attacker.uvRect.width>=.5f)throw new Exception("Melee is missing its attack pose atlas.");
                     if(damage.GetComponentsInChildren<ThreadGraphic>().Length!=0)throw new Exception("Melee still contains a travelling light beam.");
                     testedMelee=marker;windupUv=marker.Attacker.uvRect;windupHealth=visibleHealth.Values.Sum();
@@ -223,6 +231,7 @@ namespace RequiemLantern.Presentation
                 if(clashFeedback&&clashFeedback.GetComponent<Text>().color.a>.35f&&clashFx.Find("Weapon contact"))sawClash=true;
                 if(initialHealth.Any(pair=>visibleHealth.TryGetValue(pair.Key,out var hp)&&hp<pair.Value))sawHealthChange=true;
                 if(!capturedImpact&&marker&&marker==testedMelee&&number&&number.color.a>.35f&&contact){
+                    if(marker.ContactSoundCount!=1)throw new Exception("Weapon contact must play exactly one contact sound.");
                     if(marker.Attacker.uvRect==windupUv)throw new Exception("Attack never changed from its windup pose at contact.");
                     if(visibleHealth.Values.Sum()>=windupHealth)throw new Exception("Damage was not applied at visible weapon contact.");
                     yield return new WaitForEndOfFrame();
@@ -233,6 +242,7 @@ namespace RequiemLantern.Presentation
                     }
                 }
                 if(capturedImpact&&!capturedRecoil&&marker&&marker==testedMelee&&marker.Phase=="recoil"){
+                    if(marker.ContactSoundCount!=1)throw new Exception("Contact audio replayed during recoil.");
                     yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"06c-recoil");capturedRecoil=true;
                 }
                 yield return null;

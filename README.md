@@ -48,6 +48,14 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 
 작전실에는 완료한 구간과 다음 스테이지까지만 표시합니다. 1-3 완료 후에는 1-1~1-4가 보입니다. 점화 결과를 하나씩 공개하고 접전에서는 짧게 뜸을 들이며, 리안의 묵직한 타격·세라의 되돌아 베기 등 스킬 동작을 보강했습니다.
 
+## 전투 효과음
+
+맞불의 금속 충돌 ‘챙’, 베기 접촉, 일반 타격 ‘퍽’, 강한 방패·괴물 타격 ‘쿵’을 나눴습니다. 바람·장비 고정·불씨·파괴를 포함한 8종에 각 3변형, 총 24개의 원본 PCM WAV를 Unity와 브라우저가 함께 사용합니다. 전투의 주파수 변화음과 단음은 교체했습니다.
+
+접촉음은 무기가 닿는 순간 한 번 재생하며, 같은 소리를 반복하지 않도록 변형을 순환합니다. 음소거와 화면 취소는 남은 전투음을 멈춥니다. 미리 읽지 못한 소리는 늦게 재생하지 않고 해당 순간을 건너뜁니다. 동시에 겹치는 소리의 수와 합산 볼륨도 제한합니다.
+
+[소리 설명과 재생성 방법](Art/Audio/README.md) · [약 7초 미리듣기](Art/Audio/combat-audition.wav). 모든 소리는 직접 작성한 코드로 생성한 원본이며 외부 녹음과 음원 팩을 사용하지 않았습니다.
+
 ## 근접 전투 애니메이션
 
 - 리안·세라·미나토·분노의 6개 전투 자세를 연결합니다. 대기 → 준비 → 휘두르기 → 타격 후 동작 → 복귀, 피격 자세를 별도로 사용합니다.
@@ -136,6 +144,8 @@ dotnet run --project Tests/CoreTests.csproj
 dotnet run --project Tests/CampaignTests.csproj
 node Tests/preview-regression.cjs
 node Tests/combat-fx-regression.cjs
+node Tests/combat-audio-regression.cjs
+python Tools/generate-combat-audio.py --check
 .\Tools\check-unity-source.ps1
 ```
 

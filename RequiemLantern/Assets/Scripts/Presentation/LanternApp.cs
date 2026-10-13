@@ -15,6 +15,7 @@ namespace RequiemLantern.Presentation
         internal static readonly Color Ink=Hex("0D1117"), PanelColor=Hex("151C27"), Gold=Hex("F2A541"), Ivory=Hex("E7DCC9"), Muted=Hex("9CA7B5"), Violet=Hex("B09BD8"), Teal=Hex("75C8C4");
         RectTransform stage,screen,overlay;
         Font font; AudioSource audioSource; Dictionary<string,AudioClip> tones=new Dictionary<string,AudioClip>();
+        CombatAudioBank combatAudio;
         Dictionary<string,Texture2D> art=new Dictionary<string,Texture2D>();
         BattleEngine battle; ProgressService progress; SaveStore save;
         string page="",toastText="",settingsReturn="title"; float toastUntil; Text toast;
@@ -44,12 +45,14 @@ namespace RequiemLantern.Presentation
             stage.anchorMin=stage.anchorMax=stage.pivot=new Vector2(.5f,.5f);stage.anchoredPosition=Vector2.zero;
             if(!FindAnyObjectByType<EventSystem>())new GameObject("Event System",typeof(EventSystem),typeof(StandaloneInputModule));
             audioSource=gameObject.AddComponent<AudioSource>(); audioSource.playOnAwake=false;
+            combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
             if(Environment.GetCommandLineArgs().Contains("--smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
+            combatAudio?.Update(sound);
             if(dialogue&&page=="story"&&!overlay)
             {
                 revealed+=Time.unscaledDeltaTime*36;
@@ -106,6 +109,7 @@ namespace RequiemLantern.Presentation
         }
         void Clear(string name)
         {
+            combatAudio?.Stop();
             screenVersion++;
             resolving=false;activeClashActor=null;CancelDragVisuals();
             if(screen){screen.gameObject.SetActive(false);Destroy(screen.gameObject);}if(overlay){overlay.gameObject.SetActive(false);Destroy(overlay.gameObject);}overlay=null;
@@ -139,6 +143,6 @@ namespace RequiemLantern.Presentation
                 clip=AudioClip.Create(key,n,1,44100,false);clip.SetData(a,0);tones[key]=clip;
             }audioSource.PlayOneShot(clip,volume);
         }
-        void OnDestroy(){foreach(var c in tones.Values)Destroy(c);}
+        void OnDestroy(){combatAudio?.Dispose();foreach(var c in tones.Values)Destroy(c);}
     }
 }

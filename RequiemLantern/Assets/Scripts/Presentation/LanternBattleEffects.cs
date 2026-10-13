@@ -189,9 +189,12 @@ namespace RequiemLantern.Presentation
                     int reveal=Mathf.Min(side.States.Length,Mathf.FloorToInt(progress*side.States.Length));
                     UpdateRollSide(side,reveal,t,tense);
                 }
-                marker.Revealed=sides.Sum(s=>s.Revealed);yield return null;
+                int revealed=sides.Sum(s=>s.Revealed);
+                if(revealed>marker.Revealed)PlayCombatSound("ignite",false,.5f);
+                marker.Revealed=revealed;yield return null;
             }
             foreach(var side in sides)UpdateRollSide(side,side.States.Length,duration,false);
+            if(marker.Revealed<marker.Total)PlayCombatSound("ignite",false,.5f);
             marker.Revealed=marker.Total;
             // Keep the resolved roll visible for the following weapon contact.
             yield return null;
@@ -218,7 +221,6 @@ namespace RequiemLantern.Presentation
         }
         void UpdateRollSide(FlameRollSide side,int revealed,float elapsed,bool tense)
         {
-            if(revealed>side.Revealed)Tone(side.Dark?"dark_reveal":"flame_reveal",side.Dark?420:840,.06f,.08f);
             side.Revealed=revealed;int litCount=0;
             for(int i=0;i<side.States.Length;i++){
                 bool known=i<revealed,lit=known&&side.States[i];if(lit)litCount++;
@@ -313,7 +315,7 @@ namespace RequiemLantern.Presentation
                 Action impact=()=>{
                     if(applied||version!=screenVersion)return;applied=true;
                     if(damage&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);
-                    PlayCombatSound(clash?"clang":"impact");
+                    if(PlayCombatSound(clash?"clash":HitSoundFamily(actor,e.SkillNumber,e.Amount),true))marker.ContactSoundCount++;
                 };
                 bool returnSwung=false;
                 for(float elapsed=0;elapsed<duration;elapsed+=Time.unscaledDeltaTime){
@@ -326,6 +328,7 @@ namespace RequiemLantern.Presentation
                     else if(elapsed<recoilAt){phase="follow-through";attackPose=CombatPosePlayer.FollowThrough;defendPose=damage?CombatPosePlayer.Hit:CombatPosePlayer.FollowThrough;}
                     else if(elapsed<recoverAt){phase="recoil";attackPose=CombatPosePlayer.Recovery;defendPose=damage?CombatPosePlayer.Hit:CombatPosePlayer.Recovery;}
                     else {phase="recovery";attackPose=CombatPosePlayer.Recovery;defendPose=CombatPosePlayer.Recovery;}
+                    marker.Phase=phase;marker.Pose=attackPose;
                     if(elapsed>=approach+windup&&!swung){swung=true;PlayCombatSound("swing");}
                     if(elapsed>=contactAt)impact();
                     bool fatal=damage&&applied&&visibleHealth.TryGetValue(e.TargetId,out var remaining)&&remaining<=0;
@@ -406,7 +409,7 @@ namespace RequiemLantern.Presentation
             Color initialColor=targetImage?targetImage.color:Color.white;
             float duration=autoMode?.30f:.46f;
             bool applied=false;
-            Action impact=()=>{if(applied||version!=screenVersion)return;applied=true;if((damage||heal)&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]+(heal?e.Amount:-e.Amount));};
+            Action impact=()=>{if(applied||version!=screenVersion)return;applied=true;if((damage||heal)&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]+(heal?e.Amount:-e.Amount));if(damage)PlayCombatSound(HitSoundFamily(actor,e.SkillNumber,e.Amount),true);};
             if(e.Type=="Ignite"){
                 number=Label(fx,"Ignition",e.Amount>100?"점 화":e.Amount<100?"빗나감":"양 호",point.x-140,point.y-170,280,65,29,e.Amount>100?Gold:Muted,TextAnchor.MiddleCenter);
                 ring=Ring(fx,"Ignite halo",point.x-48,point.y-48,96,color,2);duration=autoMode?.12f:.20f;
@@ -428,7 +431,9 @@ namespace RequiemLantern.Presentation
             else if(e.Type=="DefeatUnit")number=Label(fx,"Fallen",target!=null&&target.IsEnemy?(target.IsHuman?"제 압":"어둠 소멸"):"전투불능",point.x-190,point.y-132,380,70,31,Muted,TextAnchor.MiddleCenter);
             else if(damage)number=Label(fx,"Battle feedback","−"+e.Amount,point.x-170,point.y-134,340,90,52,color,TextAnchor.MiddleCenter);
             else{if(e.Type=="Cancel")FadeIntent(e.TargetId);duration=autoMode?.07f:.14f;}
-            if(shatter)PlayCombatSound("impact");else if(heal||guard||resonance)Tone("fx_"+e.Type,heal?880:740,.18f,.1f);
+            if(shatter)PlayCombatSound("break");
+            else if(guard)PlayCombatSound(e.Type=="Evade"?"swing":"brace",false,.6f);
+            else if(heal||resonance)PlayCombatSound("ignite",false,.45f);
             status.transform.SetAsLastSibling();
             try {
                 for(float elapsed=0;elapsed<duration;elapsed+=Time.unscaledDeltaTime){
@@ -446,34 +451,14 @@ namespace RequiemLantern.Presentation
             finally {if(fx){fx.gameObject.SetActive(false);Destroy(fx.gameObject);}}
         }
 
-        void PlayCombatSound(string kind)
+        string HitSoundFamily(UnitState actor,int skillNumber,int amount)
         {
-            if(!sound||!audioSource)return;
-            string key="combat_"+kind;
-            if(!tones.TryGetValue(key,out var clip)){
-                const int rate=44100;float duration=kind=="clang"?.33f:kind=="swing"?.16f:.24f;
-                int count=(int)(rate*duration);var samples=new float[count];uint noiseState=0x63A9C517;
-                float previousNoise=0;
-                for(int i=0;i<count;i++){
-                    float t=i/(float)rate;noiseState=unchecked(noiseState*1664525+1013904223);
-                    float noise=((noiseState>>8)&65535)/32767.5f-1;
-                    float highNoise=noise-previousNoise;previousNoise=noise;
-                    float value;
-                    if(kind=="swing")value=highNoise*.34f*Mathf.Sin(Mathf.PI*i/count)*Mathf.Exp(-4*t/duration);
-                    else{
-                        float metal=kind=="clang"?1260:740;
-                        value=(Mathf.Sin(2*Mathf.PI*metal*t)*.30f*Mathf.Exp(-18*t)
-                            +Mathf.Sin(2*Mathf.PI*metal*2.13f*t)*.21f*Mathf.Exp(-25*t)
-                            +Mathf.Sin(2*Mathf.PI*metal*3.76f*t)*.12f*Mathf.Exp(-34*t)
-                            +Mathf.Sin(2*Mathf.PI*metal*5.17f*t)*.08f*Mathf.Exp(-44*t)
-                            +highNoise*.30f*Mathf.Exp(-105*t)
-                            +Mathf.Sin(2*Mathf.PI*117*t)*.26f*Mathf.Exp(-32*t))*Mathf.Min(1,t/.0007f);
-                    }
-                    samples[i]=Mathf.Clamp(value,-.95f,.95f);
-                }
-                clip=AudioClip.Create(key,count,1,rate,false);clip.SetData(samples,0);tones[key]=clip;
-            }
-            audioSource.PlayOneShot(clip,kind=="swing"?.18f:.27f);
+            if(actor==null)return "hit_blunt";
+            if(actor.Id=="sera"||actor.Id=="noa")return "hit_cut";
+            if(actor.Id=="minato")return "hit_blunt";
+            return (actor.Id=="lian"||actor.Id=="heidel"||actor.IsEnemy)&&(skillNumber>=2||amount>=18)?"hit_heavy":"hit_blunt";
         }
+        bool PlayCombatSound(string family,bool contact=false,float level=1)
+        {return combatAudio!=null&&combatAudio.Play(family,sound,contact,level);}
     }
 }

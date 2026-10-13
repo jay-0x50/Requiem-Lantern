@@ -90,7 +90,7 @@ function environment(motion = true, mockImages = false, initialSnapshot = battle
     stage.appendChild(new Node('button', '', { action: 'target:' + id }));
   for (const i of initial.intents) stage.appendChild(new Node('path', '', { intentLine: i.id }));
   let clock = 0, nextId = 0;
-  const timers = new Map(), sounds = [], impacts = [], images = [];
+  const timers = new Map(), sounds = [], impacts = [], images = [], audioStops = [], audioTimeline = [];
   const context = {
     document: { createElement: tag => new Node(tag) },
     setTimeout: (run, delay) => { const id = ++nextId; timers.set(id, { run, due: clock + delay }); return id; },
@@ -105,10 +105,10 @@ function environment(motion = true, mockImages = false, initialSnapshot = battle
     get src() { return this.url; }
   };
   vm.createContext(context); vm.runInContext(source, context);
-  const fx = new context.LanternCombatFX(root, { motion: () => motion, sound: (...args) => sounds.push(args), impact: (...args) => impacts.push(args), color: () => '#ffaa33' });
+  const fx = new context.LanternCombatFX(root, { motion: () => motion, sound: (...args) => sounds.push(args), impact: (...args) => {impacts.push(args);audioTimeline.push({args,phase:stage.dataset.combatPhase,hp:fx.units.get('anger')?.hp,clock});}, stopSound: () => audioStops.push(clock), color: () => '#ffaa33' });
   fx.attach(initial);
   return {
-    root, stage, fx, initial, timers, sounds, impacts, images,
+    root, stage, fx, initial, timers, sounds, impacts, images, audioStops, audioTimeline,
     async until(predicate) {
       for (let guard = 0; guard < 5000; guard++) {
         for(let tick=0;tick<8;tick++)await Promise.resolve();
@@ -529,7 +529,7 @@ async function main() {
   let lamps=env.root.querySelector('.flame-roll');
   assert.equal(lamps.querySelectorAll('.unknown').length,3);assert.equal(lamps.querySelectorAll('.off').length,1);
   assert.equal(lamps.querySelectorAll('strong')[0].textContent,'8');assert.equal(lamps.querySelectorAll('strong')[1].textContent,'5');
-  assert.equal(env.fx.units.get('anger').hp,190);assert.ok(env.sounds.length>=2);
+  assert.equal(env.fx.units.get('anger').hp,190);assert.equal(env.impacts.filter(([kind])=>kind==='ignite').length,1);assert.equal(env.sounds.length,0);
   await env.drain();assert.equal(await reveal,true);
   pass('both sides reveal one authoritative flame at a time and accumulate affinity-adjusted power without early damage');
 
@@ -591,6 +591,40 @@ async function main() {
   await env.until(()=>env.stage.dataset.combatPhase==='windup');
   assert.equal(env.root.querySelectorAll('.flame-roll').length,0);await env.drain();assert.equal(await counter,true);
   pass('a counterattack clears a previous enemy-only roll panel instead of showing the wrong attacker power');
+
+  env=environment();
+  const physicalHit={...event('Damage','anger',18),skillId:'lian_breakthrough',skillNumber:2,clashIndex:3};
+  const physical=env.fx.play([physicalHit],copy(env.initial));
+  await env.until(()=>env.stage.dataset.combatPhase==='swing');
+  assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,0);assert.equal(env.fx.units.get('anger').hp,190);
+  await env.until(()=>env.stage.dataset.combatPhase==='contact');
+  const contact=env.audioTimeline.find(entry=>entry.args[0]==='hit'),swing=env.audioTimeline.find(entry=>entry.args[0]==='swish');
+  assert.equal(swing.phase,'swing');assert.equal(contact.phase,'contact');assert.equal(contact.hp,172);assert.ok(contact.clock>swing.clock);
+  assert.deepEqual(copy(contact.args[2]),{actorId:'lian',skillNumber:2,skillId:'lian_breakthrough',clashIndex:3,isEnemy:false});
+  await env.drain();assert.equal(await physical,true);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,1);
+  pass('sample metadata arrives at the actual swing and single authoritative damage contact, never before impact');
+
+  env=environment(false);
+  const enemyHit=env.fx.play([{...event('Damage','lian',22,'anger'),skillNumber:3,skillId:'enemy_crush'}],copy(env.initial));
+  await env.until(()=>env.stage.dataset.combatPhase==='contact');
+  const enemySound=env.impacts.find(([kind])=>kind==='hit');
+  assert.equal(enemySound[2].isEnemy,true);assert.equal(enemySound[2].skillNumber,3);assert.equal(env.sounds.length,0);
+  await env.drain();assert.equal(await enemyHit,true);
+  pass('reduced motion preserves exact enemy contact audio and its heavy-hit metadata without procedural tones');
+
+  env=environment();
+  const preparations=env.fx.play([event('Guard','lian'),event('Evade','lian'),event('Counter','lian'),event('Heal','minato',5),event('PartBreak','anger_arm'),event('Rift','anger',8),event('Resonance','anger')],copy(env.initial));
+  await env.drain();assert.equal(await preparations,true);
+  assert.deepEqual(env.impacts.map(([kind])=>kind),['brace','swing','brace','ignite','break','break','ignite']);
+  assert.equal(env.sounds.length,0);
+  pass('defense preparation, healing and break cues have their own samples and never invent a weapon hit');
+
+  env=environment();
+  const audioCancelled=env.fx.play([physicalHit],copy(env.initial));
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');const stops=env.audioStops.length;
+  env.fx.clear();assert.equal(env.audioStops.length,stops+1);await env.drain();assert.equal(await audioCancelled,false);
+  assert.equal(env.impacts.length,0);assert.equal(env.fx.units.get('anger').hp,190);
+  pass('presentation cancellation stops the sample bank and suppresses future swings and contact sounds');
 
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }

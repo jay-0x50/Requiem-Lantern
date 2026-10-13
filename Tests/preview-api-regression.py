@@ -27,10 +27,18 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='character-chapters-v3'
+    assert data and data['runtimeRevision']=='physical-combat-audio-v4'
     assert 'characterStories' not in data
     assert [c['focusCharacterId'] for c in data['campaign']['chapters']]==['lian','sera','noa','heidel','minato']
     assert all(c['focusStorySummary'] for c in data['campaign']['chapters'])
+    for family in ['clash','hit_cut','hit_blunt','hit_heavy','swing','brace','ignite','break']:
+        for variant in range(1,4):
+            filename=f'{family}_{variant:02d}.wav'
+            with urllib.request.urlopen(f'http://127.0.0.1:{PORT}/audio/combat/{filename}',timeout=5) as response:
+                assert response.headers.get_content_type()=='audio/wav'
+                audio=response.read()
+            assert audio[:4]==b'RIFF' and audio[8:12]==b'WAVE'
+            assert audio==(ROOT/'RequiemLantern/Assets/Resources/Audio/Combat'/filename).read_bytes()
     assert sum(len(c['stages']) for c in data['campaign']['chapters'])==50
     assert [s['id'] for c in data['campaign']['chapters'] for s in c['stages'] if s['unlocked']]==['c1s01']
     data=call('stage-enter',400,stageId='c1s02');assert data['campaign']['activeStage'] is None

@@ -5,7 +5,7 @@ let story=[],storyIndex=0,storyReturn='hub',storyKey='',storyLog=[],typingTimer,
 let selectedChapter=1,selectedStage='',rosterIndex=0,campaignBusy=false;
 function loadSettings(){const defaults={assisted:true,motion:true,sound:true};try{const saved=JSON.parse(localStorage.getItem('rl-settings')||'null');for(const key of Object.keys(defaults))if(typeof saved?.[key]==='boolean')defaults[key]=saved[key];}catch{}return defaults;}
 let settings=loadSettings(),settingsReturn='hub';
-let busy=false,viewToken=0,lastReward=null,dragInfo=null,toastTimer,context,battleAutoTimer,autoBattleWaiting=false,suppressClickUntil=0;
+let busy=false,viewToken=0,lastReward=null,dragInfo=null,toastTimer,context,combatAudio,battleAutoTimer,autoBattleWaiting=false,suppressClickUntil=0;
 const chars=[
  ['Lian','리안','광휘 · 수호자','은백색 머리의 파수꾼.\n소등의 날 이후, 13년간 홀로 등대 요새를 지켰다.\n파편의 대가로 어린 시절의 기억 대부분을 잃었다.','…살아 있으면, 그걸로 됐어.'],
  ['Sera','세라','화염 · 돌격수','사라진 고아원 아이들을 찾아 요새에 합류했다.\n밝고 큰 웃음 뒤에 남겨진 마음을 감추고 있다.','괜찮아 괜찮아! 어둠 따위, 내가 태워버릴 테니까!'],
@@ -25,35 +25,68 @@ const footer=hint=>`<footer><span>REQUIEM LANTERN &nbsp; / &nbsp; PLAY PREVIEW 0
 const header=(over,title,back='hub')=>`<header>${btn('〈','go:'+back,'back','aria-label="이전 화면"')}<div class="titles"><div class="eyebrow">${over}</div><div class="heading">${title}</div></div><div class="wallet"><span>등불 조각 &nbsp; <b class="gold">${data.progress.lanternFragments}</b></span><span>코인 &nbsp; ${data.progress.coins.toLocaleString()}</span></div></header>`;
 const hero=(id,cls)=>`<img class="hero ${settings.motion?'breathe ':''}${cls}" src="/art/${art(id)}.png" alt="${esc(chars.find(c=>c[0]===art(id))?.[1]||id)}">`;
 const color=e=>({Radiance:'#f2a541',Flame:'#e77a5d',Tide:'#75c8c4',Frost:'#a7d4e9',Shadow:'#b09bd8'}[e]||'#f2a541');
-const battleFx=new LanternCombatFX(game,{motion:()=>settings.motion,sound:tone,impact:combatSound,color});
+const battleFx=new LanternCombatFX(game,{motion:()=>settings.motion,impact:combatSound,stopSound:()=>combatAudio?.stop(),color});
 const element=e=>({Radiance:'광휘',Flame:'화염',Tide:'물결',Frost:'서리',Shadow:'그림자'}[e]);
 function resize(){game.style.transform=`scale(${Math.min(innerWidth/1600,innerHeight/900)})`;}
 addEventListener('resize',resize);resize();
-function tone(freq=680,duration=.1){if(!settings.sound)return;try{context??=new AudioContext();const o=context.createOscillator(),g=context.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.07,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+duration);o.connect(g);g.connect(context.destination);o.start();o.stop(context.currentTime+duration);}catch{}}
-function combatSound(kind,amount=0){
- if(!settings.sound)return;
+function tone(freq=680,duration=.1){if(!settings.sound)return;try{unlockCombatAudio();const o=context.createOscillator(),g=context.createGain();o.frequency.value=freq;o.type='sine';g.gain.setValueAtTime(.07,context.currentTime);g.gain.exponentialRampToValueAtTime(.001,context.currentTime+duration);o.connect(g);g.connect(context.destination);o.start();o.stop(context.currentTime+duration);}catch{}}
+// Shared sampled combat audio. Preload is started by a real UI gesture; playback
+// never waits for decoding, because a late sound would miss weapon contact.
+const combatAudioFamilies=['clash','hit_cut','hit_blunt','hit_heavy','swing','brace','ignite','break'];
+function combatFamily(kind,amount=0,metadata={}){
+ if(kind==='swish')return'swing';
+ if(kind==='hit'){
+  const id=String(metadata.actorId||'').toLowerCase();
+  if(['sera','noa'].includes(id))return'hit_cut';
+  if(id==='minato')return'hit_blunt';
+  return (['lian','heidel'].includes(id)||metadata.isEnemy)&&(metadata.skillNumber>=2||amount>=18)?'hit_heavy':'hit_blunt';
+ }
+ return combatAudioFamilies.includes(kind)?kind:null;
+}
+class CombatSampleAudio{
+ constructor(audioContext,enabled){
+  this.context=audioContext;this.enabled=enabled;this.buffers=new Map();this.last=new Map();this.voices=new Set();this.loading=null;
+  this.master=audioContext.createGain();this.master.gain.value=.8;this.master.connect(audioContext.destination);
+ }
+ preload(){
+  if(!this.loading)this.loading=Promise.all(combatAudioFamilies.flatMap(family=>[1,2,3].map(async variant=>{
+   const key=family+'_'+String(variant).padStart(2,'0');
+   try{const response=await fetch('/audio/combat/'+key+'.wav');if(!response.ok)return;const buffer=await this.context.decodeAudioData(await response.arrayBuffer());this.buffers.set(key,buffer);}catch{}
+  })));
+  return this.loading;
+ }
+ play(kind,amount=0,metadata={}){
+  if(!this.enabled()||this.context.state!=='running'||this.voices.size>=8)return false;
+  const family=combatFamily(kind,amount,metadata);if(!family)return false;
+  const available=[1,2,3].map(n=>family+'_'+String(n).padStart(2,'0')).filter(key=>this.buffers.has(key));
+  if(!available.length)return false;
+  const previous=this.last.get(family),index=available.indexOf(previous),key=available[(index+1)%available.length];
+  const buffer=this.buffers.get(key),now=this.context.currentTime,duration=buffer.duration;
+  if(!Number.isFinite(duration)||duration<=0)return false;
+  let source,gain,envelope,voice;
+  try{
+   source=this.context.createBufferSource();envelope=this.context.createGain();gain=this.context.createGain();source.buffer=buffer;
+   const level=Number.isFinite(metadata.level)?Math.max(0,Math.min(1,metadata.level)):1;
+   const volume=({clash:.5,hit_cut:.45,hit_blunt:.52,hit_heavy:.58,swing:.18,brace:.34,ignite:.2,break:.48})[family]*level;
+   envelope.gain.setValueAtTime(0,now);envelope.gain.linearRampToValueAtTime(1,now+Math.min(.003,duration/4));
+   envelope.gain.setValueAtTime(1,now+Math.max(.003,duration-.018));envelope.gain.linearRampToValueAtTime(0,now+duration);
+   source.connect(envelope);envelope.connect(gain);gain.connect(this.master);voice={source,gain,envelope,volume};this.voices.add(voice);this.rebalance();
+   source.onended=()=>this.release(voice);source.start(now);source.stop(now+duration);this.last.set(family,key);return true;
+  }catch{if(voice)this.release(voice);else{source?.disconnect();envelope?.disconnect();gain?.disconnect();}return false;}
+ }
+ rebalance(){const count=Math.max(1,this.voices.size);for(const voice of this.voices)voice.gain.gain.setValueAtTime(voice.volume/count,this.context.currentTime);}
+ release(voice){if(!this.voices.delete(voice))return;voice.source.disconnect();voice.envelope.disconnect();voice.gain.disconnect();this.rebalance();}
+ stop(){const voices=[...this.voices];for(const voice of voices){try{voice.source.stop();}catch{}}for(const voice of voices)this.release(voice);}
+}
+function unlockCombatAudio(){
  try{
-  context??=new AudioContext();if(context.state==='suspended')context.resume();
-  const now=context.currentTime,swish=kind==='swish',metal=kind==='clash',duration=swish?.12:metal?.38:.22;
-  const output=context.createGain();output.gain.value=swish?.2:.28;output.connect(context.destination);
-  // A short filtered rush under the strike, and non-harmonic ringing at contact.
-  const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*duration),context.sampleRate),samples=buffer.getChannelData(0);
-  for(let i=0;i<samples.length;i++){const t=i/context.sampleRate;samples[i]=(Math.random()*2-1)*Math.exp(-t/(swish?.04:.022));}
-  const noise=context.createBufferSource(),filter=context.createBiquadFilter();noise.buffer=buffer;
-  filter.type=swish?'bandpass':'highpass';filter.frequency.setValueAtTime(swish?800:1900,now);filter.frequency.exponentialRampToValueAtTime(swish?3300:700,now+duration);filter.Q.value=.8;
-  noise.connect(filter);filter.connect(output);noise.start(now);noise.stop(now+duration);
-  if(!swish){
-   const frequencies=metal?[670,1137,1781,2679,3881]:[105,187,743];
-   frequencies.forEach((frequency,i)=>{
-    const oscillator=context.createOscillator(),envelope=context.createGain();oscillator.type='sine';
-    oscillator.frequency.setValueAtTime(frequency*(1+Math.min(50,amount)*.001),now);
-    envelope.gain.setValueAtTime((metal?.23:.3)/(1+i*.65),now);envelope.gain.exponentialRampToValueAtTime(.0001,now+duration/(1+i*.15));
-    oscillator.connect(envelope);envelope.connect(output);oscillator.start(now);oscillator.stop(now+duration);oscillator.onended=()=>{oscillator.disconnect();envelope.disconnect();};
-   });
-  }
-  noise.onended=()=>{noise.disconnect();filter.disconnect();output.disconnect();};
+  if(!context||context.state==='closed'){context=new AudioContext();combatAudio=new CombatSampleAudio(context,()=>settings.sound);}
+  if(!combatAudio)combatAudio=new CombatSampleAudio(context,()=>settings.sound);
+  if(context.state==='suspended')context.resume().catch(()=>{});
+  combatAudio.preload();
  }catch{}
 }
+function combatSound(kind,amount=0,metadata={}){return settings.sound&&combatAudio?combatAudio.play(kind,amount,metadata):false;}
 function toast(msg){clearTimeout(toastTimer);const t=document.querySelector('#toast');t.textContent=msg;t.style.display='block';toastTimer=setTimeout(()=>t.style.display='none',4500);}
 function normalizeState(value){return {...value,previews:(value.previews||[]).map(p=>({...p,...p.preview}))};}
 async function command(action,extra={}){const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});const d=await r.json();if(d.battle)data=normalizeState(d);if(d.error){toast(d.error);return false;}if(!r.ok)throw Error(d.error||'전투 처리에 실패했습니다.');if(d.reward)lastReward=d.reward;return true;}
@@ -161,7 +194,7 @@ function showRoster(i){
  rosterIndex=i;const roster=chars.filter(c=>!['Rowan','Ellen','Eve'].includes(c[0])),c=roster[i],progress=characterProgress(c[0]),combat=['Lian','Sera','Minato','Heidel','Noa'].includes(c[0]),focusChapter=campaignChapters().find(chapter=>String(chapter.focusCharacterId).toLowerCase()===c[0].toLowerCase());
  setScreen('roster',`${header('AFTERGLOW ARCHIVE / 인물 기록','잔영과 등불지기')}${hero(c[0],'roster-hero')}<div class="roster-info"><div class="eyebrow">CHARACTER &nbsp; ${String(i+1).padStart(2,'0')} / ${String(roster.length).padStart(2,'0')}</div><h1>${c[1]}</h1><div class="role">${c[2]}</div><div class="bio">${c[3]}</div><blockquote>“${c[4]}”</blockquote>${combat?`<div class="character-growth"><span>레벨 ${progress.level} · 동기화 ${progress.syncLevel}</span><small>${progress.syncLevel>0?'3스킬 개방':'동기화하면 3스킬이 열립니다'}</small>${btn(progress.syncLevel>0?'동기화 완료':'동기화 · 등불 조각 10',`synchronize:${c[0].toLowerCase()}`,'primary',progress.syncLevel>0||data.progress.lanternFragments<10?'disabled':'')}</div>`:''}${focusChapter?`<div class="roster-story-entry">${btn('메인 스토리 · '+c[1]+'의 장 보기','focus-chapter:'+c[0].toLowerCase())}<small>제${focusChapter.number}장의 스테이지로 이어지는 이야기${chapterReachable(focusChapter)?'':' · 앞선 스테이지 완료 후 개방'}</small></div>`:''}<div class="roster-tabs">${roster.map((c,n)=>btn(c[1],'character:'+n,n===i?'primary':'')).join('')}</div></div>${footer('동기화는 레벨과 별도로 진행됩니다 · 3스킬 개방')}`);
 }
-function showSettings(){setScreen('settings',`${header('PREFERENCES','환경 설정',settingsReturn)}<div class="settings"><h1>편안한 속도로, 빛을 잇도록.</h1>${[['assisted','점화 타이밍 보조','자동으로 ‘양호’ 판정. 끄면 클릭 / Space로 점화합니다.'],['motion','움직임과 전투 효과','빛실 흐름, 타격 움직임, 화면 흔들림을 재생합니다. 끄면 간소하게 표시합니다.'],['sound','효과음','빛실 연결과 점화에 유리종 음색을 재생합니다.']].map(([id,title,desc])=>`<div class="setting"><div><strong>${title}</strong><p>${desc}</p></div>${btn(settings[id]?'켜짐':'꺼짐','setting:'+id,settings[id]?'primary':'')}</div>`).join('')}</div>${footer('진행은 로컬 서버에 저장 · 설정은 이 브라우저에 저장')}`);}
+function showSettings(){setScreen('settings',`${header('PREFERENCES','환경 설정',settingsReturn)}<div class="settings"><h1>편안한 속도로, 빛을 잇도록.</h1>${[['assisted','점화 타이밍 보조','자동으로 ‘양호’ 판정. 끄면 클릭 / Space로 점화합니다.'],['motion','움직임과 전투 효과','빛실 흐름, 타격 움직임, 화면 흔들림을 재생합니다. 끄면 간소하게 표시합니다.'],['sound','효과음','무기 충돌, 타격, 불씨와 장비 효과음을 재생합니다.']].map(([id,title,desc])=>`<div class="setting"><div><strong>${title}</strong><p>${desc}</p></div>${btn(settings[id]?'켜짐':'꺼짐','setting:'+id,settings[id]?'primary':'')}</div>`).join('')}</div>${footer('진행은 로컬 서버에 저장 · 설정은 이 브라우저에 저장')}`);}
 function showArchive(){
  const cleared=campaignStages().filter(s=>s.cleared),chapters=campaignChapters().filter(c=>c.stages.some(s=>s.cleared));
  setScreen('archive',`${header('MAIN STORY / MEMORY ARCHIVE','기록실')}<div class="campaign-archive"><div class="eyebrow">함께 지나온 이야기 · ${cleared.length} / ${campaignStages().length}</div><h1>빛은 기억을 품는다.</h1><p>완료한 스테이지의 대화를 다시 펼쳐 봅니다.</p><div class="archive-stage-list">${chapters.map(c=>`<section><h2>제${c.number}장${chapterFocusLabel(c)?' · '+esc(chapterFocusLabel(c)):''} · ${esc(chapterDisplayTitle(c))}</h2>${c.stages.filter(s=>s.cleared).map(s=>btn(`<span>${esc(displayStageNumber(s))}</span><strong>${esc(s.title)}</strong><small>${stageLabel(s)}</small>`,`stage-replay:${s.id}`)).join('')}</section>`).join('')}</div></div>${footer('이야기 다시 보기는 전투와 보상 없이 재생합니다')}`);
@@ -204,12 +237,12 @@ async function linkTarget(id){
  const sk=skill(selectedActor,selectedSkill);if(!sk)return;
  if(!defenseSkill(sk)&&!cardFor(unit(selectedActor),selectedCardId)){toast('제시된 스킬 카드 두 장 중에서 선택해 주세요.');return;}
  const kind=sk.kind==='Heal'?'Support':defenseSkill(sk)?'Guard':intent(id)?'Clash':'Strike';
- if(await command('link',{actorId:selectedActor,slot:selectedSlot,skillId:selectedSkill,cardId:defenseSkill(sk)?'':selectedCardId,kind,targetId:id})){tone(890,.2);showBattle();battleFx.connected(selectedActor,selectedSlot,id,kind);}
+ if(await command('link',{actorId:selectedActor,slot:selectedSlot,skillId:selectedSkill,cardId:defenseSkill(sk)?'':selectedCardId,kind,targetId:id})){showBattle();battleFx.connected(selectedActor,selectedSlot,id,kind);combatSound(kind==='Guard'?'brace':'ignite',0,{actorId:selectedActor,skillNumber:sk.number||0,skillId:sk.id,level:.45});}
 }
 function modal(title,body,buttons=btn('닫기','close','primary')){pauseStoryAuto();pauseBattleAuto();game.insertAdjacentHTML('beforeend',`<div class="modal"><h2>${title}</h2>${body}<div class="modal-actions">${buttons}</div></div>`);}
 function closeModal(){game.querySelector('.modal')?.remove();if(!game.querySelector('.modal')){scheduleStoryAuto();scheduleBattleAuto();}}
 function delay(t){return new Promise(r=>setTimeout(r,t));}
-async function ignite(link){return new Promise(resolve=>{const sk=skill(link.actorId,link.skillId);modal(`${unit(link.actorId).name} / ${sk.name}`,`<p>${settings.motion?'두 원이 겹칠 때 클릭 또는 Space':'카운트다운의 ‘지금 점화’에 클릭 또는 Space'}</p><div class="ignite-area"><div class="ring"></div><div class="ring moving"></div><div class="ignite-grade"></div></div>`,'');game.querySelector('.modal').classList.add('ignite-modal');const area=game.querySelector('.ignite-area'),moving=area.querySelector('.moving'),out=area.querySelector('.ignite-grade');const start=performance.now();let done=false;const frame=()=>{if(done)return;const time=performance.now()-start;const diameter=330-150*time/1100;if(settings.motion)moving.style.width=moving.style.height=Math.max(35,diameter)+'px';else{moving.hidden=true;out.textContent=Math.abs(time-1100)<130?'지금 점화':time<1100?((1100-time)/1000).toFixed(1):'늦음';}if(time>1850)complete(null);else requestAnimationFrame(frame);};const complete=stamp=>{if(done)return;done=true;removeEventListener('keydown',key);area.removeEventListener('pointerdown',tap);const err=stamp===null?Infinity:Math.abs(stamp-start-1100),factor=(1-data.battle.gloom*.1)*(data.battle.lanternQueued?1.2:1);const grade=err<=80*factor?'Perfect':err<=200*factor?'Good':'Miss';out.textContent={Perfect:'점 화',Good:'양 호',Miss:'빗나감'}[grade];tone(grade==='Perfect'?1046:520,.25);setTimeout(()=>{closeModal();resolve(grade);},460);};const key=e=>{if(e.code==='Space'){e.preventDefault();complete(performance.now());}};const tap=()=>complete(performance.now());addEventListener('keydown',key);area.addEventListener('pointerdown',tap);requestAnimationFrame(frame);});}
+async function ignite(link){return new Promise(resolve=>{const sk=skill(link.actorId,link.skillId);modal(`${unit(link.actorId).name} / ${sk.name}`,`<p>${settings.motion?'두 원이 겹칠 때 클릭 또는 Space':'카운트다운의 ‘지금 점화’에 클릭 또는 Space'}</p><div class="ignite-area"><div class="ring"></div><div class="ring moving"></div><div class="ignite-grade"></div></div>`,'');game.querySelector('.modal').classList.add('ignite-modal');const area=game.querySelector('.ignite-area'),moving=area.querySelector('.moving'),out=area.querySelector('.ignite-grade');const start=performance.now();let done=false;const frame=()=>{if(done)return;const time=performance.now()-start;const diameter=330-150*time/1100;if(settings.motion)moving.style.width=moving.style.height=Math.max(35,diameter)+'px';else{moving.hidden=true;out.textContent=Math.abs(time-1100)<130?'지금 점화':time<1100?((1100-time)/1000).toFixed(1):'늦음';}if(time>1850)complete(null);else requestAnimationFrame(frame);};const complete=stamp=>{if(done)return;done=true;removeEventListener('keydown',key);area.removeEventListener('pointerdown',tap);const err=stamp===null?Infinity:Math.abs(stamp-start-1100),factor=(1-data.battle.gloom*.1)*(data.battle.lanternQueued?1.2:1);const grade=err<=80*factor?'Perfect':err<=200*factor?'Good':'Miss';out.textContent={Perfect:'점 화',Good:'양 호',Miss:'빗나감'}[grade];combatSound('ignite',0,{actorId:link.actorId,skillNumber:sk.number||0,skillId:sk.id});setTimeout(()=>{closeModal();resolve(grade);},460);};const key=e=>{if(e.code==='Space'){e.preventDefault();complete(performance.now());}};const tap=()=>complete(performance.now());addEventListener('keydown',key);area.addEventListener('pointerdown',tap);requestAnimationFrame(frame);});}
 async function resolveRound(){
  if(busy||page!=='battle'||game.querySelector('.modal'))return;
  pauseBattleAuto();autoBattleWaiting=false;busy=true;page='resolve';cleanupDrag();game.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -231,7 +264,7 @@ function showResult(){
  const action=win?(follow?'campaign-story':campaign?'go:stages':'story:epilogue'):'deploy',label=win?(follow?'후속 이야기 →':campaign?'다음 스테이지 →':'남겨진 기억 읽기 →'):'다시 도전하기 →';
  setScreen('result',`${hero(data.battle.allies[0]?.portrait||data.battle.allies[0]?.id||'Lian','result-hero')}<div class="result-info"><div class="eyebrow">${win?'THE LIGHT REMAINS':'A MOMENT IN THE DARK'}</div><h1>${win?'지켜낸 불씨':'아직, 끝이 아니야'}</h1><p>${win?(follow?'남겨진 대화를 마치면 다음 스테이지가 열립니다.':'우리가 지나온 길에 또 하나의 기록이 남았다.'):'빛실을 다시 잇고, 다른 길을 찾아보자.\n정신력과 속성 우세를 살펴 맞불을 연결하세요.'}</p>${win&&lastReward?`<div class="rewards"><div class="reward"><b>+${lastReward.coins}</b>코인</div><div class="reward"><b>+${lastReward.lanternFragments}</b>등불 조각</div><div class="reward"><b>+${lastReward.memoryFragments}</b>기억의 파편</div></div>`:''}${btn(label,action,'primary')}${btn('등대로','go:hub')}</div>${footer('진행 상황 자동 저장 · 기록실에서 완료한 이야기를 다시 볼 수 있습니다')}`);
 }
-game.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;if(campaignBusy)return;if(dragInfo?.moved||performance.now()<suppressClickUntil)return;tone();try{if(action.startsWith('go:'))return go(action.slice(3));if(action.startsWith('chapter:'))return showStages(+action.slice(8),'');if(action.startsWith('stage-select:'))return showStages(selectedChapter,action.slice(13));if(action.startsWith('stage-enter:'))return enterCampaign(action.slice(12));if(action.startsWith('stage-replay:'))return enterCampaign(action.slice(13),true);if(action.startsWith('synchronize:')){if(await command('synchronize',{actorId:action.slice(12)})){showRoster(rosterIndex);toast('동기화가 완료되어 3스킬이 열렸습니다.');}return;}if(action.startsWith('focus-chapter:'))return focusMainChapter(action.slice(14));if(action.startsWith('character:'))return showRoster(+action.split(':')[1]);if(action.startsWith('story:'))return startStory(action.slice(6));if(action.startsWith('replay:'))return startStory(action.slice(7),'archive');if(action.startsWith('setting:')){const id=action.slice(8);settings[id]=!settings[id];try{localStorage.setItem('rl-settings',JSON.stringify(settings));}catch{}return showSettings();}if(action.startsWith('slot:')){const [,actor,n]=action.split(':');selectedActor=actor;selectedSlot=+n;const choice=selectionForSlot(actor,+n);selectedSkill=choice.skillId;selectedCardId=choice.cardId;return showBattle();}if(action.startsWith('skill-card:')){const card=cardFor(unit(selectedActor),action.slice(11));if(!card||cardReserved(selectedActor,card.id,selectedSlot))return;selectedSkill=card.skillId;selectedCardId=card.id;return showBattle();}if(action.startsWith('skill:')){const chosen=skill(selectedActor,action.slice(6));if(!chosen||!defenseSkill(chosen))return;selectedSkill=chosen.id;selectedCardId='';return showBattle();}if(action.startsWith('target:'))return await linkTarget(action.slice(7));
+game.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;if(campaignBusy)return;if(dragInfo?.moved||performance.now()<suppressClickUntil)return;tone();try{if(action.startsWith('go:'))return go(action.slice(3));if(action.startsWith('chapter:'))return showStages(+action.slice(8),'');if(action.startsWith('stage-select:'))return showStages(selectedChapter,action.slice(13));if(action.startsWith('stage-enter:'))return enterCampaign(action.slice(12));if(action.startsWith('stage-replay:'))return enterCampaign(action.slice(13),true);if(action.startsWith('synchronize:')){if(await command('synchronize',{actorId:action.slice(12)})){showRoster(rosterIndex);toast('동기화가 완료되어 3스킬이 열렸습니다.');}return;}if(action.startsWith('focus-chapter:'))return focusMainChapter(action.slice(14));if(action.startsWith('character:'))return showRoster(+action.split(':')[1]);if(action.startsWith('story:'))return startStory(action.slice(6));if(action.startsWith('replay:'))return startStory(action.slice(7),'archive');if(action.startsWith('setting:')){const id=action.slice(8);settings[id]=!settings[id];if(id==='sound'){if(settings.sound)unlockCombatAudio();else combatAudio?.stop();}try{localStorage.setItem('rl-settings',JSON.stringify(settings));}catch{}return showSettings();}if(action.startsWith('slot:')){const [,actor,n]=action.split(':');selectedActor=actor;selectedSlot=+n;const choice=selectionForSlot(actor,+n);selectedSkill=choice.skillId;selectedCardId=choice.cardId;return showBattle();}if(action.startsWith('skill-card:')){const card=cardFor(unit(selectedActor),action.slice(11));if(!card||cardReserved(selectedActor,card.id,selectedSlot))return;selectedSkill=card.skillId;selectedCardId=card.id;return showBattle();}if(action.startsWith('skill:')){const chosen=skill(selectedActor,action.slice(6));if(!chosen||!defenseSkill(chosen))return;selectedSkill=chosen.id;selectedCardId='';return showBattle();}if(action.startsWith('target:'))return await linkTarget(action.slice(7));
 switch(action){case'begin':return data.progress.prologueCompleted?go('hub'):data.campaign?enterCampaign(campaignStages()[0].id):startStory('prologue');case'storynext':return nextStory();case'storyauto':storyAuto=!storyAuto;button.textContent=storyAuto?'자동 켜짐':'자동';scheduleStoryAuto();return;case'storyskip':return finishStory();case'storylog':clearTimeout(autoTimer);return modal('지나온 대화',`<div class="log">${esc(storyLog.join('\n\n'))}</div>`);case'close':return closeModal();case'campaign-story':return routeCampaign();case'deploy':if(!await command('restart'))return;selectFirstFighter();autoBattle=false;lastReward=null;return showBattle();case'recommend':await command('recommend');showBattle();toast('광역 맞불 → 부위 파괴 → 부상 회복 순서로 제안했습니다.');return;case'clear':case'reuse':await command(action);return showBattle();case'remove':await command('remove',{actorId:selectedActor,slot:selectedSlot});return showBattle();case'lantern':await command('lantern',{actorId:selectedActor});return showBattle();case'automode':autoBattle=!autoBattle;if(!autoBattle)autoBattleWaiting=false;if(autoBattle)await command('recommend');return showBattle();case'resolve':return resolveRound();case'battlelog':return modal('라운드 기록',`<div class="log">${esc(data.battle.events.length?data.battle.events.map(e=>e.message).join('\n'):data.battle.links.map(l=>unit(l.actorId).name+' → '+targetName(l.targetId)+' : '+l.reason).join('\n'))}</div>`);case'retreat':return modal('등대로 돌아갈까요?','<p>진행 중인 전투의 보상은 받을 수 없습니다.</p>',btn('전투 계속','close','primary')+btn('등대로','go:hub'));case'repair':if(await command('repair')){showHub();toast('등대의 불빛이 조금 더 따뜻해졌습니다.');}return;}}
 catch(err){toast(err.message);}});
 function cleanupDrag(){game.querySelector('#drag-thread')?.setAttribute('d','');battleFx.drag(null,[],null,null);dragInfo=null;}
