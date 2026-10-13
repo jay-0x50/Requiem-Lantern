@@ -27,7 +27,7 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='campaign-sanity-v1'
+    assert data and data['runtimeRevision']=='skill-deck-v2'
     assert sum(len(c['stages']) for c in data['campaign']['chapters'])==50
     assert [s['id'] for c in data['campaign']['chapters'] for s in c['stages'] if s['unlocked']]==['c1s01']
     data=call('stage-enter',400,stageId='c1s02');assert data['campaign']['activeStage'] is None
@@ -41,6 +41,19 @@ try:
     call('stage-exit')
     data=call('stage-enter',stageId='c1s02');assert data['campaign']['phase']=='BeforeStory'
     data=call('stage-story',stageId='c1s02',expectedPhase='BeforeStory');assert data['campaign']['phase']=='Battle'
+    actor=next(a for a in data['battle']['allies'] if a['id']=='lian')
+    hand=actor['skillHand'];assert len(hand)==2 and len(actor['drawPile'])==3
+    assert not any(s['skillId']=='lian_crescendo' for s in hand)
+    card=hand[0];intent=data['battle']['intents'][0]['id']
+    data=call('link',400,actorId='lian',slot=0,skillId=card['skillId'],cardId='invalid-card',kind='Clash',targetId=intent)
+    assert not data['battle']['links'] and next(a for a in data['battle']['allies'] if a['id']=='lian')['skillHand']==hand
+    data=call('link',actorId='lian',slot=0,skillId=card['skillId'],cardId=card['id'],kind='Clash',targetId=intent)
+    assert data['battle']['links'][0]['cardId']==card['id']
+    enemy=data['battle']['enemies'][0]['id']
+    data=call('link',400,actorId='lian',slot=1,skillId=card['skillId'],cardId=card['id'],kind='Strike',targetId=enemy)
+    assert len(data['battle']['links'])==1 and data['battle']['links'][0]['cardId']==card['id']
+    data=call('clear');assert not data['battle']['links']
+    assert next(a for a in data['battle']['allies'] if a['id']=='lian')['skillHand']==hand
     before=data['plannedCost']
     data=call('link',400,actorId='lian',slot=0,skillId='lian_crescendo',kind='Clash',targetId=data['battle']['intents'][0]['id'])
     assert data['plannedCost']==before and not stage(data,'c1s02')['cleared']
@@ -63,7 +76,7 @@ try:
     call('stage-exit')
     data=call('synchronize',400,actorId='lian')
     assert next(c for c in data['progress']['characters'] if c['id']=='lian')['syncLevel']==0
-    print('PASS: real HTTP stage locks, story completion, battle guards, S3 lock, victory/after-story rewards, stale requests, replay and insufficient synchronization funds.')
+    print('PASS: real HTTP stage locks, story completion, two-card hand, explicit card identity/reservation/clear without reroll, battle guards, S3 lock, victory/after-story rewards, stale requests, replay and insufficient synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)

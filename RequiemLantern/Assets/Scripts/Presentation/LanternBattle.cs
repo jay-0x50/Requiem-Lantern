@@ -11,7 +11,7 @@ namespace RequiemLantern.Presentation
 {
     public partial class LanternApp
     {
-        string selectedActor="lian",selectedSkill="lian_glimmer"; int selectedSlot;
+        string selectedActor="lian",selectedSkill="lian_glimmer",selectedCard; int selectedSlot,selectionRound;
         Dictionary<string,Vector2> anchors=new Dictionary<string,Vector2>();
         Dictionary<string,Vector2> slotAnchors=new Dictionary<string,Vector2>();
         ThreadGraphic dragLine; bool ignitionTapped; float ignitionTimestamp;
@@ -22,6 +22,7 @@ namespace RequiemLantern.Presentation
         {Box(p,name+" track",x,y,w,7,new Color(.04f,.055f,.075f,.95f));return Box(p,name+" fill",x,y,w*Mathf.Clamp01((float)value/Mathf.Max(1,max)),7,color);}
         void DrawBattle()
         {
+            ChooseSkillForSlot(selectedActor,selectedSlot,true);
             Clear("battle");var s=battle.State;anchors.Clear();slotAnchors.Clear();fighters.Clear();healthFills.Clear();healthLabels.Clear();gaugeWidths.Clear();visibleHealth.Clear();
             foreach(var unit in s.Allies.Concat(s.Enemies))visibleHealth[unit.Id]=unit.Hp;
             Box(screen,"Gloom",0,0,1920,1080,new Color(.025f,.01f,.065f,.06f*s.Gloom));
@@ -74,7 +75,7 @@ namespace RequiemLantern.Presentation
                 RegisterHealth(u.Id,Gauge(screen,u.Id+" card gauge",x+17,863,345,u.Hp,u.MaxHp,ElementColor(u.Element)),health);
                 for(int j=0;j<u.SlotCount;j++){
                     int slot=j;var link=s.Links.FirstOrDefault(l=>l.ActorId==u.Id&&(l.Slot==slot||battle.Skill(l.ActorId,l.SkillId).Slots==2));
-                    string caption=link==null?"슬롯 "+(j+1)+"  +":battle.Skill(u.Id,link.SkillId).Name;
+                    string caption=link==null?"행동 "+(j+1)+"  +":battle.Skill(u.Id,link.SkillId).Name;
                     var btn=Button(screen,u.Id+" slot "+j,caption,x+16+j*180,887,168,62,()=>SelectSlot(u.Id,slot),selectedActor==u.Id&&selectedSlot==j);
                     btn.interactable=u.Alive;slotAnchors[u.Id+":"+j]=new Vector2(x+100+j*180,887);
                     var drag=btn.gameObject.AddComponent<LinkDrag>();
@@ -83,17 +84,27 @@ namespace RequiemLantern.Presentation
                     Label(screen,u.Id+" target "+j,link==null?"미연결":TargetName(link.TargetId),x+16+j*180,958,172,27,16,Muted,TextAnchor.MiddleCenter);
                 }
             }
-            var selected=battle.Unit(selectedActor);var skill=battle.Skill(selectedActor,selectedSkill)??selected.Skills[0];
-            Label(screen,"Skill selection",$"{selected.Name} · 슬롯 {selectedSlot+1} · 동기화 {selected.SyncLevel}",1262,791,610,38,22,Gold);
-            for(int i=0;i<selected.Skills.Count;i++){
-                var sk=selected.Skills[i];bool unlocked=BattleRules.IsSkillUnlocked(selected,sk);
-                string skillCaption=(sk.Number>0?sk.Number+". ":"")+sk.Name+(unlocked?" · "+sk.Cost:" · 동기화 필요");
-                var b=Button(screen,"Skill "+sk.Id,skillCaption,1265+(i%2)*289,833+(i/2)*67,275,61,()=>{selectedSkill=sk.Id;DrawBattle();},sk.Id==selectedSkill);
-                Label(b.transform,"Flame count",$"불 {sk.FlameCount}개 · {sk.BasePower} + {sk.FlamePower}×점등",15,39,245,18,12,Muted,TextAnchor.MiddleCenter);
-                b.GetComponent<OrnateButton>().Caption.rectTransform.sizeDelta=new Vector2(225,37);
-                b.GetComponent<OrnateButton>().Caption.fontSize=17;
-                int replaceCost=s.Links.Where(l=>l.ActorId==selectedActor&&(l.Slot==selectedSlot||sk.Slots==2||battle.Skill(l.ActorId,l.SkillId).Slots==2)).Sum(l=>battle.Skill(l.ActorId,l.SkillId).Cost);
-                b.interactable=unlocked&&(sk.Cost<=battle.AvailableEmber+replaceCost)&&(sk.Slots!=2||selectedSlot==0);
+            var selected=battle.Unit(selectedActor);
+            Label(screen,"Skill selection",$"{selected.Name} · 행동 {selectedSlot+1} · 동기화 {selected.SyncLevel}",1262,787,610,37,21,Gold);
+            string composition="1스킬 ×3 · 2스킬 ×2"+(selected.SyncLevel>0?" · 3스킬 ×1":" · 3스킬 동기화 필요");
+            Label(screen,"Skill bag",composition+" · 남은 덱 "+selected.DrawPile.Count,1267,824,585,24,14,Muted);
+            for(int i=0;i<selected.SkillHand.Count;i++){
+                var card=selected.SkillHand[i];var sk=battle.Skill(selected.Id,card.SkillId);int offered=i+1;
+                bool available=CanUseSkillCard(selected,card,selectedSlot);
+                var b=Button(screen,"Skill card "+card.Id,$"{offered}. {sk.Number}스킬 · {sk.Name}",1265+i*289,852,275,69,()=>{
+                    selectedSkill=sk.Id;selectedCard=card.Id;DrawBattle();
+                },card.Id==selectedCard);
+                Label(b.transform,"Flame count",$"불 {BattleRules.Flames(sk)}개 · {BattleRules.Base(sk)}+{BattleRules.Flame(sk)}×점등 · 비용 {sk.Cost}",10,41,255,23,12,Muted,TextAnchor.MiddleCenter);
+                b.GetComponent<OrnateButton>().Caption.rectTransform.sizeDelta=new Vector2(225,38);
+                b.GetComponent<OrnateButton>().Caption.fontSize=17;b.interactable=available;
+            }
+            var defense=selected.Skills.FirstOrDefault(BattleRules.IsDefensive);
+            if(defense!=null){
+                string kind=defense.Kind==SkillKind.Evade?"회피":defense.Kind==SkillKind.Counter?"반격":"방어";
+                var b=Button(screen,"Defense skill "+defense.Id,kind+" · "+defense.Name+"    불 "+BattleRules.Flames(defense)+"개",1265,930,564,35,()=>{
+                    selectedSkill=defense.Id;selectedCard=null;DrawBattle();
+                },selectedSkill==defense.Id&&string.IsNullOrEmpty(selectedCard));
+                b.interactable=selected.Alive;b.GetComponent<OrnateButton>().Caption.fontSize=17;
             }
             foreach(var l in s.Links){
                 if(!anchors.TryGetValue(l.TargetId,out var end))continue;var color=Gold;
@@ -110,18 +121,46 @@ namespace RequiemLantern.Presentation
             Button(screen,"Battle log","전투 기록",479,216,140,52,ShowBattleLog);
             Button(screen,"Remove selected","연결 해제",1265,971,275,42,()=>{battle.RemoveLink(selectedActor,selectedSlot);DrawBattle();});
             var resolve=Button(screen,"Resolve round","빛실 실행   →",1554,971,275,42,()=>{if(autoMode)battle.RecommendLinks();StartCoroutine(Resolve());},true);resolve.interactable=s.Links.Count>0;
-            Footer("맞불 2연승 → 공격  ·  보라 점선: 적 예고  /  초록: 유리  /  주황: 접전  /  붉음: 불리");
+            Footer("제시된 스킬과 방어 행동을 골라 연결 · 맞불 2연승 → 공격 · 초록: 유리 / 주황: 접전 / 붉음: 불리");
         }
         string TargetName(string id){var intent=battle.Intent(id);if(intent!=null)return "맞불 · "+intent.Name;var unit=battle.Unit(id);if(unit!=null)return unit.Name;return battle.State.Enemies.SelectMany(e=>e.Parts).FirstOrDefault(p=>p.Id==id)?.Name??id;}
-        void SelectSlot(string actor,int slot)
+        bool CanUseSkillCard(UnitState actor,SkillCard card,int slot)
         {
-            selectedActor=actor;selectedSlot=slot;selectedSkill=battle.State.Links.FirstOrDefault(x=>x.ActorId==actor&&x.Slot==slot)?.SkillId??battle.Unit(actor).Skills[0].Id;DrawBattle();
+            if(actor==null||card==null||!actor.Alive)return false;
+            var skill=battle.Skill(actor.Id,card.SkillId);if(skill==null||!BattleRules.IsSkillUnlocked(actor,skill))return false;
+            if(skill.Slots==2&&slot!=0)return false;
+            int replaced=battle.State.Links.Where(l=>l.ActorId==actor.Id&&(l.Slot==slot||skill.Slots==2||battle.Skill(l.ActorId,l.SkillId).Slots==2)).Sum(l=>battle.Skill(l.ActorId,l.SkillId).Cost);
+            return skill.Cost<=battle.AvailableEmber+replaced&&battle.IsCardAvailable(actor,card.Id,slot);
         }
+        void ChooseSkillForSlot(string actor,int slot,bool preserve=false)
+        {
+            var unit=battle.Unit(actor);
+            if(unit==null||!unit.Alive)unit=battle.State.Allies.FirstOrDefault(u=>u.Alive)??battle.State.Allies.First();
+            slot=Mathf.Clamp(slot,0,unit.SlotCount-1);bool same=selectedActor==unit.Id&&selectedSlot==slot&&selectionRound==battle.State.Round;
+            selectedActor=unit.Id;selectedSlot=slot;selectionRound=battle.State.Round;
+            if(preserve&&same){
+                var skill=battle.Skill(unit.Id,selectedSkill);
+                if(skill!=null&&BattleRules.IsDefensive(skill)&&string.IsNullOrEmpty(selectedCard))return;
+                var card=unit.SkillHand.FirstOrDefault(c=>c.Id==selectedCard&&c.SkillId==selectedSkill);
+                if(CanUseSkillCard(unit,card,slot))return;
+            }
+            var linked=battle.State.Links.FirstOrDefault(l=>l.ActorId==unit.Id&&(l.Slot==slot||battle.Skill(l.ActorId,l.SkillId).Slots==2));
+            if(linked!=null){
+                var skill=battle.Skill(unit.Id,linked.SkillId);
+                var card=unit.SkillHand.FirstOrDefault(c=>c.Id==linked.CardId);
+                if(BattleRules.IsDefensive(skill)||CanUseSkillCard(unit,card,slot)){selectedSkill=linked.SkillId;selectedCard=linked.CardId;return;}
+            }
+            var available=unit.SkillHand.FirstOrDefault(c=>CanUseSkillCard(unit,c,slot));
+            if(available!=null){selectedSkill=available.SkillId;selectedCard=available.Id;return;}
+            selectedSkill=unit.Skills.FirstOrDefault(BattleRules.IsDefensive)?.Id;selectedCard=null;
+        }
+        void SelectSlot(string actor,int slot)
+        { ChooseSkillForSlot(actor,slot);DrawBattle(); }
         void Target(string id)
         {
             if(page!="battle"||overlay||resolving)return;
             var skill=battle.Skill(selectedActor,selectedSkill);LinkKind kind=skill.Kind==SkillKind.Heal?LinkKind.Support:(skill.Kind==SkillKind.Guard||skill.Kind==SkillKind.Evade||skill.Kind==SkillKind.Counter)?LinkKind.Guard:battle.Intent(id)!=null?LinkKind.Clash:LinkKind.Strike;
-            if(battle.TryLink(selectedActor,selectedSlot,selectedSkill,kind,id,out string error)){Tone("link",880,.2f,.13f);DrawBattle();if(anchors.TryGetValue(id,out var end))StartCoroutine(ConnectionPulse(slotAnchors[selectedActor+":"+selectedSlot],end,kind==LinkKind.Support?Teal:Gold,screenVersion));}else Notify(error);
+            if(battle.TryLink(selectedActor,selectedSlot,selectedSkill,kind,id,out string error,selectedCard)){Tone("link",880,.2f,.13f);DrawBattle();if(anchors.TryGetValue(id,out var end))StartCoroutine(ConnectionPulse(slotAnchors[selectedActor+":"+selectedSlot],end,kind==LinkKind.Support?Teal:Gold,screenVersion));}else Notify(error);
         }
         Vector2 Pointer(PointerEventData e){RectTransformUtility.ScreenPointToLocalPointInRectangle(screen,e.position,null,out var p);return new Vector2(p.x,-p.y);}
         Vector2 ToMesh(Vector2 p){return new Vector2(p.x,-p.y);}

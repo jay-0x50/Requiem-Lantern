@@ -27,6 +27,7 @@ QA/**/*.jpeg
 QA/**/*.webp
 QA/**/*.xml
 QA/**/*.xml.bak
+QA/**/*.log
 QA/**/preview-before.json
 .vs/
 .idea/

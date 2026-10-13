@@ -21,6 +21,7 @@ namespace RequiemLantern.Preview
         public string ActorId { get; set; }
         public int Slot { get; set; }
         public string SkillId { get; set; }
+        public string CardId { get; set; }
         public LinkKind Kind { get; set; }
         public string TargetId { get; set; }
         public string StageId { get; set; }
@@ -130,7 +131,7 @@ namespace RequiemLantern.Preview
                         break;
                     case "stage-exit": campaign.Exit(); break;
                     case "recommend": battle.RecommendLinks(); break;
-                    case "link": battle.TryLink(action.ActorId, action.Slot, action.SkillId, action.Kind, action.TargetId, out error); break;
+                    case "link": battle.TryLink(action.ActorId, action.Slot, action.SkillId, action.Kind, action.TargetId, out error, action.CardId); break;
                     case "remove": battle.RemoveLink(action.ActorId, action.Slot); break;
                     case "clear": battle.ClearLinks(); break;
                     case "reuse": battle.ReusePreviousLinks(); break;
@@ -172,7 +173,7 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "campaign-sanity-v1",
+                application = "RequiemLantern", runtimeRevision = "skill-deck-v2",
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 characterStories = CharacterStoryCatalog.All,

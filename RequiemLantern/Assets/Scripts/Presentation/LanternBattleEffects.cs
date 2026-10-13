@@ -14,6 +14,9 @@ namespace RequiemLantern.Presentation
         bool resolving;
         string activeClashActor;
         RectTransform activeFlameRoll;
+        int flamePresentationRound=-1, tenseFlameCount;
+        BattleEngine flamePresentationBattle;
+        readonly HashSet<string> activeFlameActors=new HashSet<string>();
         RectTransform dragVisuals;
         RingGraphic dragHalo;
         Text dragHint;
@@ -87,8 +90,7 @@ namespace RequiemLantern.Presentation
         {
             if(page!="battle"||overlay||resolving||!battle.Unit(actor).Alive)return;
             CancelDragVisuals();
-            if(selectedActor!=actor||selectedSlot!=slot)selectedSkill=previousSkill??battle.Unit(actor).Skills[0].Id;
-            selectedActor=actor;selectedSlot=slot;
+            if(selectedActor!=actor||selectedSlot!=slot)ChooseSkillForSlot(actor,slot);
             dragVisuals=MakeRect(screen,"Live light thread",0,0,1920,1080);
             dragLine=Thread(dragVisuals,"Gold filament",slotAnchors[actor+":"+slot],Pointer(e),Gold,false,4);
             dragLine.Glow=true;dragLine.Pulse=true;dragLine.ReducedMotion=reducedMotion;
@@ -140,9 +142,12 @@ namespace RequiemLantern.Presentation
             if(version!=screenVersion||!layer)yield break;
             if(e.Type=="Ignite")activeClashActor=battle.Intent(e.TargetId)!=null?e.ActorId:null;
             if(e.Type=="Relink"||e.Type=="Illusion")activeClashActor=null;
-            status.text=e.Message;
+            status.text=e.Type=="FlameRoll"?"불과 어둠의 위력을 판정합니다…":e.Message;
             if(e.Type=="Sanity")RefreshSanity(e.ActorId,e.ActorSanity);
-            if(e.Type=="FlameRoll")yield return PresentFlameRoll(e,layer,version);
+            if(e.Type=="FlameRoll"){
+                yield return PresentFlameRoll(e,layer,version);
+                if(status&&version==screenVersion)status.text=e.Message;
+            }
             else if(e.Type=="Damage"||e.Type=="Tie"||e.Type=="Clash")yield return PresentMelee(e,layer,status,version,e.Type=="Tie"||e.Type=="Clash");
             else yield return PresentBattleSignal(e,layer,status,version);
             if(e.Type=="Clash"||e.Type=="ClashWin")activeClashActor=null;
@@ -164,24 +169,67 @@ namespace RequiemLantern.Presentation
             activeFlameRoll=MakeRect(layer,"Flame roll",704,152,840,164);
             Box(activeFlameRoll,"Roll glass",0,0,840,164,new Color(.017f,.026f,.047f,.95f));
             var actor=battle.Unit(e.ActorId);var target=battle.Unit(e.TargetId);
-            DrawRollSide(activeFlameRoll,actor,e.FlameStates,e.ActorPower,e.ActorSanity,22);
-            if(e.EnemyFlameStates!=null&&e.EnemyFlameStates.Length>0)DrawRollSide(activeFlameRoll,target,e.EnemyFlameStates,e.TargetPower,e.TargetSanity,444);
+            activeFlameActors.Clear();if(actor!=null)activeFlameActors.Add(actor.Id);
+            var sides=new List<FlameRollSide>();
+            if(actor!=null)sides.Add(DrawRollSide(activeFlameRoll,actor,e.FlameStates,e.ActorPower,e.ActorSanity,e.BasePower,e.FlamePower,22));
+            if(target!=null&&e.EnemyFlameStates!=null&&e.EnemyFlameStates.Length>0){activeFlameActors.Add(target.Id);sides.Add(DrawRollSide(activeFlameRoll,target,e.EnemyFlameStates,e.TargetPower,e.TargetSanity,e.EnemyBasePower,e.EnemyFlamePower,444));}
             Label(activeFlameRoll,"Roll index",e.ClashIndex>0?e.ClashIndex+"차 맞불":"위력 점화",328,125,184,28,17,Gold,TextAnchor.MiddleCenter);
             RefreshSanity(e.ActorId,e.ActorSanity);if(target!=null)RefreshSanity(target.Id,e.TargetSanity);
-            float duration=autoMode?.18f:.30f;
-            for(float t=0;t<duration;t+=Time.unscaledDeltaTime){if(version!=screenVersion||!layer)yield break;yield return null;}
+            if(flamePresentationBattle!=battle||flamePresentationRound!=battle.State.Round){flamePresentationBattle=battle;flamePresentationRound=battle.State.Round;tenseFlameCount=0;}
+            bool tense=!reducedMotion&&tenseFlameCount<2&&e.EnemyFlameStates!=null&&e.EnemyFlameStates.Length>0
+                &&(e.ClashIndex>=2||Mathf.Abs(e.ActorPower-e.TargetPower)<=2||actor!=null&&visibleHealth.TryGetValue(actor.Id,out var hp)&&hp<actor.MaxHp*.35f);
+            if(tense)tenseFlameCount++;
+            float duration=reducedMotion?.18f:tense?(autoMode?.62f:.86f):(autoMode?.26f:.36f);
+            var marker=activeFlameRoll.gameObject.AddComponent<FlameRevealMarker>();
+            marker.Total=sides.Sum(s=>s.States.Length);marker.Tense=tense;marker.Duration=duration;
+            for(float t=0;t<duration;t+=Time.unscaledDeltaTime){
+                if(version!=screenVersion||!layer)yield break;
+                foreach(var side in sides){
+                    float progress=Mathf.Clamp01((t/duration-.20f)/.62f);
+                    int reveal=Mathf.Min(side.States.Length,Mathf.FloorToInt(progress*side.States.Length));
+                    UpdateRollSide(side,reveal,t,tense);
+                }
+                marker.Revealed=sides.Sum(s=>s.Revealed);yield return null;
+            }
+            foreach(var side in sides)UpdateRollSide(side,side.States.Length,duration,false);
+            marker.Revealed=marker.Total;
+            // Keep the resolved roll visible for the following weapon contact.
+            yield return null;
         }
-        void DrawRollSide(Transform parent,UnitState unit,bool[] flames,float power,int sanity,float x)
+        sealed class FlameRollSide
         {
-            if(unit==null)return;bool dark=unit.IsEnemy;
+            public bool Dark;public bool[] States;public float FinalPower,BasePower,FlamePower,Multiplier;
+            public int Revealed;public FlameGraphic[] Icons;public Text[] Labels;public Text Power;
+        }
+        FlameRollSide DrawRollSide(Transform parent,UnitState unit,bool[] flames,float power,int sanity,float basePower,float flamePower,float x)
+        {
+            bool dark=unit.IsEnemy;
             Label(parent,"Roll actor "+unit.Id,unit.Name+" · 정신력 "+sanity.ToString("+0;-0;0"),x,9,370,30,20,dark?Hex("BFA2EF"):Gold);
             int count=flames==null?0:flames.Length;
+            var side=new FlameRollSide{Dark=dark,States=flames??new bool[0],FinalPower=power,BasePower=basePower,FlamePower=flamePower,Icons=new FlameGraphic[count],Labels=new Text[count]};
+            float raw=basePower+flamePower*side.States.Count(lit=>lit);side.Multiplier=raw>0?power/raw:1;
             for(int i=0;i<count;i++){
                 var icon=MakeRect(parent,"Flame "+unit.Id+" "+i,x+i*62,49,44,57).gameObject.AddComponent<FlameGraphic>();
-                icon.Lit=flames[i];icon.color=flames[i]?(dark?Hex("B99AFF"):Hex("FFC472")):Hex("404755");icon.raycastTarget=false;
-                Label(parent,"Flame state "+unit.Id+" "+i,flames[i]?"점화":"소등",x+i*62-3,106,53,23,13,flames[i]?(dark?Hex("D9C8FA"):Gold):Muted,TextAnchor.MiddleCenter);
+                icon.Lit=false;icon.color=Hex("606471");icon.raycastTarget=false;side.Icons[i]=icon;
+                side.Labels[i]=Label(parent,"Flame state "+unit.Id+" "+i,"?",x+i*62-3,106,53,23,13,Muted,TextAnchor.MiddleCenter);
             }
-            Label(parent,"Roll power "+unit.Id,power.ToString("0.#"),x+258,42,111,62,43,dark?Hex("D9C8FA"):Ivory,TextAnchor.MiddleRight);
+            side.Power=Label(parent,"Roll power "+unit.Id,"…",x+258,42,111,62,43,dark?Hex("D9C8FA"):Ivory,TextAnchor.MiddleRight);
+            return side;
+        }
+        void UpdateRollSide(FlameRollSide side,int revealed,float elapsed,bool tense)
+        {
+            if(revealed>side.Revealed)Tone(side.Dark?"dark_reveal":"flame_reveal",side.Dark?420:840,.06f,.08f);
+            side.Revealed=revealed;int litCount=0;
+            for(int i=0;i<side.States.Length;i++){
+                bool known=i<revealed,lit=known&&side.States[i];if(lit)litCount++;
+                var icon=side.Icons[i];icon.Lit=lit;
+                float shimmer=known||reducedMotion?1:.5f+.25f*Mathf.Sin(elapsed*(tense?30:18)+i);
+                Color tint=known?(lit?(side.Dark?Hex("B99AFF"):Hex("FFC472")):Hex("404755")):Hex("858999");tint.a=shimmer;icon.color=tint;icon.SetVerticesDirty();
+                side.Labels[i].text=known?(lit?(side.Dark?"활성":"점화"):"소등"):"?";
+                side.Labels[i].color=lit?(side.Dark?Hex("D9C8FA"):Gold):Muted;
+            }
+            float current=(side.BasePower+side.FlamePower*litCount)*side.Multiplier;
+            side.Power.text=revealed==side.States.Length?side.FinalPower.ToString("0.#"):current>0?current.ToString("0.#")+"…":"…";
         }
         static float Smooth(float value){return Mathf.SmoothStep(0,1,Mathf.Clamp01(value));}
 
@@ -192,11 +240,15 @@ namespace RequiemLantern.Presentation
             var actor=battle.Unit(e.ActorId);var target=battle.Unit(e.TargetId);
             if(!actorImage||!targetImage||actor==null||target==null){yield return PresentBattleSignal(e,layer,status,version);yield break;}
             bool damage=e.Type=="Damage";
+            if(damage&&activeFlameRoll&&!activeFlameActors.Contains(e.ActorId)){activeFlameRoll.gameObject.SetActive(false);Destroy(activeFlameRoll.gameObject);activeFlameRoll=null;}
             Color attackColor=ElementColor(actor.Element),targetColor=targetImage.color;
             var fx=MakeRect(layer,"FX "+e.Type,0,0,1920,1080);
             Box(fx,"Duel atmosphere",0,117,1920,665,new Color(.014f,.020f,.035f,.25f));
             var marker=fx.gameObject.AddComponent<CombatPhaseMarker>();
-            marker.Clash=clash;
+            marker.Clash=clash;marker.SkillId=e.SkillId;marker.SkillNumber=e.SkillNumber;
+            bool heavy=!clash&&(actor.Id=="lian"||actor.Id=="heidel"||actor.IsEnemy)&&e.SkillNumber>=2;
+            bool flourish=!clash&&actor.Id=="sera"&&e.SkillNumber>=2;
+            bool sweep=!clash&&(actor.Id=="minato"||actor.Id=="noa");
             var dimmed=new Dictionary<RawImage,Color>();
             var planningWidgets=new List<GameObject>();
             foreach(Transform child in screen){
@@ -230,9 +282,11 @@ namespace RequiemLantern.Presentation
                 var shadowB=Box(fx,"Defender ground",0,0,170,10,new Color(0,0,0,.27f));
                 shadowA.transform.SetAsFirstSibling();shadowB.transform.SetAsFirstSibling();
                 var arc=MakeRect(fx,"Weapon swing arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();
-                arc.Center=ToMesh(contact)+new Vector2(-facing*36,0);arc.Facing=facing;arc.Radius=126;arc.Thickness=14;arc.color=Color.clear;arc.raycastTarget=false;
+                arc.Center=ToMesh(contact)+new Vector2(-facing*36,0);arc.Facing=facing;arc.Radius=sweep?155:126+e.SkillNumber*7;arc.Thickness=heavy?21:flourish?9:14;arc.color=Color.clear;arc.raycastTarget=false;
                 WeaponArcGraphic counter=null;
                 if(clash){counter=MakeRect(fx,"Counter weapon arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();counter.Center=ToMesh(contact)+new Vector2(facing*32,5);counter.Facing=-facing;counter.Radius=107;counter.Thickness=10;counter.color=Color.clear;counter.raycastTarget=false;}
+                WeaponArcGraphic flourishArc=null;
+                if(flourish){flourishArc=MakeRect(fx,"Return slash arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();flourishArc.Center=ToMesh(contact)+new Vector2(facing*22,-12);flourishArc.Facing=-facing;flourishArc.Radius=103;flourishArc.Thickness=9;flourishArc.color=Color.clear;flourishArc.raycastTarget=false;}
                 var contactRoot=MakeRect(fx,"Weapon contact",0,0,1920,1080);
                 var seal=Ring(contactRoot,"Contact shock",contact.x-23,contact.y-23,46,Color.clear,3);
                 var flash=Box(contactRoot,"Contact glint",contact.x-4,contact.y-4,8,8,Color.clear);flash.rectTransform.localRotation=Quaternion.Euler(0,0,45);
@@ -248,6 +302,12 @@ namespace RequiemLantern.Presentation
                 float speed=autoMode?.72f:1;
                 float approach=(reducedMotion?.10f:.25f)*speed,windup=.16f*speed,swing=.11f*speed;
                 float contactAt=approach+windup+swing,hold=.045f,follow=.12f*speed,recoil=.11f*speed,recover=.18f*speed;
+                if(!clash){
+                    windup=(heavy?.27f:flourish?.11f:sweep?.21f:.16f)*speed;
+                    swing=(heavy?.14f:flourish?.08f:sweep?.14f:.11f)*speed;
+                    hold=heavy?.075f:.045f;follow=(flourish?.23f:heavy?.18f:.12f)*speed;
+                    recover=(heavy?.23f:flourish?.20f:.18f)*speed;contactAt=approach+windup+swing;
+                }
                 float recoilAt=contactAt+hold+follow,recoverAt=recoilAt+recoil,duration=recoverAt+recover;
                 if(clash){approach=(reducedMotion?.06f:.15f)*speed;windup=.10f*speed;swing=.08f*speed;hold=.045f;follow=.06f*speed;recoil=.05f*speed;recover=.10f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
                 Action impact=()=>{
@@ -255,6 +315,7 @@ namespace RequiemLantern.Presentation
                     if(damage&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);
                     PlayCombatSound(clash?"clang":"impact");
                 };
+                bool returnSwung=false;
                 for(float elapsed=0;elapsed<duration;elapsed+=Time.unscaledDeltaTime){
                     if(version!=screenVersion||!fx)yield break;
                     string phase;int attackPose,defendPose;
@@ -279,9 +340,16 @@ namespace RequiemLantern.Presentation
                         actorFoot.y-=Mathf.Sin(arrive*Mathf.PI)*14;
                         if(elapsed>=approach&&elapsed<contactAt){float strike=Smooth((elapsed-approach-windup)/swing);actorFoot.x-=facing*18*(1-strike);if(clash)targetFoot.x+=facing*12*(1-strike);}
                         if(elapsed>=contactAt){float recoilAmount=Mathf.Sin(Mathf.Clamp01(motionAfter/(follow+recoil))*Mathf.PI);actorFoot.x-=facing*12*recoilAmount;targetFoot.x+=facing*(damage?34:18)*recoilAmount;}
+                        if(!clash){
+                            float charge=Mathf.Sin(Mathf.Clamp01((elapsed-approach)/windup)*Mathf.PI);
+                            if(elapsed>=approach&&elapsed<approach+windup){actorFoot.x-=facing*(heavy?32:flourish?18:23)*charge;actorFoot.y+=heavy?8*charge:0;attacker.Lean(facing*(heavy?7:flourish?4:5)*charge);}
+                            if(elapsed>=contactAt&&elapsed<recoilAt){float drive=Mathf.Sin(Mathf.Clamp01(motionAfter/follow)*Mathf.PI);actorFoot.x+=facing*(heavy?24:flourish?42:19)*drive;attacker.Lean(-facing*(heavy?8:flourish?5:4)*drive);}
+                            if(flourish&&elapsed>=contactAt+hold&&elapsed<recoilAt){attacker.SetPose(motionAfter<follow*.48f?CombatPosePlayer.Swing:CombatPosePlayer.FollowThrough);actorFoot.y-=Mathf.Sin(Mathf.Clamp01(motionAfter/follow)*Mathf.PI)*12;}
+                        }
                         if(elapsed>=recoverAt){actorFoot=Vector2.Lerp(actorMeet,attacker.OriginalFoot,returning);targetFoot=Vector2.Lerp(targetMeet,defender.OriginalFoot,returning);}
-                        if(applied&&after<hold)stage.anchoredPosition=stageOrigin+new Vector2(facing*3.5f,2);
-                        else if(applied&&motionAfter<.13f){float strength=1-motionAfter/.13f;stage.anchoredPosition=stageOrigin+new Vector2(facing*3.5f*Mathf.Cos(motionAfter*95),2.5f*Mathf.Sin(motionAfter*130))*strength;}else stage.anchoredPosition=stageOrigin;
+                        float weight=heavy?6:3.5f;
+                        if(applied&&after<hold)stage.anchoredPosition=stageOrigin+new Vector2(facing*weight,2);
+                        else if(applied&&motionAfter<.13f){float strength=1-motionAfter/.13f;stage.anchoredPosition=stageOrigin+new Vector2(facing*weight*Mathf.Cos(motionAfter*95),2.5f*Mathf.Sin(motionAfter*130))*strength;}else stage.anchoredPosition=stageOrigin;
                     }
                     attacker.PlaceFoot(actorFoot);defender.PlaceFoot(targetFoot);
                     marker.Phase=phase;marker.Pose=attackPose;marker.ActorFoot=actorFoot;
@@ -291,6 +359,12 @@ namespace RequiemLantern.Presentation
                     float trailProgress=Mathf.Clamp01((elapsed-approach-windup)/swing),trailFade=elapsed<contactAt?1:Mathf.Clamp01(1-after/.17f);
                     arc.Progress=trailProgress;arc.color=new Color(attackColor.r,attackColor.g,attackColor.b,reducedMotion?0:trailFade*.66f);arc.SetVerticesDirty();
                     if(counter){counter.Progress=trailProgress;Color c=ElementColor(target.Element);counter.color=new Color(c.r,c.g,c.b,reducedMotion?0:trailFade*.62f);counter.SetVerticesDirty();}
+                    if(flourishArc){
+                        float returnProgress=Mathf.Clamp01(motionAfter/(follow*.8f));
+                        float returnAlpha=applied&&motionAfter>0&&motionAfter<follow?Mathf.Sin(returnProgress*Mathf.PI)*.7f:0;
+                        flourishArc.Progress=returnProgress;flourishArc.color=new Color(attackColor.r,attackColor.g,attackColor.b,reducedMotion?0:returnAlpha);flourishArc.SetVerticesDirty();
+                        if(applied&&motionAfter>0&&!returnSwung){returnSwung=true;PlayCombatSound("swing");}
+                    }
                     float burst=applied?Mathf.Clamp01(after/.27f):0,burstAlpha=applied&&!reducedMotion?1-burst:0;
                     float diameter=46+burst*92;seal.rectTransform.sizeDelta=new Vector2(diameter,diameter);seal.rectTransform.anchoredPosition=ToMesh(contact-new Vector2(diameter/2,diameter/2));seal.color=new Color(1,.83f,.48f,burstAlpha*.6f);seal.SetVerticesDirty();
                     flash.color=new Color(1,.95f,.78f,applied&&!reducedMotion?Mathf.Clamp01(1-after/.065f):0);

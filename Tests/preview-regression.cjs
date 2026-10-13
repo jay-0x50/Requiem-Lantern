@@ -12,7 +12,7 @@ const combatSource = fs.readFileSync(path.join(__dirname, '../Preview/combat-fx.
 const storySource = fs.readFileSync(path.join(__dirname, '../Preview/story-view.js'), 'utf8');
 let passed = 0;
 const skill = (id, kind = 'Attack') => ({
-  id, name: id, kind, cost: 0, slots: 1, speed: 10, hitPowers: [6]
+  id, name: id, kind, cost: 0, slots: 1, speed: 10, hitPowers: [6],number:kind==='Guard'?0:/breakthrough|heal/.test(id)?2:1,basePower:4,flamePower:2,flameCount:1
 });
 const state = {
   progress: { lanternFragments: 0, coins: 0, prologueCompleted: false, keepLevel: 0, memoryFragments: 0 },
@@ -30,9 +30,9 @@ const state = {
     outcome: 'Ongoing', phase: 'Link',
     allies: [
       { id: 'lian', name: '리안', hp: 100, maxHp: 100, element: 'Radiance',
-        skills: [skill('lian_glimmer'), skill('lian_breakthrough'), skill('lian_guard', 'Guard')], parts: [] },
+        skills: [skill('lian_glimmer'), skill('lian_breakthrough'), skill('lian_guard', 'Guard')],parts:[],skillHand:[{id:'lian-card-1',skillId:'lian_glimmer'},{id:'lian-card-2',skillId:'lian_breakthrough'}],drawPile:['s1','s1','s2'],discardPile:[] },
       { id: 'minato', name: '미나토', hp: 90, maxHp: 100, element: 'Tide',
-        skills: [skill('minato_glimmer'), skill('minato_heal', 'Heal')], parts: [] }
+        skills: [skill('minato_glimmer'), skill('minato_heal', 'Heal')],parts:[],skillHand:[{id:'minato-card-1',skillId:'minato_glimmer'},{id:'minato-card-2',skillId:'minato_heal'}],drawPile:['s1','s1','s2'],discardPile:[] }
     ],
     enemies: [{ id: 'anger', name: '분노', hp: 100, maxHp: 100, rift: 40, maxRift: 60,
       skills: [], parts: [{ id: 'arm', name: '팔', hp: 30 }, { id: 'core', name: '핵', hp: 30 }] }],
@@ -117,7 +117,7 @@ async function main() {
   pass('boot response flattens nested previews');
 
   env = environment();
-  env.run("page='battle';showBattle=()=>{};tone=()=>{};command=async(action,args)=>{globalThis.record={action,...args};return true};selectedSkill='lian_breakthrough';");
+  env.run("page='battle';showBattle=()=>{};tone=()=>{};command=async(action,args)=>{globalThis.record={action,...args};return true};selectedSkill='lian_breakthrough';selectedCardId='lian-card-2';");
   function pointerDown(actor = 'lian', slot = '0') {
     env.gameEvents.pointerdown({ clientX: 113, clientY: 756, pointerId: 1,
       target: { closest: () => ({ dataset: { actor, slot }, disabled: false }) } });
@@ -130,7 +130,7 @@ async function main() {
   assert.equal(env.context.record.targetId, 'intent1');
   pass('same-slot tactical skill survives drag');
 
-  env.run("suppressClickUntil=0;selectedSkill='lian_breakthrough'");
+  env.run("suppressClickUntil=0;selectedSkill='lian_breakthrough';selectedCardId='lian-card-2'");
   pointerDown(); pointerMove(1392.5, 611.5); env.setHit('anger'); await pointerUp(1392.5, 611.5);
   assert.equal(env.context.record.targetId, 'anger');
   pass('actual body target button wins over nearby core');
@@ -141,7 +141,7 @@ async function main() {
   assert.equal(env.context.record, null);
   pass('attack snapping excludes allied units');
 
-  env.run("suppressClickUntil=0;selectedActor='minato';selectedSlot=0;selectedSkill='minato_heal';");
+  env.run("suppressClickUntil=0;selectedActor='minato';selectedSlot=0;selectedSkill='minato_heal';selectedCardId='minato-card-2';");
   pointerDown('minato'); pointerMove(172, 446); env.setHit(null); await pointerUp(172, 446);
   assert.equal(env.context.record.targetId, 'lian');
   assert.equal(env.context.record.kind, 'Support');
@@ -308,15 +308,17 @@ async function main() {
   env = environment();
   const chapters = campaignFixture(env);
   env.context.showStages();
-  assert.equal((env.game.innerHTML.match(/data-action="chapter:/g) || []).length, 5);
-  assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g) || []).length, 10);
-  assert.ok(env.game.innerHTML.includes('이야기 + 전투'));
-  assert.ok(!env.game.innerHTML.includes('준비 중'));
-  env.context.showStages(3, chapters[2].stages[8].id);
-  assert.ok(env.game.innerHTML.includes('침묵의 기록관'));
-  assert.ok(env.game.innerHTML.includes('stage-enter:c3s09" disabled'));
-  assert.ok(env.game.innerHTML.includes('이브'));
-  pass('campaign map displays all five chapters, ten stages, stage types and locked human finale details');
+  assert.equal((env.game.innerHTML.match(/data-action="chapter:/g) || []).length,1);
+  assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g) || []).length,1);
+  assert.ok(env.game.innerHTML.includes('얼어붙은 폐허'));
+  assert.ok(!env.game.innerHTML.includes('낯선 불꽃'));assert.ok(!env.game.innerHTML.includes('CHAPTER 02'));
+  env.context.showStages(3,chapters[2].stages[8].id);
+  assert.ok(!env.game.innerHTML.includes('침묵의 기록관'));assert.ok(!env.game.innerHTML.includes('이브'));
+  env.run(`for(const stage of data.campaign.chapters[0].stages.slice(0,3)){stage.cleared=true;stage.unlocked=true;}data.campaign.chapters[0].stages[3].unlocked=true;showStages();`);
+  assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g)||[]).length,4);
+  assert.ok(env.game.innerHTML.includes('낯선 불꽃'));assert.ok(!env.game.innerHTML.includes('外壁'));assert.ok(!env.game.innerHTML.includes('외벽의 발소리'));
+  env.context.showArchive();assert.ok(env.game.innerHTML.includes('제1장'));assert.ok(!env.game.innerHTML.includes('제2장'));assert.ok(!env.game.innerHTML.includes('아직 기록된 이야기가 없습니다'));
+  pass('map shows completed and next stages while future chapters, scenes and archive placeholders stay hidden');
 
   env = environment();campaignFixture(env);
   env.run(`tone=()=>{};globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{speaker:'카이',text:'꺼지지 않은 불',portrait:'Kai',listenerPortrait:'Lian',caption:'1-1 · 첫 불씨'}];return true;};`);
@@ -350,7 +352,7 @@ async function main() {
   pass('story-only completion selects the newly unlocked stage without requesting battle rewards');
 
   env = environment();campaignFixture(env);
-  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[6];data.campaign.replay=true;data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'함께 먹은 저녁'}];routeCampaign();globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.phase='Complete';return true;};`);
+  env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[6];data.campaign.activeStage.cleared=true;data.campaign.activeStage.unlocked=true;data.campaign.replay=true;data.campaign.phase='BeforeStory';data.campaign.currentStory=[{text:'함께 먹은 저녁'}];routeCampaign();globalThis.stageCalls=[];command=async(action,args)=>{stageCalls.push({action,...args});data.campaign.phase='Complete';return true;};`);
   await env.context.finishStory();
   assert.equal(env.run('page'),'stages');assert.equal(env.run('selectedStage'),'c1s07');
   assert.deepEqual(Array.from(env.context.stageCalls).map(c=>c.action),['stage-story']);
@@ -365,14 +367,15 @@ async function main() {
   env = environment();
   env.run(`data.battle.allies[0].syncLevel=0;data.battle.allies[0].slotCount=1;data.battle.allies[0].sanity=-20;data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:1,slots:1,kind:'Attack'});showBattle();`);
   assert.ok(env.game.innerHTML.includes('정신력 -20'));assert.ok(env.game.innerHTML.includes('점등 10%'));
-  assert.ok(env.game.innerHTML.includes('3스킬 · 세 번째 불 · 잠김'));assert.ok(env.game.innerHTML.includes('skill:lian_third" title="동기화 1 필요" disabled'));
+  assert.ok(!env.game.innerHTML.includes('세 번째 불'));assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
   assert.equal((env.game.innerHTML.match(/data-action="slot:lian:/g)||[]).length,1);
-  env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].sanity=20;showBattle();`);
-  assert.ok(!env.game.innerHTML.includes('세 번째 불 · 잠김'));assert.ok(env.game.innerHTML.includes('점등 90%'));
-  pass('sanity probability bounds, synchronization-locked third skill and single-slot actor appear correctly');
+  assert.ok(env.game.innerHTML.includes('카드 구성 1×3 / 2×2'));
+  env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].sanity=20;data.battle.allies[0].skillHand[1]={id:'lian-card-3',skillId:'lian_third'};showBattle();`);
+  assert.ok(env.game.innerHTML.includes('3스킬 · 세 번째 불'));assert.ok(env.game.innerHTML.includes('/ 3×1'));assert.ok(env.game.innerHTML.includes('점등 90%'));
+  pass('battle offers exactly two actual cards plus defense, with synchronized third skills appearing only when drawn');
 
   env = environment();
-  env.run(`data.battle.allies[0].skills.push({id:'lian_evade',name:'회피',kind:'Evade',cost:0,slots:1});selectedSkill='lian_evade';globalThis.defenseCall=null;command=async(action,args)=>{defenseCall={action,...args};return true;};showBattle=()=>{};`);
+  env.run(`data.battle.allies[0].skills.push({id:'lian_evade',name:'회피',kind:'Evade',cost:0,slots:1});selectedSkill='lian_evade';selectedCardId='';globalThis.defenseCall=null;command=async(action,args)=>{defenseCall={action,...args};return true;};showBattle=()=>{};`);
   await env.context.linkTarget('lian');
   assert.equal(env.context.defenseCall.kind,'Guard');
   assert.deepEqual(Array.from(env.context.validDropTargets(env.run("skill('lian','lian_evade')"))),['lian','minato']);
@@ -407,6 +410,33 @@ async function main() {
   env.run(`data.progress.prologueCompleted=true;data.campaign.activeStage=data.campaign.chapters[0].stages[3];data.campaign.phase='Battle';page='title';tone=()=>{};globalThis.exitCalls=[];command=async(action,args)=>{exitCalls.push({action,...args});data.campaign.activeStage=null;return true;};`);
   await env.click('begin');assert.equal(env.run('page'),'hub');assert.equal(env.context.exitCalls[0].action,'stage-exit');
   pass('returning from reloaded title also clears an active server battle before opening the keep');
+
+
+  env=environment();
+  env.run(`data.battle.allies[0].skillHand=[{id:'duplicate-one',skillId:'lian_glimmer'},{id:'duplicate-two',skillId:'lian_glimmer'}];selectFirstFighter();showBattle();tone=()=>{};globalThis.cardCalls=[];command=async(action,args)=>{cardCalls.push({action,...args});return true;};`);
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
+  await env.click('skill-card:duplicate-two');await env.context.linkTarget('intent1');
+  assert.equal(env.context.cardCalls[0].cardId,'duplicate-two');assert.equal(env.context.cardCalls[0].skillId,'lian_glimmer');
+  env.run(`data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'duplicate-two',kind:'Clash',targetId:'intent1'}];selectedSlot=1;selectedCardId='';selectedSkill='lian_glimmer';showBattle();`);
+  assert.equal(env.run('selectedCardId'),'duplicate-one');
+  assert.ok(env.game.innerHTML.includes('data-card-id="duplicate-two" title="제시된 카드 2 · 기본 위력 4 · 켜진 불마다 +2" disabled'));
+  await env.click('slot:lian:0');assert.equal(env.run('selectedCardId'),'duplicate-two');
+  pass('identical offered skills retain distinct card identities and another slot cannot reserve the same card');
+
+  env=environment();
+  env.run(`page='battle';selectedActor='lian';selectedSlot=0;selectedSkill='lian_glimmer';selectedCardId='lian-card-1';data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'lian-card-1',kind:'Strike',targetId:'anger'}];tone=()=>{};command=async(action,args)=>{globalThis.dragCardCall={action,...args};return true;};`);
+  await env.click('skill-card:lian-card-2');
+  env.gameEvents.pointerdown({clientX:113,clientY:756,pointerId:2,target:{closest:()=>({dataset:{actor:'lian',slot:'0'},disabled:false})}});
+  env.events.pointermove({clientX:945,clientY:270,pointerId:2});env.setHit('intent1');await env.events.pointerup({clientX:945,clientY:270,pointerId:2});
+  assert.equal(env.context.dragCardCall.cardId,'lian-card-2');assert.equal(env.context.dragCardCall.skillId,'lian_breakthrough');
+  pass('same-slot drag uses a newly selected offered card when replacing an existing connection');
+
+  env=environment();
+  env.run(`tone=()=>{};selectedCardId='lian-card-2';globalThis.guardCardCall=null;command=async(action,args)=>{guardCardCall={action,...args};return true;};`);
+  await env.click('skill:lian_guard');await env.context.linkTarget('lian');
+  assert.equal(env.context.guardCardCall.cardId,'');assert.equal(env.context.guardCardCall.kind,'Guard');
+  assert.equal(env.run('selectedCardId'),'');
+  pass('defense remains available outside the card bag and sends no attack card identity');
 
   console.log('TOTAL ' + passed + ' regression cases passed');
 }

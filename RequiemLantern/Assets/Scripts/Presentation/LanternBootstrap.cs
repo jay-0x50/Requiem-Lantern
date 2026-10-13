@@ -86,6 +86,8 @@ namespace RequiemLantern.Presentation
             if(!CampaignRules.IsCleared(progress.Data,firstChapter.Stages[0])||progress.Data.Coins!=0||!CampaignRules.IsUnlocked(progress.Data,firstChapter.Stages[1]))
                 throw new Exception("Story-only stage did not complete freely and unlock stage 1-2.");
             yield return Capture(directory,"12-campaign-map");
+            if(!screen.Find("Stage "+firstChapter.Stages[0].Id)||!screen.Find("Stage "+firstChapter.Stages[1].Id)||screen.Find("Stage "+firstChapter.Stages[2].Id)||screen.Find("Chapter 2"))
+                throw new Exception("Campaign map displayed future stages or hid completed/current stages.");
             EnterCampaignStage(firstChapter.Stages[1].Id);FinishCurrentStory();
             if(page!="battle"||battle.State.Allies.Count!=1||campaign.Phase!=CampaignPhase.Battle)throw new Exception("Mixed stage 1-2 did not enter its solo Lian battle.");
             yield return Capture(directory,"13-campaign-solo-battle");
@@ -98,6 +100,15 @@ namespace RequiemLantern.Presentation
             if(CampaignRules.IsCleared(progress.Data,firstChapter.Stages[1])||campaign.Phase!=CampaignPhase.AfterStory)throw new Exception("Mixed stage completed before its after-story.");
             ContinueCampaign();revealed=999;yield return Capture(directory,"14-campaign-after-story");FinishCurrentStory();
             if(!CampaignRules.IsCleared(progress.Data,firstChapter.Stages[1])||!CampaignRules.IsUnlocked(progress.Data,firstChapter.Stages[2]))throw new Exception("Mixed stage after-story did not complete/unlock its successor.");
+            EnterCampaignStage(firstChapter.Stages[2].Id);FinishCurrentStory();
+            for(int stageIndex=0;stageIndex<firstChapter.Stages.Count;stageIndex++){
+                bool displayed=screen.Find("Stage "+firstChapter.Stages[stageIndex].Id);
+                if(displayed!=(stageIndex<4))throw new Exception("Campaign map must show completed 1-1..1-3 and frontier 1-4 only.");
+            }
+            if(screen.Find("Chapter 2"))throw new Exception("Locked future chapter tab was displayed.");
+            yield return Capture(directory,"16-stage-frontier");
+            ShowArchive();
+            if(!screen.Find("Stage "+firstChapter.Stages[2].Id)||screen.Find("Stage "+firstChapter.Stages[3].Id))throw new Exception("Archive displayed an unfinished stage.");
             var meal=firstChapter.Stages[6];CampaignRules.Complete(progress.Data,meal);
             int coinsBeforeReplay=progress.Data.Coins;
             EnterCampaignStage(meal.Id,true);storyIndex=1;DrawStory();revealed=999;yield return Capture(directory,"15-campaign-ensemble");FinishCurrentStory();
@@ -122,12 +133,34 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Reading archived character drafts unexpectedly changed rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
             int coinsBeforeLegacy=progress.Data.Coins;
-            StartBattle();battle.RecommendLinks();DrawBattle();yield return Capture(directory,"06-battle");
+            // Use an actual shuffled duplicate S1 hand so the UI is exercised with
+            // two distinct copies, rather than substituting an authored test hand.
+            int duplicateSeed=Enumerable.Range(0,100).First(seed=>{
+                var candidate=BattleEngine.CreatePrototype(progress.Data,seed);var actor=candidate.Unit("lian");
+                return actor.SkillHand.Count==2&&actor.SkillHand.All(card=>candidate.Skill(actor.Id,card.SkillId).Number==1);
+            });
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,duplicateSeed);PrepareBattlePresentation();
+            var duplicateCards=battle.Unit("lian").SkillHand.ToArray();
+            if(screen.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal))!=2)
+                throw new Exception("Battle sidebar did not display exactly two offered skill cards.");
+            screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().onClick.Invoke();Target(battle.State.Intents[0].Id);
+            if(battle.State.Links.Single(l=>l.ActorId=="lian").CardId!=duplicateCards[0].Id)throw new Exception("Selected card identity was not retained in its action link.");
+            SelectSlot("lian",1);
+            if(selectedCard!=duplicateCards[1].Id||screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().interactable)
+                throw new Exception("Reserved duplicate card remained available for the other action slot.");
+            Target(battle.State.Intents[1].Id);
+            if(battle.State.Links.Where(l=>l.ActorId=="lian").Select(l=>l.CardId).Distinct().Count()!=2)throw new Exception("Two actions reused the same offered card.");
+            SelectSlot("lian",0);if(selectedCard!=duplicateCards[0].Id)throw new Exception("Selecting an existing action did not restore its card.");
+            SelectSlot("lian",1);if(selectedCard!=duplicateCards[1].Id)throw new Exception("Selecting the second existing action did not restore its card.");
+            yield return Capture(directory,"17-skill-bag");
+            battle.RecommendLinks();DrawBattle();yield return Capture(directory,"06-battle");
             smokePhase="first round battlefield effects (60 second deadline)";
             smokeDeadline=Time.realtimeSinceStartup+60;
             var initialHealth=battle.State.Allies.Concat(battle.State.Enemies).ToDictionary(unit=>unit.Id,unit=>unit.Hp);
             bool requiresClash=battle.State.Links.Any(link=>link.Kind==LinkKind.Clash);
             bool capturedImpact=false,capturedWindup=false,capturedRecoil=false,sawClash=false,sawHealthChange=false;
+            bool capturedFlameSuspense=false,completedFlameReveal=false;
+            FlameRevealMarker testedFlames=null;int flameHealth=0,lastRevealed=0;
             CombatPhaseMarker testedMelee=null;Rect windupUv=default;int windupHealth=0;
             assisted=true;autoMode=false;
             StartCoroutine(Resolve());
@@ -135,6 +168,16 @@ namespace RequiemLantern.Presentation
             while(resolving||page=="resolve"){
                 if(Time.realtimeSinceStartup>smokeDeadline)throw new TimeoutException("Battlefield Resolve did not return within 60 seconds.");
                 if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Resolve raised an asynchronous exception: "+smokeAsyncError);
+                var reveal=overlay?overlay.GetComponentInChildren<FlameRevealMarker>():null;
+                if(!capturedFlameSuspense&&reveal&&reveal.Total>0&&reveal.Revealed==0){
+                    testedFlames=reveal;flameHealth=visibleHealth.Values.Sum();lastRevealed=0;
+                    yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"18-flame-suspense");capturedFlameSuspense=true;
+                }
+                if(testedFlames&&!completedFlameReveal){
+                    if(testedFlames.Revealed<lastRevealed||testedFlames.Revealed>testedFlames.Total)throw new Exception("Flame reveal did not progress monotonically to its final count.");
+                    if(visibleHealth.Values.Sum()!=flameHealth)throw new Exception("Health changed while flames were still revealing.");
+                    lastRevealed=testedFlames.Revealed;completedFlameReveal=lastRevealed==testedFlames.Total;
+                }
                 var damage=overlay?overlay.Find("FX Damage"):null;
                 var feedback=damage?damage.Find("Battle feedback"):null;
                 var number=feedback?feedback.GetComponent<Text>():null;
@@ -167,6 +210,7 @@ namespace RequiemLantern.Presentation
                 yield return null;
             }
             if(!capturedWindup||!capturedImpact||!capturedRecoil||!sawHealthChange||(requiresClash&&!sawClash))throw new Exception("Smoke missed atlas windup/contact/recoil, weapon clash or sequential health change.");
+            if(!capturedFlameSuspense||!completedFlameReveal)throw new Exception("Smoke missed the unrevealed flame phase or its sequential completion before damage.");
             if(page!="battle"||resolving||overlay||battle.State.Round!=2||battle.State.Outcome!=BattleOutcome.Ongoing)
                 throw new Exception("First visual round did not return cleanly to round 2 planning.");
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies)){
@@ -188,13 +232,13 @@ namespace RequiemLantern.Presentation
             if(save.Load().Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not persisted to the isolated save.");
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
                 "08-character-stories","09-lian-story","10-lian-ending","09-sera-story","10-sera-ending","09-noa-story","10-noa-ending",
-                "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble"};
+                "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble","16-stage-frontier","17-skill-bag","18-flame-suspense"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
-                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-four fresh screenshots.");yield return null;
+                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-seven fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 24 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.\nRowan, Ellen and Eve speaker labels displayed; archived character drafts returned to selection without changing rewards. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.\nRowan, Ellen and Eve speaker labels displayed; archived character drafts returned to selection without changing rewards. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Two offered duplicate skill cards displayed, reserved individually and restored by action selection. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
         }
         bool FreshSmokeScreenshot(string path)

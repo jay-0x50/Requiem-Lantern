@@ -5,7 +5,7 @@ $url='http://127.0.0.1:8127/'
 $state=$null
 try { $state=Invoke-RestMethod ($url+'api/state') -TimeoutSec 2 } catch { }
 if ($state) {
-    if ($state.application -eq 'RequiemLantern' -and $state.runtimeRevision -eq 'campaign-sanity-v1') {
+    if ($state.application -eq 'RequiemLantern' -and $state.runtimeRevision -eq 'skill-deck-v2') {
         if (-not $NoBrowser) { Start-Process $url }
         Write-Output "Preview is already running: $url"
         return

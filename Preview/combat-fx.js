@@ -6,7 +6,7 @@ class LanternCombatFX {
  constructor(root, options={}) {
   this.root=root; this.options=options; this.epoch=0; this.pending=new Map();
   this.units=new Map(); this.parts=new Map(); this.cancelled=new Set();
-  this.atlases=new Map();
+  this.atlases=new Map();this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();
   // Decode ahead of combat. Failed or unfinished loads retain the original portrait.
   if(typeof Image!=='undefined')for(const name of ['Lian','Sera','Minato','Anger']){
    const asset={ready:false,image:new Image()};this.atlases.set(name.toLowerCase(),asset);
@@ -18,7 +18,7 @@ class LanternCombatFX {
   this.clear(); this.battle=battle;
   this.units=new Map([...battle.allies,...battle.enemies].map(u=>[u.id,{...u}]));
   this.parts=new Map(battle.enemies.flatMap(u=>u.parts.map(p=>[p.id,{...p}])));
-  this.cancelled=new Set(); this.active=null;
+  this.cancelled=new Set();this.rollActors=new Set();this.presentationElapsed=0;this.tensionCount=0;this.lastClash=null;this.active=null;
   this.root.querySelector('.battle')?.insertAdjacentHTML('beforeend',
    '<div class="combat-fx" aria-hidden="true"></div><div class="drag-cursor" aria-hidden="true"><i></i><span></span></div><div class="combat-caption" role="status" aria-live="polite"><div class="caption-overline">RESONANCE / 連光</div><strong></strong><span></span><div class="playback-progress"><i></i></div></div>');
  }
@@ -28,9 +28,18 @@ class LanternCombatFX {
   for(const [id,done] of this.pending){clearTimeout(id);done(false);}this.pending.clear();
   this.root.querySelectorAll('.combat-fx,.combat-caption,.drag-cursor').forEach(n=>n.remove());
   this.root.querySelectorAll('.fx-active,.drop-ready,.drop-focus,.fx-lunge,.fx-hit').forEach(n=>n.classList.remove('fx-active','drop-ready','drop-focus','fx-lunge','fx-hit'));
-  this.root.querySelector('.battle')?.classList.remove('resolving','fx-shake');
+  this.root.querySelector('.battle')?.classList.remove('resolving','fx-shake','tension-roll');
  }
  wait(ms){return new Promise(done=>{const id=setTimeout(()=>{this.pending.delete(id);done(true);},ms);this.pending.set(id,done);});}
+ step(ms){
+  const remaining=Math.max(0,28000-this.presentationElapsed),duration=Math.min(Math.max(0,ms),remaining);
+  this.presentationElapsed+=duration;
+  return duration>0?this.wait(duration):Promise.resolve(true);
+ }
+ attackStyle(e,clash){
+  if(clash||(!e.skillId&&!e.skillNumber))return'clash';
+  return ({lian:'shield-blow',sera:'double-slash',minato:'staff-wave'}[e.actorId])||'strike';
+ }
  point(id){
   if(!this.battle||!id)return null;
   let i=this.battle.allies.findIndex(u=>u.id===id);if(i>=0)return{x:172+i*265,y:446};
@@ -114,7 +123,7 @@ class LanternCombatFX {
  releaseMelee(){
   for(const fighter of this.meleePair||[]){if(!fighter)continue;fighter.original.style.visibility=fighter.visibility;fighter.wrapper.remove();}
   this.meleePair=null;
-  const stage=this.root.querySelector('.battle');if(stage){stage.classList.remove('melee-active','hit-stop','contact-kick');stage.dataset.combatPhase='';}
+  const stage=this.root.querySelector('.battle');if(stage){stage.classList.remove('melee-active','hit-stop','contact-kick');stage.dataset.combatPhase='';stage.dataset.attackStyle='';}
  }
  async melee(e,fast,epoch,clash){
   // Atlas cells share one foot pivot. Translation belongs to the wrapper;
@@ -125,7 +134,9 @@ class LanternCombatFX {
   const defender=ongoing?this.meleePair.find(f=>f?.id===e.targetId):this.createFighter(e.targetId,this.units.get(e.targetId)?.isEnemy?'enemy-side':'ally-side');
   const pair=[attacker,defender];this.meleePair=pair;
   const stage=this.root.querySelector('.battle');stage?.classList.add('melee-active');
-  const pause=ms=>this.wait(this.motion?ms*(fast?.76:1):90);
+  const pause=ms=>this.step(this.motion?ms*(fast?.76:1):90);
+  const style=this.attackStyle(e,clash),special=this.motion&&e.type==='Damage'&&style!=='clash',heavy=special&&style==='shield-blow';
+  if(stage){stage.dataset.attackStyle=style;stage.dataset.skillNumber=String(e.skillNumber||0);}
   const valid=()=>epoch===this.epoch;
   const attackFrame=clash&&e.actorId==='anger'&&e.targetId==='sera'?3:2;
   const counterFrame=clash&&e.targetId==='anger'&&e.actorId==='sera'?3:2;
@@ -140,28 +151,36 @@ class LanternCombatFX {
     for(const f of pair)this.place(f,center(f),0,fast?130:180);
     if(!await pause(180)||!valid())return;
    }
-   this.setPosePhase(pair,'windup');this.pose(attacker,1,'windup');this.pose(defender,clash?1:0,'windup');
-   this.place(attacker,center(attacker)-direction(attacker)*24,-direction(attacker)*5,100);
+   this.setPosePhase(pair,'windup');this.pose(attacker,heavy?4:1,'windup');this.pose(defender,clash?1:0,'windup');
+   this.place(attacker,center(attacker)-direction(attacker)*(heavy?42:24),-direction(attacker)*(heavy?7:5),100);
    if(clash)this.place(defender,center(defender)-direction(defender)*18,-direction(defender)*4,100);
-   if(!await pause(['Clash','Tie'].includes(e.type)?80:150)||!valid())return;
+   if(!await pause(['Clash','Tie'].includes(e.type)?80:heavy?180:style==='double-slash'?80:style==='staff-wave'?115:150)||!valid())return;
+   if(special&&style==='double-slash'){
+    this.setPosePhase(pair,'feint');this.pose(attacker,2,'feint');this.place(attacker,center(attacker)-direction(attacker)*12,-direction(attacker)*3,45);
+    this.options.impact?.('swish',0);this.expire(this.node('weapon-cut feint-cut',hit,this.tint(e.actorId)),190);
+    if(!await pause(65)||!valid())return;this.pose(attacker,3,'feint');
+    if(!await pause(55)||!valid())return;
+   }
    this.setPosePhase(pair,'swing');this.pose(attacker,attackFrame,'swing');if(clash)this.pose(defender,counterFrame,'swing');
    this.place(attacker,center(attacker),0,70);
    if(clash)this.place(defender,center(defender),0,70);
    this.options.impact?.('swish',e.amount);
-   if(!await pause(75)||!valid())return;
+   if(!await pause(style==='double-slash'&&special?45:75)||!valid())return;
    this.setPosePhase(pair,'contact');this.pose(attacker,attackFrame,'contact');this.pose(defender,clash?counterFrame:5,'contact');
    if(e.type==='Damage')this.applyEvent(e);
    this.options.impact?.(clash?'clash':'hit',e.amount);
    if(this.motion){
     stage?.classList.add('hit-stop','contact-kick');
     this.shards(hit,clash?'#ffdea1':this.tint(e.actorId));
-    this.expire(this.node('weapon-cut '+(direction(attacker)<0?'reverse':''),hit,this.tint(e.actorId)),230);
+    if(special&&style==='staff-wave')this.expire(this.node('staff-wave',hit,'#9eddd8'),350);
+    else this.expire(this.node('weapon-cut '+(heavy?'heavy-cut ':style==='double-slash'?'second-cut ':'')+(direction(attacker)<0?'reverse':''),hit,this.tint(e.actorId)),heavy?330:230);
+    if(heavy){this.pulse(hit,'#ffdd95',true);this.expire(this.node('shield-impact',hit,'#ffe0a0'),300);}
     if(clash)this.expire(this.node('weapon-contact',hit,'#ffe4b0'),170);
    }
    if(e.type==='Damage')this.expire(this.node('fx-number', this.motion?{x:center(defender),y:320}:this.point(e.targetId),this.tint(e.targetId),String(e.amount)),800);
    else {this.caption(e.type==='Tie'?'맞불 · 무승부':'맞불 · '+(e.winnerStreak||0)+'연속 우세',e.message);this.expire(this.node('fx-link-label',hit,'#ffdfa5',e.type==='Tie'?'무승부':(e.winnerStreak||0)+'연속'),600);}
    // Both silhouettes hold on the exact contact pose before the recoil.
-   if(!await this.wait(this.motion?65:90)||!valid())return;
+   if(!await this.step(this.motion?(heavy?100:style==='double-slash'&&special?45:65):90)||!valid())return;
    stage?.classList.remove('hit-stop');
    this.setPosePhase(pair,'recoil');this.pose(attacker,3,'recoil');this.pose(defender,e.type==='Damage'?5:4,'recoil');
    this.place(defender,center(defender)-direction(defender)*(e.type==='Damage'?46:22),-direction(defender)*7,110);
@@ -218,31 +237,65 @@ class LanternCombatFX {
  }
  sync(battle){this.units=new Map([...battle.allies,...battle.enemies].map(u=>[u.id,{...u}]));this.parts=new Map(battle.enemies.flatMap(u=>u.parts.map(p=>[p.id,{...p}])));this.paint();}
  showFlameRoll(e){
+  this.rollActors=new Set([e.actorId,...(e.enemyFlameStates?.length?[e.targetId]:[])]);
   this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());
-  const card=this.node('flame-roll',{x:1055,y:150});if(!card)return;
+  const card=this.node('flame-roll',{x:1055,y:150});if(!card)return null;
   card.dataset.clashIndex=String(e.clashIndex||0);
   const title=document.createElement('div');title.className='flame-roll-title';title.textContent=e.clashIndex?`맞불 ${e.clashIndex}회 · 2연속 우세를 겨룹니다`:'스킬 점등';card.appendChild(title);
-  const make=(states,power,sanity,enemy,id)=>{
+  const sides=[];
+  const make=(states,power,sanity,enemy,id,base,flamePower)=>{
    const side=document.createElement('div');side.className='flame-roll-side'+(enemy?' darkness':'');
    const label=document.createElement('small');label.textContent=(this.units.get(id)?.name||'')+' · 정신력 '+((sanity||0)>0?'+':'')+(sanity||0);side.appendChild(label);
-   const flames=document.createElement('div');flames.className='rolled-flames';
-   for(const state of states||[]){const flame=document.createElement('i');flame.className='flame '+(state?'on':'off');flame.dataset.flame=state?'on':'off';flames.appendChild(flame);}side.appendChild(flames);
-   const value=document.createElement('strong');value.textContent=String(Math.round((power??0)*10)/10);side.appendChild(value);card.appendChild(side);
+   const flames=document.createElement('div');flames.className='rolled-flames';const lamps=[];
+   for(const state of states||[]){const lamp=document.createElement('i');lamp.className='flame unknown';lamp.dataset.flame='unknown';flames.appendChild(lamp);lamps.push(lamp);}side.appendChild(flames);
+   const value=document.createElement('strong');value.textContent='—';side.appendChild(value);card.appendChild(side);
+   sides.push({states:states||[],lamps,value,power:power||0,base:base||0,flamePower:flamePower||0,lit:0,enemy});
   };
-  make(e.flameStates,e.actorPower,e.actorSanity,this.units.get(e.actorId)?.isEnemy,e.actorId);
-  if(e.enemyFlameStates?.length)make(e.enemyFlameStates,e.targetPower,e.targetSanity,this.units.get(e.targetId)?.isEnemy,e.targetId);
+  make(e.flameStates,e.actorPower,e.actorSanity,this.units.get(e.actorId)?.isEnemy,e.actorId,e.basePower,e.flamePower);
+  if(e.enemyFlameStates?.length)make(e.enemyFlameStates,e.targetPower,e.targetSanity,this.units.get(e.targetId)?.isEnemy,e.targetId,e.enemyBasePower,e.enemyFlamePower);
+  return{card,sides};
+ }
+ revealFlame(side,index){
+  const state=side.states[index];if(index>=side.states.length)return;
+  const lamp=side.lamps[index];lamp.className='flame '+(state?'on':'off');lamp.dataset.flame=state?'on':'off';side.lit+=state?1:0;
+  const rawFinal=side.base+side.states.filter(Boolean).length*side.flamePower,partial=side.base+side.lit*side.flamePower;
+  if(side.base>0&&rawFinal>0)side.value.textContent=String(Math.round(side.power*partial/rawFinal*10)/10);
+  if(index===side.states.length-1)side.value.textContent=String(Math.round(side.power*10)/10);
+ }
+ async animateFlameRoll(e,fast,epoch){
+  const roll=this.showFlameRoll(e);if(!roll)return;
+  const stage=this.root.querySelector('.battle'),actor=this.units.get(e.actorId),close=!!e.enemyFlameStates?.length&&Math.abs(e.actorPower-e.targetPower)<=2;
+  const dramatic=this.motion&&!fast&&this.tensionCount<2&&this.presentationElapsed<22000&&((e.clashIndex>=2&&this.lastClash?.winnerStreak===1)||close||(actor&&actor.hp/actor.maxHp<=.35));
+  const count=Math.max(1,...roll.sides.map(s=>s.states.length));
+  if(!this.motion){for(const side of roll.sides)for(let index=0;index<side.states.length;index++)this.revealFlame(side,index);this.caption(e.clashIndex?'맞불 · 점등':'스킬 · 점등',e.message,'③ 실행 · 정신력과 불');await this.step(110);return;}
+  if(dramatic){this.tensionCount++;roll.card.classList.add('tension');stage?.classList.add('tension-roll');}
+  const total=dramatic?820:fast?220:280,lead=dramatic?90:30,hold=dramatic?200:50,beat=(total-lead-hold)/count;
+  try{
+   if(!await this.step(lead)||epoch!==this.epoch)return;
+   for(let index=0;index<count;index++){
+    for(const side of roll.sides){const lamp=side.lamps[index];if(lamp)lamp.classList.add('flicker');}
+    if(!await this.step(beat*.45)||epoch!==this.epoch)return;
+    for(const side of roll.sides){this.revealFlame(side,index);if(index<side.states.length)this.options.sound?.(side.states[index]?(side.enemy?620:850)+index*70:240,.055);}
+    if(!await this.step(beat*.55)||epoch!==this.epoch)return;
+   }
+   for(const side of roll.sides)side.value.textContent=String(Math.round(side.power*10)/10);
+   roll.card.classList.add('decided');this.caption(e.clashIndex?'맞불 · 점등':'스킬 · 점등',e.message,'③ 실행 · 정신력과 불');this.options.sound?.(dramatic?1040:760,.08);
+   await this.step(hold);
+  }finally{if(epoch===this.epoch)stage?.classList.remove('tension-roll');}
  }
  async event(e,fast,epoch){
-  const pause=ms=>this.wait(this.motion?(fast?ms*.7:ms):110),a=this.point(e.actorId),b=this.point(e.targetId),c=this.tint(e.actorId);
+  const pause=ms=>this.step(this.motion?(fast?ms*.7:ms):110),a=this.point(e.actorId),b=this.point(e.targetId),c=this.tint(e.actorId);
   if(e.type==='Ignite'){
+   this.lastClash=null;this.rollActors.clear();this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());
    this.root.querySelectorAll('.fx-active').forEach(n=>n.classList.remove('fx-active'));
    this.active={actor:e.actorId,target:e.targetId,clash:this.battle.intents.some(i=>i.id===e.targetId)};
    this.portrait(e.actorId)?.classList.add('fx-active');this.target(e.targetId)?.classList.add('fx-active');
    this.caption(e.message,this.active.clash?'불과 어둠을 밝혀 두 번 연속 우세를 겨룹니다':'공격 자세를 잡습니다','③ 실행 · 점등 / 격돌 / 타격');await pause(230);
   }else if(e.type==='FlameRoll'){
-   this.showFlameRoll(e);this.caption(e.clashIndex?'맞불 · 점등':'스킬 · 점등',e.message,'③ 실행 · 정신력과 불');await pause(220);
+   this.caption(e.clashIndex?'맞불 · 점등':'스킬 · 점등',e.enemyFlameStates?.length?'불과 어둠의 위력을 판정합니다…':this.units.get(e.actorId)?.isEnemy?'어둠의 발현을 확인합니다…':'불의 점등을 확인합니다…','③ 실행 · 정신력과 불');await this.animateFlameRoll(e,fast,epoch);
   }else if(e.type==='Damage'||e.type==='Tie'||e.type==='Clash'){
-   const clash=e.type!=='Damage';
+   const clash=e.type!=='Damage';if(clash)this.lastClash=e;
+   if(e.type==='Damage'&&!this.rollActors.has(e.actorId)){this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());this.rollActors.clear();}
    this.caption(clash?'맞불 · 무기 격돌':this.units.get(e.actorId)?.isEnemy?'적의 공격':'공격',e.message,'③ 실행 · 격돌 / 타격');
    await this.melee(e,fast,epoch,clash);
   }else{
@@ -267,7 +320,7 @@ class LanternCombatFX {
   }
  }
  async play(events,finalBattle,{fast=false}={}){
-  const epoch=this.epoch;this.root.querySelector('.battle')?.classList.add('resolving');
+  const epoch=this.epoch;this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();this.lastClash=null;this.root.querySelector('.battle')?.classList.add('resolving');
   const phase=this.root.querySelector('.phase');if(phase)phase.textContent='ROUND '+String(this.battle.round).padStart(2,'0')+' / ③ 실행';
   for(let i=0;i<events.length;i++){
    if(epoch!==this.epoch)return false;

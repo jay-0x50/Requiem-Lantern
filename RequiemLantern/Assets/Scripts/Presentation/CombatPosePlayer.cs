@@ -31,7 +31,15 @@ namespace RequiemLantern.Presentation
         public RawImage Attacker, Defender;
         public Vector2 ActorFoot, ContactPoint;
         public bool AtlasActive, FrameLayoutActive, Clash;
-        public int Pose;
+        public int Pose, SkillNumber;
+        public string SkillId;
+    }
+
+    public sealed class FlameRevealMarker : MonoBehaviour
+    {
+        public int Revealed, Total;
+        public bool Tense;
+        public float Duration;
     }
 
     // A temporary foreground performer. The planning portrait is restored on every exit.
@@ -111,6 +119,10 @@ namespace RequiemLantern.Presentation
 
         public void PlaceFoot(Vector2 point)
         {if(rect)rect.anchoredPosition=new Vector2(point.x,-point.y);}
+
+        // Rotate around the planted foot, after SetPose has chosen the source frame.
+        public void Lean(float degrees)
+        {if(rect)rect.localRotation*=Quaternion.Euler(0,0,degrees);}
 
         // Top-down canvas offset from the planted foot to the actual blade/fist contact.
         public Vector2 ContactOffset(int pose)

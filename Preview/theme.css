@@ -402,3 +402,5 @@
 .skill-panel{flex:1;min-width:350px}.skill-panel .skill-title{font-size:12px;margin-bottom:8px}.skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.skills button{height:40px;font-size:11px;padding:5px 10px;display:flex;align-items:center;justify-content:space-between;gap:5px}.skills button span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.skills .flame-badges{margin:0;gap:3px}.skills .flame{width:7px;height:10px}.skills button small{font-size:9px;white-space:nowrap}.skill-actions{margin-top:8px}.skill-actions button{height:36px;font-size:14px}
 
 .enemy-stats{z-index:6;pointer-events:none}.enemy-stats .name,.enemy-sanity,.enemy-stats small{text-shadow:0 2px 4px #000,0 0 6px #000}
+
+.deck-status{font-size:10px;color:#95a6bb;letter-spacing:.03em;margin:0 0 6px}.skills{grid-template-columns:repeat(2,minmax(0,1fr))}.skill-panel .skill-title{margin-bottom:3px}.skills button:last-child:nth-child(odd){grid-column:1 / -1}.campaign-map{align-items:start}

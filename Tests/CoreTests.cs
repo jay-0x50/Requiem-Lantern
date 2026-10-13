@@ -24,21 +24,22 @@ internal static class CoreTests
             }
             Equal(SkillKind.Evade,PrototypeData.CreateCharacter("sera").Skills.Single(BattleRules.IsDefensive).Kind);
             Equal(SkillKind.Counter,PrototypeData.CreateCharacter("heidel").Skills.Single(BattleRules.IsDefensive).Kind);
+            False(BattleRules.IsSkillUnlocked(new UnitState(),new SkillData{Number=3}));
         });
         Test("slot occupancy, synchronization lock and budget are atomic", () => {
             var b = BattleEngine.CreatePrototype(seed:1); string error;
             False(b.TryLink("lian",0,"lian_crescendo",LinkKind.Strike,"anger",out error)); Equal(0,b.State.Links.Count);
-            b.Unit("lian").SyncLevel=1;
+            b.Unit("lian").SyncLevel=1; ForceHand(b.Unit("lian"),"lian_crescendo","lian_glimmer"); ForceHand(b.Unit("sera"),"sera_slash","sera_glimmer");
             True(b.TryLink("lian", 0, "lian_crescendo", LinkKind.Strike, "anger", out error)); Equal(3, b.PlannedCost);
             False(b.TryLink("sera", 0, "sera_slash", LinkKind.Strike, "anger", out error)); Equal(1, b.State.Links.Count);
             True(b.TryLink("lian", 1, "lian_glimmer", LinkKind.Strike, "anger", out error)); Equal(0, b.PlannedCost); Equal(1, b.State.Links.Count);
             False(b.TryLink("lian", 1, "lian_crescendo", LinkKind.Strike, "anger", out error)); Equal(0, b.PlannedCost);
             False(b.TryLink("lian", 2, "lian_glimmer", LinkKind.Strike, "anger", out error));
-            True(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Clash, b.State.Intents[0].Id, out error));
+            b.RemoveLink("lian",1); True(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Clash, b.State.Intents[0].Id, out error));
             False(b.TryLink("sera", 0, "sera_glimmer", LinkKind.Clash, b.State.Intents[0].Id, out error));
         });
         Test("support slot and target restrictions", () => {
-            var b = BattleEngine.CreatePrototype(); b.Unit("minato").IsSupport = true; string error;
+            var b = BattleEngine.CreatePrototype(); ForceHand(b.Unit("minato"),"minato_heal","minato_glimmer"); b.Unit("minato").IsSupport = true; string error;
             Equal(1, b.Unit("minato").SlotCount);
             False(b.TryLink("minato", 0, "minato_glimmer", LinkKind.Strike, "anger", out error));
             False(b.TryLink("minato", 1, "minato_heal", LinkKind.Support, "lian", out error));
@@ -99,14 +100,14 @@ internal static class CoreTests
             var b=Fixture(1,9,1,new ScriptedRandom(0));b.ResolveRound();Equal(85,b.Unit("hero").Hp);
         });
         Test("part break cancels forecast and redirects clash", () => {
-            var b = BattleEngine.CreatePrototype(); b.Unit("anger").Parts[0].Hp = 1; string error;
+            var b = BattleEngine.CreatePrototype(); ForceHand(b.Unit("sera"),"sera_glimmer","sera_glimmer"); ForceHand(b.Unit("lian"),"lian_glimmer","lian_glimmer"); b.Unit("anger").Parts[0].Hp = 1; string error;
             True(b.TryLink("sera", 0, "sera_glimmer", LinkKind.Strike, "anger_arm", out error));
             True(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Clash, b.State.Intents[0].Id, out error));
             b.ResolveRound(); True(b.State.Intents[0].Cancelled); True(b.State.Events.Any(x => x.Type == "Relink"));
             True(b.State.Events.Any(x => x.Type == "PartBreak")); b.BeginNextRound(); False(b.State.Intents.Any(x => x.Name == "난타"));
         });
         Test("rift cancels now and skips exactly next round", () => {
-            var b = BattleEngine.CreatePrototype(); b.Unit("anger").Rift = 1; string error;
+            var b = BattleEngine.CreatePrototype(); ForceHand(b.Unit("sera"),"sera_glimmer","sera_glimmer"); b.Unit("anger").Rift = 1; string error;
             True(b.TryLink("sera", 0, "sera_glimmer", LinkKind.Strike, "anger", out error));
             b.ResolveRound(); True(b.State.Intents.All(x => x.Cancelled)); Equal(150, b.Unit("lian").Hp);
             b.BeginNextRound(); Equal(2, b.State.Round); Equal(0, b.State.Intents.Count);
@@ -121,7 +122,7 @@ internal static class CoreTests
             True(b.Unit("minato").Hp < 100); Equal(150, b.Unit("lian").Hp);
         });
         Test("support heals and clamps at maximum", () => {
-            var b = BattleEngine.CreatePrototype(); b.State.Intents.Clear(); b.Unit("lian").Hp = 140; string error;
+            var b = BattleEngine.CreatePrototype(); ForceHand(b.Unit("minato"),"minato_heal","minato_glimmer"); b.State.Intents.Clear(); b.Unit("lian").Hp = 140; string error;
             True(b.TryLink("minato", 0, "minato_heal", LinkKind.Support, "lian", out error)); b.ResolveRound(); Equal(150, b.Unit("lian").Hp);
         });
         Test("lantern is slot-free, spent first and reduces gloom", () => {
@@ -135,7 +136,7 @@ internal static class CoreTests
             Equal(IgniteGrade.Perfect, BattleRules.GradeTiming(80, 3, true)); Equal(IgniteGrade.Miss, BattleRules.GradeTiming(250, 0));
         });
         Test("different elements purify only after hits", () => {
-            var b = BattleEngine.CreatePrototype(); b.State.Intents.Clear(); string error;
+            var b = BattleEngine.CreatePrototype(); ForceHand(b.Unit("sera"),"sera_glimmer","sera_glimmer"); ForceHand(b.Unit("lian"),"lian_glimmer","lian_glimmer"); b.State.Intents.Clear(); string error;
             True(b.TryLink("sera", 0, "sera_glimmer", LinkKind.Strike, "anger", out error));
             True(b.TryLink("lian", 0, "lian_glimmer", LinkKind.Strike, "anger", out error)); b.ResolveRound();
             Equal(0, b.State.Gloom); True(b.State.Events.Any(x => x.Type == "Resonance" && x.Message.Contains("정화")));
@@ -143,8 +144,8 @@ internal static class CoreTests
         Test("steam reduces explicit enemy flame count before its next roll", () => {
             var b=Fixture(6,6,1,new ScriptedRandom());var intent=b.State.Intents[0];intent.FlameCount=3;intent.HitPowers=new[]{6,6,6};
             var other=new UnitState{Id="other",Name="물결 잔영",Element=Element.Tide,Hp=100,MaxHp=100,Defense=0};
-            other.Skills.Add(new SkillData{Id="water",Name="물결",Element=Element.Tide,BasePower=6,FlamePower=2,FlameCount=1,Speed=13,RiftDamage=0});
-            b.State.Allies.Add(other);string error;True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));True(b.TryLink("other",0,"water",LinkKind.Strike,"enemy",out error));
+            other.Skills.Add(new SkillData{Id="water",Name="물결",Number=1,Element=Element.Tide,BasePower=6,FlamePower=2,FlameCount=1,Speed=13,RiftDamage=0});
+            b.State.Allies.Add(other);ForceHand(other,"water","water");string error;True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));True(b.TryLink("other",0,"water",LinkKind.Strike,"enemy",out error));
             b.ResolveRound();Equal(2,intent.FlameCount);Equal(2,b.State.Events.Single(x=>x.Type=="FlameRoll"&&x.ActorId=="enemy").FlameStates.Length);
             True(b.State.Events.Any(x=>x.Type=="Resonance"&&x.Message.Contains("증기")));
         });
@@ -215,6 +216,97 @@ internal static class CoreTests
             True(b.TryLink("hero",0,"counter",LinkKind.Guard,"hero",out error));b.ResolveRound();Equal(93,hero.Hp);Equal(288,b.Unit("enemy").Hp);
             Equal(1,b.State.Events.Count(x=>x.Type=="Counter"));True(b.State.Events.FindIndex(x=>x.Type=="Damage")<b.State.Events.FindIndex(x=>x.Type=="Counter"));
         });
+        Test("numbered skill bag preserves three-two-one ratios independently of flames", () => {
+            foreach(string id in new[]{"lian","sera","minato","noa","heidel"}) foreach(int sync in new[]{0,1}) {
+                var unit=PrototypeData.CreateCharacter(id,sync);var state=new BattleState{RandomSeed=1234};state.Allies.Add(unit);
+                new BattleEngine(state);Equal(2,unit.SkillHand.Count);Equal(sync==1?6:5,Bag(unit).Count);
+                Equal(3,Bag(unit).Count(x=>x==unit.Skills.Single(k=>k.Number==1).Id));
+                Equal(2,Bag(unit).Count(x=>x==unit.Skills.Single(k=>k.Number==2).Id));
+                Equal(sync==1?1:0,Bag(unit).Count(x=>x==unit.Skills.Single(k=>k.Number==3).Id));
+                True(unit.SkillHand.Select(x=>x.Id).Distinct().Count()==2);False(Bag(unit).Any(x=>unit.Skills.Single(k=>k.Id==x).Number==0));
+                Equal(2,unit.Skills.Single(k=>k.Number==1).FlameCount);
+            }
+        });
+        Test("duplicate hand cards reserve different identities and refill only next round", () => {
+            var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_glimmer");string error;
+            True(b.TryLink(unit.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error));
+            True(b.TryLink(unit.Id,1,"lian_glimmer",LinkKind.Strike,"anger",out error));
+            True(b.State.Links[0].CardId!=b.State.Links[1].CardId);var committed=b.State.Links.Select(x=>x.CardId).ToList();Equal(2,unit.SkillHand.Count);Equal(0,unit.DiscardPile.Count);
+            b.ResolveRound();Equal(0,unit.SkillHand.Count);Equal(2,unit.DiscardPile.Count);Equal(5,Bag(unit).Count);
+            b.ResolveRound();Equal(2,unit.DiscardPile.Count);b.BeginNextRound();Equal(2,unit.SkillHand.Count);Equal(5,Bag(unit).Count);
+            True(unit.SkillHand.All(x=>!committed.Contains(x.Id)));
+        });
+        Test("explicit card validation and replacements leave rejected plans atomic", () => {
+            var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_breakthrough");string error;
+            var first=unit.SkillHand[0];var second=unit.SkillHand[1];string snapshot=BagTrace(unit);
+            False(b.TryLink(unit.Id,0,first.SkillId,LinkKind.Strike,"anger",out error,"missing"));
+            False(b.TryLink(unit.Id,0,first.SkillId,LinkKind.Strike,"anger",out error,second.Id));Equal(0,b.State.Links.Count);Equal(snapshot,BagTrace(unit));
+            True(b.TryLink(unit.Id,0,first.SkillId,LinkKind.Strike,"anger",out error,first.Id));
+            False(b.TryLink(unit.Id,1,first.SkillId,LinkKind.Strike,"anger",out error,first.Id));Equal(1,b.State.Links.Count);
+            True(b.TryLink(unit.Id,1,second.SkillId,LinkKind.Strike,"anger",out error,second.Id));
+            False(b.TryLink(unit.Id,0,second.SkillId,LinkKind.Strike,"anger",out error,second.Id));Equal(2,b.State.Links.Count);Equal(first.Id,b.State.Links[0].CardId);Equal(snapshot,BagTrace(unit));
+            True(b.TryLink(unit.Id,0,"lian_guard",LinkKind.Guard,unit.Id,out error));Equal(null,b.State.Links.Single(x=>x.Slot==0).CardId);
+            True(b.IsCardAvailable(unit,first.Id));True(b.TryLink(unit.Id,1,first.SkillId,LinkKind.Strike,"anger",out error,first.Id));
+            Equal(0,b.PlannedCost);b.ClearLinks();Equal(snapshot,BagTrace(unit));Equal(0,unit.DiscardPile.Count);
+        });
+        Test("a two-slot skill replaces both reservations but consumes one card", () => {
+            var b=DeckBattle(true);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_crescendo");string error;
+            string third=unit.SkillHand[1].Id;True(b.TryLink(unit.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error,unit.SkillHand[0].Id));
+            True(b.TryLink(unit.Id,1,"lian_guard",LinkKind.Guard,unit.Id,out error));
+            True(b.IsCardAvailable(unit,third,0));False(b.IsCardAvailable(unit,third,1));
+            True(b.TryLink(unit.Id,0,"lian_crescendo",LinkKind.Strike,"anger",out error,third));Equal(1,b.State.Links.Count);Equal(3,b.PlannedCost);
+            b.ResolveRound();Equal(1,unit.SkillHand.Count);Equal("lian_glimmer",unit.SkillHand[0].SkillId);Equal(1,unit.DiscardPile.Count);
+        });
+        Test("defense remains available without cards and rejected budgets do not consume", () => {
+            var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_breakthrough");b.State.Ember=0;string error;
+            string trace=BagTrace(unit);False(b.TryLink(unit.Id,0,"lian_breakthrough",LinkKind.Strike,"anger",out error,unit.SkillHand[1].Id));Equal(trace,BagTrace(unit));
+            True(b.TryLink(unit.Id,0,"lian_guard",LinkKind.Guard,unit.Id,out error));True(b.TryLink(unit.Id,1,"lian_guard",LinkKind.Guard,unit.Id,out error));
+            b.ResolveRound();Equal(trace,BagTrace(unit));b.BeginNextRound();Equal(trace,BagTrace(unit));
+        });
+        Test("discard-only recycling retains unused hand and total bag composition", () => {
+            var b=DeckBattle(true);var unit=b.Unit("lian");ForceHand(unit,"lian_crescendo","lian_glimmer");string retained=unit.SkillHand[0].Id;string error;
+            for(int i=0;i<14;i++) {
+                b.State.Intents.Clear();var card=unit.SkillHand.Single(x=>x.Id!=retained);
+                True(b.TryLink(unit.Id,0,card.SkillId,LinkKind.Strike,"anger",out error,card.Id));b.ResolveRound();b.BeginNextRound();
+                Equal(2,unit.SkillHand.Count);True(unit.SkillHand.Any(x=>x.Id==retained));Equal(6,Bag(unit).Count);
+                Equal(3,Bag(unit).Count(x=>x=="lian_glimmer"));Equal(2,Bag(unit).Count(x=>x=="lian_breakthrough"));Equal(1,Bag(unit).Count(x=>x=="lian_crescendo"));
+            }
+            True(unit.NextCardNumber>6);
+        });
+        Test("cancelled committed actions discard once even when the actor falls", () => {
+            var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_glimmer");unit.Hp=1;string error;
+            b.State.Intents.Add(new IntentState{Id="fast",ActorId="anger",TargetId="lian",Name="선제 공격",Speed=99,Element=Element.Shadow,BasePower=100,FlamePower=1,FlameCount=1});
+            True(b.TryLink(unit.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error));b.ResolveRound();
+            Equal(1,unit.SkillHand.Count);Equal(1,unit.DiscardPile.Count);True(b.State.Events.Any(x=>x.Type=="Cancel"));
+            b.ResolveRound();Equal(1,unit.DiscardPile.Count);
+        });
+        Test("recommendation, clear, reuse and previews cannot reroll the hand", () => {
+            var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_breakthrough");string initial=BagTrace(unit);
+            for(int i=0;i<10;i++){b.RecommendLinks();b.ClearLinks();b.ReusePreviousLinks();b.Preview(new LinkCommand{ActorId=unit.Id,SkillId=unit.SkillHand[0].SkillId,CardId=unit.SkillHand[0].Id,TargetId="missing"});Equal(initial,BagTrace(unit));}
+            b.RecommendLinks();foreach(var link in b.State.Links.Where(x=>x.CardId!=null))True(b.Unit(link.ActorId).SkillHand.Any(x=>x.Id==link.CardId));
+            b.ResolveRound();b.BeginNextRound();b.State.Intents.Clear();string after=BagTrace(unit);b.ReusePreviousLinks();Equal(after,BagTrace(unit));
+            foreach(var link in b.State.Links.Where(x=>x.CardId!=null))True(b.Unit(link.ActorId).SkillHand.Any(x=>x.Id==link.CardId));
+        });
+        Test("card shuffles are deterministic and never consume flame RNG", () => {
+            var random=new ScriptedRandom(0,0);var state=PrototypeData.CreateBattle(seed:31415);var b=new BattleEngine(state,null,random);
+            Equal(0,random.Calls);var unit=b.Unit("lian");var same=new BattleEngine(PrototypeData.CreateBattle(seed:31415));
+            Equal(BagTrace(unit),BagTrace(same.Unit("lian")));b.RecommendLinks();b.ClearLinks();Equal(0,random.Calls);
+            state.Intents.Clear();string error;var card=unit.SkillHand.First();True(b.TryLink(unit.Id,0,card.SkillId,LinkKind.Strike,"anger",out error,card.Id));
+            b.ResolveRound();Equal(b.Skill(unit.Id,card.SkillId).FlameCount,random.Calls);b.BeginNextRound();Equal(b.Skill(unit.Id,card.SkillId).FlameCount,random.Calls);
+        });
+        Test("restarts rebuild the seeded bag and preserve synchronization locks", () => {
+            var data=new ProgressData();data.Characters.Add(new CharacterProgress{Id="lian",SyncLevel=1});
+            var b=BattleEngine.CreatePrototype(data,99);string initial=BagTrace(b.Unit("lian"));
+            b.RecommendLinks();b.ResolveRound();b.Restart();Equal(initial,BagTrace(b.Unit("lian")));Equal(1,b.Unit("lian").SyncLevel);
+            Equal(1,Bag(b.Unit("lian")).Count(x=>x=="lian_crescendo"));Equal(0,Bag(b.Unit("sera")).Count(x=>x=="sera_crescendo"));
+        });
+        Test("motion events identify numbered skill and retain actual winning flames", () => {
+            var b=Fixture(6,6,1,new ScriptedRandom(0,.99,0,.99));Link(b);b.ResolveRound();
+            var roll=b.State.Events.Last(x=>x.Type=="FlameRoll");var win=b.State.Events.Single(x=>x.Type=="ClashWin");var hit=b.State.Events.Single(x=>x.Type=="Damage");
+            Equal("hit",roll.SkillId);Equal("시험",roll.SkillName);Equal(1,roll.SkillNumber);Equal(6,roll.BasePower);Equal(6,roll.FlamePower);Equal(6,roll.EnemyBasePower);
+            Equal(roll.ActorPower,win.ActorPower);Equal(win.ActorPower,hit.ActorPower);Equal(win.SkillId,hit.SkillId);Equal(1,hit.SkillNumber);
+            Equal(string.Join(",",roll.FlameStates),string.Join(",",hit.FlameStates));
+        });
         Test("story preserves names, quotations and prototype flags", () => {
             True(StoryCatalog.Prologue.Any(x => x.Speaker == "리안" && x.Text == "…움직이지 마. 그림자가 소리에 반응해." && !x.IsPrototype));
             True(StoryCatalog.Prologue.Any(x => x.IsPrototype)); True(StoryCatalog.FirstMeal.Any(x => x.Speaker == "미나토"));
@@ -255,11 +347,31 @@ internal static class CoreTests
     {
         var state=new BattleState{Gloom=0};
         var hero=new UnitState{Id="hero",Name="테스트 잔영",Element=Element.Flame,Hp=100,MaxHp=100,Attack=10,Defense=0,Speed=12};
-        hero.Skills.Add(new SkillData{Id="hit",Name="시험",Element=Element.Flame,BasePower=allyBase,FlamePower=6,FlameCount=flames,Speed=12,RiftDamage=0});
+        hero.Skills.Add(new SkillData{Id="hit",Name="시험",Number=1,Element=Element.Flame,BasePower=allyBase,FlamePower=6,FlameCount=flames,Speed=12,RiftDamage=0});
         var enemy=new UnitState{Id="enemy",Name="테스트 군체",IsEnemy=true,Element=Element.Flame,Hp=300,MaxHp=300,Attack=10,Defense=0,Rift=100,MaxRift=100,Speed=11};
         state.Allies.Add(hero);state.Enemies.Add(enemy);
         state.Intents.Add(new IntentState{Id="forecast",ActorId="enemy",TargetId="hero",Name="시험 예고선",BasePower=enemyBase,FlamePower=6,FlameCount=1,Element=Element.Flame,Speed=11});
         return new BattleEngine(state,null,random);
+    }
+    // Explicit hands isolate rule tests without weakening production card validation.
+    private static void ForceHand(UnitState unit, params string[] skills)
+    {
+        var bag=new List<string>();
+        foreach(var skill in unit.Skills.Where(x=>x.Number>=1&&x.Number<=3&&BattleRules.IsSkillUnlocked(unit,x)))
+            for(int n=0;n<(skill.Number==1?3:skill.Number==2?2:1);n++)bag.Add(skill.Id);
+        unit.SkillHand.Clear();unit.DrawPile.Clear();unit.DiscardPile.Clear();unit.DeckInitialized=true;unit.NextCardNumber=0;
+        foreach(string id in skills) {True(bag.Remove(id));unit.SkillHand.Add(new SkillCard{Id=unit.Id+":fixture:"+(++unit.NextCardNumber),SkillId=id});}
+        unit.DrawPile.AddRange(bag);
+    }
+    private static List<string> Bag(UnitState unit)
+    { return unit.SkillHand.Select(x=>x.SkillId).Concat(unit.DrawPile).Concat(unit.DiscardPile).ToList(); }
+    private static string BagTrace(UnitState unit)
+    { return string.Join(",",unit.SkillHand.Select(x=>x.Id+"="+x.SkillId))+"/"+string.Join(",",unit.DrawPile)+"/"+string.Join(",",unit.DiscardPile); }
+    private static BattleEngine DeckBattle(bool synchronized)
+    {
+        var data=new ProgressData();if(synchronized)data.Characters.Add(new CharacterProgress{Id="lian",SyncLevel=1});
+        var b=BattleEngine.CreatePrototype(data,1234);b.State.Intents.Clear();var enemy=b.Unit("anger");enemy.Hp=enemy.MaxHp=100000;enemy.Rift=enemy.MaxRift=10000;
+        foreach(var part in enemy.Parts)part.Hp=part.MaxHp=10000;return b;
     }
     private static void Link(BattleEngine b) { string error; True(b.TryLink("hero", 0, "hit", LinkKind.Clash, "forecast", out error)); }
     private static BattleEngine PlayAuto()

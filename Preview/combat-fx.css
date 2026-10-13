@@ -82,3 +82,14 @@
 .flame-roll-side.darkness strong{color:#cbb5f0}.rolled-flames{display:flex;gap:9px}.rolled-flames .flame{width:17px;height:23px}.flame-roll .flame.off{opacity:.65}
 
 .resolving .enemy-stats{opacity:0}
+
+.flame.unknown{background:#283241;border-color:#a08d7288;opacity:.65;box-shadow:none}
+.flame.flicker{animation:flame-suspense .09s linear infinite;background:#d8b882;box-shadow:0 0 11px #ecc88290}
+.flame-roll.tension{border-color:#eed39eb5;box-shadow:0 0 35px #e6b96b30,0 12px 28px #0009}.flame-roll.decided .flame-roll-side strong{color:#ffe2ac;text-shadow:0 0 13px #dcb36d65}.flame-roll.decided .darkness strong{color:#e1cdfb}
+.tension-roll .combat-fx{scale:1.025;transform-origin:66% 45%;transition:scale .15s ease}
+.battle[data-attack-style="shield-blow"].contact-kick .combat-fx{animation-duration:.25s}.heavy-cut{border-right-width:12px!important}.shield-impact{width:94px;height:94px;border:3px solid #f5cf8b;transform:translate(-50%,-50%) rotate(45deg);box-shadow:0 0 23px #f2c3798a;animation:shield-strike .3s ease-out both}
+.feint-cut{height:130px!important;animation-duration:.17s!important;opacity:.75}.second-cut{rotate:22deg}.staff-wave{width:142px;height:100px;border:3px solid #91ddd7;border-radius:50%;transform:translate(-50%,-50%) rotate(-24deg);box-shadow:0 0 19px #75c8c485;animation:staff-ripple .35s ease-out both}
+@keyframes flame-suspense{0%,100%{opacity:.3;filter:brightness(.8)}50%{opacity:1;filter:brightness(1.5)}}
+@keyframes shield-strike{from{scale:.55;opacity:1}to{scale:1.65;opacity:0}}
+@keyframes staff-ripple{from{scale:.6;opacity:.85}to{scale:1.5;opacity:0}}
+.reduce-motion .flame.flicker{animation:none}.reduce-motion .tension-roll .combat-fx{scale:1}.reduce-motion .shield-impact,.reduce-motion .staff-wave{display:none}

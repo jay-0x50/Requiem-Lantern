@@ -110,8 +110,8 @@ function environment(motion = true, mockImages = false, initialSnapshot = battle
   return {
     root, stage, fx, initial, timers, sounds, impacts, images,
     async until(predicate) {
-      for (let guard = 0; guard < 1000; guard++) {
-        await Promise.resolve(); await Promise.resolve();
+      for (let guard = 0; guard < 5000; guard++) {
+        for(let tick=0;tick<8;tick++)await Promise.resolve();
         if (predicate()) return;
         if (!timers.size) throw Error('No pending timer before the expected presentation phase');
         const [id, timer] = [...timers].sort((a, b) => a[1].due - b[1].due)[0];
@@ -120,8 +120,8 @@ function environment(motion = true, mockImages = false, initialSnapshot = battle
       throw Error('Expected presentation phase was never reached');
     },
     async drain() {
-      for (let guard = 0; guard < 1000; guard++) {
-        await Promise.resolve(); await Promise.resolve();
+      for (let guard = 0; guard < 5000; guard++) {
+        for(let tick=0;tick<8;tick++)await Promise.resolve();
         if (!timers.size) { await Promise.resolve(); if (!timers.size) return; }
         const [id, timer] = [...timers].sort((a, b) => a[1].due - b[1].due)[0];
         clock = timer.due; timers.delete(id); timer.run();
@@ -447,7 +447,7 @@ async function main() {
   env.fx.clear(); env.fx.attach(battle());
   const newFinal = battle(); newFinal.enemies[0].hp = 180;
   const newRound = env.fx.play([event('Damage', 'anger', 10)], newFinal);
-  await Promise.resolve(); await Promise.resolve();
+  for(let tick=0;tick<8;tick++)await Promise.resolve();
   assert.equal(await oldRound, false);
   assert.equal(env.root.querySelectorAll('.melee-fighter').length, 2);
   assert.equal(env.fx.portrait('lian').style.visibility, 'hidden');
@@ -474,11 +474,13 @@ async function main() {
 
   env = environment();
   env.initial.allies[0].sanity=0;env.initial.enemies[0].sanity=0;env.fx.attach(env.initial);
-  const roll={...event('FlameRoll','anger'),flameStates:[true,false,true],enemyFlameStates:[false,true],actorPower:12,targetPower:9.0000001,actorSanity:0,targetSanity:0,clashIndex:1};
+  const roll={...event('FlameRoll','anger'),flameStates:[true,false,true],enemyFlameStates:[false,true],actorPower:12,targetPower:9.0000001,actorSanity:0,targetSanity:0,clashIndex:1,basePower:4,flamePower:4,enemyBasePower:5,enemyFlamePower:4};
   const sanityFinal=copy(env.initial);sanityFinal.allies[0].sanity=5;
   const rolling=env.fx.play([roll,event('Sanity','lian',5)],sanityFinal);
   await env.until(()=>env.root.querySelectorAll('.flame-roll').length===1);
   const rollCard=env.root.querySelector('.flame-roll');
+  assert.equal(rollCard.querySelectorAll('.unknown').length,5);assert.equal(rollCard.querySelectorAll('.on').length,0);
+  await env.until(()=>rollCard.classList.contains('decided'));
   assert.equal(rollCard.querySelectorAll('.on').length,3);assert.equal(rollCard.querySelectorAll('.off').length,2);
   assert.equal(rollCard.querySelectorAll('strong')[0].textContent,'12');assert.equal(rollCard.querySelectorAll('strong')[1].textContent,'9');
   assert.equal(env.fx.units.get('lian').sanity,0);assert.equal(env.fx.units.get('anger').hp,190);
@@ -519,6 +521,76 @@ async function main() {
   assert.equal(await interruptedClash,false);assert.equal(env.fx.units.get('anger').hp,190);
   assert.equal(env.root.querySelectorAll('.melee-fighter').length,0);assert.equal(env.fx.portrait('lian').style.visibility,'');
   pass('cancelling a pending weapon contest restores portraits and suppresses the future strike');
+
+
+  env=environment();
+  const reveal=env.fx.play([roll],copy(env.initial));
+  await env.until(()=>env.root.querySelectorAll('.on').length===1);
+  let lamps=env.root.querySelector('.flame-roll');
+  assert.equal(lamps.querySelectorAll('.unknown').length,3);assert.equal(lamps.querySelectorAll('.off').length,1);
+  assert.equal(lamps.querySelectorAll('strong')[0].textContent,'8');assert.equal(lamps.querySelectorAll('strong')[1].textContent,'5');
+  assert.equal(env.fx.units.get('anger').hp,190);assert.ok(env.sounds.length>=2);
+  await env.drain();assert.equal(await reveal,true);
+  pass('both sides reveal one authoritative flame at a time and accumulate affinity-adjusted power without early damage');
+
+  env=environment();
+  const suspense=env.fx.play([{...roll,clashIndex:2,actorPower:9,targetPower:9},event('Damage','anger',8)],copy(env.initial));
+  await env.until(()=>env.root.querySelectorAll('.flicker').length>0);
+  assert.ok(env.stage.classList.contains('tension-roll'));env.fx.clear();await env.drain();
+  assert.equal(await suspense,false);assert.equal(env.fx.units.get('anger').hp,190);
+  assert.equal(env.root.querySelectorAll('.flame-roll').length,0);assert.equal(env.stage.classList.contains('tension-roll'),false);
+  pass('cancelling during unrevealed flame suspense removes focus and suppresses the later attack');
+
+  env=environment(false);
+  const stillRoll=env.fx.play([roll],copy(env.initial));
+  await env.until(()=>env.root.querySelectorAll('.flame-roll').length>0);
+  assert.equal(env.root.querySelectorAll('.on').length,3);assert.equal(env.root.querySelectorAll('.off').length,2);
+  assert.equal(env.root.querySelectorAll('.flicker').length,0);assert.equal(env.stage.classList.contains('tension-roll'),false);
+  await env.drain();assert.equal(await stillRoll,true);
+  pass('reduced motion shows the complete real flame decision without flicker or camera emphasis');
+
+  env=environment();
+  const closeRolls=Array.from({length:6},(_,index)=>({...roll,clashIndex:index+1,actorPower:9,targetPower:9}));
+  const emphasis=env.fx.play(closeRolls,copy(env.initial));await env.drain();assert.equal(await emphasis,true);
+  assert.equal(env.fx.tensionCount,2);assert.ok(env.fx.presentationElapsed<4000);
+  pass('only two close decisions per round receive long suspense; the remaining rolls keep a brisk pace');
+
+  for(const [id,style,extra] of [['lian','shield-blow','shield-impact'],['sera','double-slash','feint-cut'],['minato','staff-wave','staff-wave']]){
+   const snapshot=battle();if(id==='sera')snapshot.allies.push({id:'sera',name:'세라',hp:100,maxHp:100,element:'Flame',parts:[]});
+   env=environment(true,false,snapshot);let hits=0;const applyDamage=env.fx.applyEvent.bind(env.fx);
+   env.fx.applyEvent=e=>{if(e.type==='Damage')hits++;applyDamage(e);};
+   const distinct=env.fx.play([{...event('Damage','anger',12,id),skillId:id+'_skill',skillNumber:2}],copy(snapshot));
+   if(id==='sera'){await env.until(()=>env.stage.dataset.combatPhase==='feint');assert.equal(hits,0);assert.equal(env.fx.units.get('anger').hp,190);}
+   await env.until(()=>env.stage.dataset.combatPhase==='contact');assert.equal(env.stage.dataset.attackStyle,style);assert.equal(hits,1);
+   assert.ok(env.root.querySelectorAll('.'+extra).length>0);await env.drain();assert.equal(await distinct,true);assert.equal(hits,1);
+  }
+  pass('Lian braces a heavy shield strike, Sera feints two slashes and Minato sends a staff ripple with one authoritative contact hit each');
+
+  env=environment();
+  const longEvents=Array.from({length:90},(_,index)=>({...event('Clash','anger'),clashIndex:index+1,winnerStreak:1}));
+  const bounded=env.fx.play(longEvents,copy(env.initial));await env.drain();assert.equal(await bounded,true);
+  assert.ok(env.fx.presentationElapsed<=28000);assert.equal(env.fx.units.get('anger').hp,190);
+  pass('exceptionally long clash playback compresses its tail into the 28-second presentation budget without inventing damage');
+
+
+  env=environment();
+  const secretRoll={...roll,message:'리안 · 불꽃 2/3 · 위력 12'};
+  const hiddenOutcome=env.fx.play([secretRoll],copy(env.initial));
+  await env.until(()=>env.root.querySelectorAll('.unknown').length>0);
+  assert.equal(env.root.querySelector('.combat-caption').querySelector('span').textContent,'불과 어둠의 위력을 판정합니다…');
+  assert.ok(!env.root.querySelector('.combat-caption').querySelector('span').textContent.includes('위력 12'));
+  await env.until(()=>env.root.querySelector('.flame-roll')?.classList.contains('decided'));
+  assert.equal(env.root.querySelector('.combat-caption').querySelector('span').textContent,secretRoll.message);
+  await env.drain();assert.equal(await hiddenOutcome,true);
+  pass('the status banner withholds final flame counts and power until every actual flame is revealed');
+
+  env=environment();
+  const counterSnapshot=copy(env.initial);counterSnapshot.allies.push({id:'heidel',name:'하이델',hp:120,maxHp:120,element:'Frost',parts:[]});env=environment(true,false,counterSnapshot);
+  const enemyRoll={...roll,actorId:'anger',targetId:'lian',flameStates:[true],enemyFlameStates:[],actorPower:7,clashIndex:0};
+  const counter=env.fx.play([enemyRoll,{...event('Damage','anger',8,'heidel'),skillId:'heidel_counter',skillNumber:0}],copy(counterSnapshot));
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');
+  assert.equal(env.root.querySelectorAll('.flame-roll').length,0);await env.drain();assert.equal(await counter,true);
+  pass('a counterattack clears a previous enemy-only roll panel instead of showing the wrong attacker power');
 
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }

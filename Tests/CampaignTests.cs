@@ -131,7 +131,12 @@ internal static class CampaignTests
             Equal(0,progress.Data.LanternFragments);var restored=RoundTrip(progress.Data,"sync");
             foreach(var stage in Stages.Where(s=>s.HasBattle)){
                 var battle=CampaignBattleFactory.Create(stage,restored,0);
-                foreach(var unit in battle.State.Allies){Equal(1,unit.SyncLevel);True(BattleRules.IsSkillUnlocked(unit,unit.Skills.Single(s=>s.Number==3)));unit.SyncLevel=0;unit.Sanity=-20;unit.Hp=1;}
+                foreach(var unit in battle.State.Allies){
+                    Equal(1,unit.SyncLevel);True(BattleRules.IsSkillUnlocked(unit,unit.Skills.Single(s=>s.Number==3)));Equal(2,unit.SkillHand.Count);
+                    var bag=unit.SkillHand.Select(c=>c.SkillId).Concat(unit.DrawPile).Concat(unit.DiscardPile).Select(id=>battle.Skill(unit.Id,id).Number).ToList();
+                    Equal(3,bag.Count(n=>n==1));Equal(2,bag.Count(n=>n==2));Equal(1,bag.Count(n=>n==3));
+                    unit.SyncLevel=0;unit.Sanity=-20;unit.Hp=1;
+                }
                 battle.Restart();foreach(var unit in battle.State.Allies){Equal(1,unit.SyncLevel);Equal(0,unit.Sanity);Equal(unit.MaxHp,unit.Hp);}
             }
         });
@@ -155,8 +160,16 @@ internal static class CampaignTests
                 var battle=CampaignBattleFactory.Create(stage,new ProgressData(),seed);int stalemates=0;
                 Equal(string.Join(",",stage.Party),string.Join(",",battle.State.Allies.Select(u=>u.Id)));True(battle.State.Allies.All(u=>u.SyncLevel==0&&u.Sanity==0));
                 while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=40){
+                    foreach(var unit in battle.State.Allies.Where(u=>u.Alive)){
+                        Equal(2,unit.SkillHand.Count,"Expected two offered cards for "+stage.Number+" / "+unit.Name);
+                        var bag=unit.SkillHand.Select(c=>c.SkillId).Concat(unit.DrawPile).Concat(unit.DiscardPile).Select(id=>battle.Skill(unit.Id,id).Number).ToList();
+                        Equal(3,bag.Count(n=>n==1));Equal(2,bag.Count(n=>n==2));Equal(0,bag.Count(n=>n==3));
+                    }
                     battle.RecommendLinks();True(battle.State.Links.Count>0,"AI produced no action in "+stage.Number);
                     True(battle.State.Links.All(l=>BattleRules.IsSkillUnlocked(battle.Unit(l.ActorId),battle.Skill(l.ActorId,l.SkillId))));
+                    var numbered=battle.State.Links.Where(l=>battle.Skill(l.ActorId,l.SkillId).Number>0).ToList();
+                    Equal(numbered.Count,numbered.Select(l=>l.CardId).Distinct().Count(),"One offered card was reserved for multiple actions in "+stage.Number);
+                    True(numbered.All(l=>battle.Unit(l.ActorId).SkillHand.Any(c=>c.Id==l.CardId&&c.SkillId==l.SkillId)),"AI selected an unavailable card in "+stage.Number);
                     var events=battle.ResolveRound(IgniteGrade.Good);stalemates+=events.Count(e=>e.Type=="Stalemate");
                     foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))True(unit.Sanity>=-20&&unit.Sanity<=20,"Sanity overflow in "+stage.Number);
                     if(battle.State.Outcome==BattleOutcome.Ongoing)battle.BeginNextRound();

@@ -40,6 +40,12 @@ namespace RequiemLantern.Core
     }
 
     [Serializable]
+    public sealed class SkillCard
+    {
+        public string Id, SkillId;
+    }
+
+    [Serializable]
     public sealed class UnitState
     {
         public string Id, Name, Role, Portrait, IntentProfile;
@@ -50,6 +56,10 @@ namespace RequiemLantern.Core
         public bool IsEnemy, IsSupport, IsHuman;
         public List<SkillData> Skills = new List<SkillData>();
         public List<PartState> Parts = new List<PartState>();
+        public List<SkillCard> SkillHand = new List<SkillCard>();
+        public List<string> DrawPile = new List<string>(), DiscardPile = new List<string>();
+        public int NextCardNumber;
+        public bool DeckInitialized;
         public bool Alive { get { return Hp > 0; } }
         public int SlotCount { get { return IsSupport ? 1 : 2; } }
     }
@@ -69,7 +79,7 @@ namespace RequiemLantern.Core
     [Serializable]
     public sealed class LinkCommand
     {
-        public string ActorId, SkillId, TargetId, Reason;
+        public string ActorId, SkillId, TargetId, Reason, CardId;
         public int Slot;
         public LinkKind Kind;
         public LinkCommand Copy() { return (LinkCommand)MemberwiseClone(); }
@@ -91,6 +101,8 @@ namespace RequiemLantern.Core
         public bool[] FlameStates = new bool[0], EnemyFlameStates = new bool[0];
         public float ActorPower, TargetPower;
         public int ActorSanity, TargetSanity, ClashIndex, WinnerStreak;
+        public string SkillId, SkillName;
+        public int SkillNumber, BasePower, FlamePower, EnemyBasePower, EnemyFlamePower;
         public BattleEvent(string type, string actor, string target, string message, int amount, int round)
         { Type = type; ActorId = actor; TargetId = target; Message = message; Amount = amount; Round = round; }
     }
@@ -122,7 +134,7 @@ namespace RequiemLantern.Core
         public static bool IsDefensive(SkillData skill)
         { return skill != null && (skill.Kind == SkillKind.Guard || skill.Kind == SkillKind.Evade || skill.Kind == SkillKind.Counter); }
         public static bool IsSkillUnlocked(UnitState actor, SkillData skill)
-        { return actor != null && skill != null && actor.SyncLevel >= skill.RequiredSyncLevel; }
+        { return actor != null && skill != null && actor.SyncLevel >= Math.Max(skill.RequiredSyncLevel, skill.Number == 3 ? 1 : 0); }
         // Legacy hit arrays remain readable by presentation and older authored data.
         // A skill now rolls a single total power; the array only supplies fallback flame count.
         public static int Flames(SkillData skill) { return Math.Max(1, skill.FlameCount > 0 ? skill.FlameCount : skill.HitPowers.Length); }
