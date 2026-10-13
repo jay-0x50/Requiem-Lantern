@@ -30,6 +30,8 @@ QA/**/*.xml.bak
 QA/**/*.log
 QA/**/preview-before.json
 QA/**/audio-resource-inventory.json
+# Suno Free trial downloads are local listening candidates.
+Art/Audio/Music/Previews/
 .vs/
 .idea/
 .env
