@@ -173,12 +173,11 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "skill-deck-v2",
+                application = "RequiemLantern", runtimeRevision = "character-chapters-v3",
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
-                characterStories = CharacterStoryCatalog.All,
                 campaign = new {
-                    chapters = CampaignCatalog.Chapters.Select(chapter => new { chapter.Number, chapter.Title, chapter.Summary,
+                    chapters = CampaignCatalog.Chapters.Select(chapter => new { chapter.Number, chapter.Title, chapter.Summary, chapter.FocusCharacterId, chapter.FocusStorySummary,
                         stages = chapter.Stages.Select(stage => new { stage.Id, stage.Number, stage.Title, stage.Summary, stage.Location, stage.Kind, stage.KindLabel,
                             stage.Chapter, stage.Participants, stage.Party, stage.EnemyName, stage.EnemyArt, stage.IsBoss, stage.HumanEnemy, stage.MusicId,
                             stage.HasBattle, unlocked = CampaignRules.IsUnlocked(progress.Data, stage), cleared = CampaignRules.IsCleared(progress.Data, stage) }) }),

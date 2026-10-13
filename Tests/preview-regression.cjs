@@ -282,25 +282,18 @@ async function main() {
   assert.equal(env.run('busy'), false); assert.equal(env.run('autoBattleWaiting'), false);
   pass('presentation failure unlocks the battlefield without advancing or awarding the battle');
 
-  env = environment();
-  env.run(`data.characterStories=[{id:'noa',name:'노아',title:'침묵에 남긴 이름',summary:'이름과 선택',recommendedAfter:'제3장 종료 후',lines:[
-   {speaker:'노아',text:'열려 있어. 들어와.',portrait:'noa',background:'keep',location:'기록실',caption:'노아 · 6/6 · 돌아온 이름',musicCue:'bgm_noa_silent_bell_afterglow'}
-  ]}];globalThis.storyCommands=[];command=async action=>{storyCommands.push(action);return true;};tone=()=>{};`);
-  env.context.showCharacterStories();
-  assert.ok(env.game.innerHTML.includes('후반부 내용'));assert.ok(env.game.innerHTML.includes('read-character:noa'));
-  await env.click('read-character:noa');
-  assert.equal(env.run('page'),'story');assert.equal(env.run('storyKey'),'character:noa');
-  assert.ok(env.game.innerHTML.includes('노아 · 6/6 · 돌아온 이름'));assert.ok(env.game.innerHTML.includes('기록실'));
-  assert.ok(!env.game.innerHTML.includes('bgm_noa_silent_bell_afterglow'));
-  await env.click('storyskip');assert.equal(env.run('page'),'character-stories');
-  assert.deepEqual(Array.from(env.context.storyCommands),[]);
-  const markup=env.game.innerHTML;env.context.startStory('character:unknown','characterStories');
-  assert.equal(env.game.innerHTML,markup);assert.equal(env.run('page'),'character-stories');
-  pass('character story route shows chapter context, returns after skip and never marks prologue or rewards');
-
+  env=environment();campaignFixture(env);
+  env.run(`data.characterStories=[{id:'noa',name:'노아',title:'별도 결말',lines:[{text:'독립 스토리 대사'}]}];data.story['character:noa']=[{text:'숨겨진 독립 스토리'}];data.campaign.chapters[0].stages[0].cleared=true;globalThis.storyCommands=[];command=async action=>{storyCommands.push(action);return true;};tone=()=>{};showArchive();`);
+  const mainArchive=env.game.innerHTML;
+  await env.click('go:characterStories');await env.click('read-character:noa');env.context.startStory('character:noa');
+  assert.equal(env.game.innerHTML,mainArchive);assert.equal(env.run('page'),'archive');
+  assert.equal(env.run('typeof showCharacterStories'),'undefined');assert.deepEqual(Array.from(env.context.storyCommands),[]);
+  assert.ok(env.game.innerHTML.includes('stage-replay:c1s01'));assert.ok(!env.game.innerHTML.includes('독립 스토리'));assert.ok(!source.includes('characterStories'));assert.ok(!source.includes('read-character:'));
+  pass('standalone character story routes and payload are retired; the archive exposes only completed main-stage replay');
 
   function campaignFixture(e) {
     const chapters = JSON.parse(fs.readFileSync(path.join(__dirname, '../기획서/메인스토리/campaign.json'), 'utf8')).chapters;
+    for(const [index,chapter] of chapters.entries()){chapter.focusCharacterId||=['lian','sera','noa','heidel','minato'][index];chapter.focusStorySummary||='메인 스토리에 이어지는 인물의 과거와 현재';}
     for (const chapter of chapters) for (const stage of chapter.stages) { stage.unlocked = stage.id === 'c1s01'; stage.cleared = false; }
     e.run('data.campaign=' + JSON.stringify({ chapters, activeStage: null, phase: 'None', replay: false, currentStory: [] }));
     return chapters;
@@ -310,13 +303,13 @@ async function main() {
   env.context.showStages();
   assert.equal((env.game.innerHTML.match(/data-action="chapter:/g) || []).length,1);
   assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g) || []).length,1);
-  assert.ok(env.game.innerHTML.includes('얼어붙은 폐허'));
-  assert.ok(!env.game.innerHTML.includes('낯선 불꽃'));assert.ok(!env.game.innerHTML.includes('CHAPTER 02'));
+  assert.ok(env.game.innerHTML.includes(chapters[0].stages[0].title));
+  assert.ok(!env.game.innerHTML.includes(chapters[0].stages[3].title));assert.ok(!env.game.innerHTML.includes('CHAPTER 02'));
   env.context.showStages(3,chapters[2].stages[8].id);
   assert.ok(!env.game.innerHTML.includes('침묵의 기록관'));assert.ok(!env.game.innerHTML.includes('이브'));
   env.run(`for(const stage of data.campaign.chapters[0].stages.slice(0,3)){stage.cleared=true;stage.unlocked=true;}data.campaign.chapters[0].stages[3].unlocked=true;showStages();`);
   assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g)||[]).length,4);
-  assert.ok(env.game.innerHTML.includes('낯선 불꽃'));assert.ok(!env.game.innerHTML.includes('外壁'));assert.ok(!env.game.innerHTML.includes('외벽의 발소리'));
+  assert.ok(env.game.innerHTML.includes(chapters[0].stages[3].title));assert.ok(!env.game.innerHTML.includes('外壁'));assert.ok(!env.game.innerHTML.includes(chapters[0].stages[4].title));
   env.context.showArchive();assert.ok(env.game.innerHTML.includes('제1장'));assert.ok(!env.game.innerHTML.includes('제2장'));assert.ok(!env.game.innerHTML.includes('아직 기록된 이야기가 없습니다'));
   pass('map shows completed and next stages while future chapters, scenes and archive placeholders stay hidden');
 
@@ -437,6 +430,37 @@ async function main() {
   assert.equal(env.context.guardCardCall.cardId,'');assert.equal(env.context.guardCardCall.kind,'Guard');
   assert.equal(env.run('selectedCardId'),'');
   pass('defense remains available outside the card bag and sends no attack card identity');
+
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.chapters[2].stages[0].unlocked=true;globalThis.focusCommands=[];command=async action=>{focusCommands.push(action);return true;};tone=()=>{};showRoster(4);`);
+  assert.ok(env.game.innerHTML.includes('focus-chapter:noa'));assert.ok(env.game.innerHTML.includes('메인 스토리 · 노아의 장 보기'));assert.ok(!env.game.innerHTML.includes('read-character:'));
+  await env.click('focus-chapter:noa');
+  assert.equal(env.run('page'),'stages');assert.equal(env.run('selectedChapter'),3);assert.equal(env.run('selectedStage'),env.run('data.campaign.chapters[2].stages[0].id'));
+  assert.ok(env.game.innerHTML.includes('노아의 장'));assert.deepEqual(Array.from(env.context.focusCommands),[]);
+  pass('an accessible character-story button opens that character’s main chapter without starting a separate story or granting rewards');
+
+  env=environment();campaignFixture(env);
+  env.run(`globalThis.focusCommands=[];command=async action=>{focusCommands.push(action);return true;};toast=message=>{globalThis.focusNotice=message;};tone=()=>{};showRoster(4);`);
+  assert.ok(env.game.innerHTML.includes('앞선 스테이지 완료 후 개방'));
+  await env.click('focus-chapter:noa');
+  assert.equal(env.run('page'),'stages');assert.equal(env.run('selectedChapter'),1);
+  assert.ok(env.context.focusNotice.includes('노아의 장(제3장)'));assert.ok(env.context.focusNotice.includes('앞선 스테이지'));
+  assert.ok(env.game.innerHTML.includes('리안의 장'));assert.ok(!env.game.innerHTML.includes('CHAPTER 03'));assert.deepEqual(Array.from(env.context.focusCommands),[]);
+  pass('a locked character chapter explains its prerequisite and shows the real current frontier without bypassing progression');
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.chapters[0].stages[0].cleared=true;showArchive();`);
+  assert.ok(env.game.innerHTML.includes('제1장 · 리안의 장'));assert.ok(!env.game.innerHTML.includes('캐릭터 이야기'));
+  env.context.showRoster(5);assert.ok(!env.game.innerHTML.includes('focus-chapter:kai'));
+  pass('main replay records name their focus character and characters without a focus chapter receive no invented story entry');
+
+  env=environment();campaignFixture(env);
+  env.run(`data.campaign.chapters[0].stages.forEach(s=>{s.cleared=true;s.unlocked=true;});data.campaign.chapters[1].stages[0].unlocked=true;showHub();`);
+  assert.ok(env.game.innerHTML.includes('<h1>세라의 장</h1>'));assert.ok(env.game.innerHTML.includes(env.run('data.campaign.chapters[1].focusStorySummary')));
+  env.context.showStages(2,'');
+  assert.ok(env.game.innerHTML.includes('세라의 장'));assert.ok(!env.game.innerHTML.includes('<strong>세라 · '));
+  pass('the keep follows the current main-story frontier and chapter titles avoid repeating their focus character');
 
   console.log('TOTAL ' + passed + ' regression cases passed');
 }

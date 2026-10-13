@@ -34,9 +34,10 @@ namespace RequiemLantern.Presentation
             Label(screen,"Keep status",$"등대 복구  {progress.Data.KeepLevel}단계",94,800,600,46,25,Gold);
             Label(screen,"Lian quote","“…살아 있으면, 그걸로 됐어.”",94,862,800,64,30);
             Label(screen,"Lian caption","리안  /  등대의 파수꾼",96,927,700,38,19,Muted);
-            Label(screen,"Main quest label","MAIN STORY",1010,177,760,40,18,Gold);
             var next=NextCampaignStage();
-            Label(screen,"Main quest title",next.Chapter+"장 · "+CampaignCatalog.Chapters[next.Chapter-1].Title,1007,222,800,80,55);
+            var nextChapter=CampaignCatalog.Chapters[next.Chapter-1];
+            Label(screen,"Main quest label","MAIN STORY / "+CampaignCharacterName(nextChapter.FocusCharacterId)+"의 이야기",1010,177,760,40,18,Gold);
+            Label(screen,"Main quest title",next.Chapter+"장 · "+CampaignCatalog.Chapters[next.Chapter-1].Title,1007,222,800,80,38);
             Label(screen,"Main quest body",next.Number+"  "+next.Title+"\n"+next.Summary,1013,318,775,95,25,Muted);
             HubCard("Sortie","01","작전실","동료들과 함께 걷는 다섯 장의 여정",1008,462,()=>{selectedChapter=next.Chapter;selectedStage=next.Id;ShowStages();},true);
             HubCard("Roster","02","잔영 기록","별의 파편을 품은 동료들",1008,594,()=>ShowRoster(0));
@@ -69,13 +70,13 @@ namespace RequiemLantern.Presentation
             if(l.Background=="black")Box(screen,"Blackout",0,0,1920,1080,new Color(.01f,.02f,.035f,.99f));
             if(!string.IsNullOrEmpty(l.ListenerPortrait)&&l.ListenerPortrait!=l.Portrait){
                 var listener=Character(screen,ArtId(l.ListenerPortrait),1040,94,760,1020,!reducedMotion);
-                listener.color=new Color(.52f,.57f,.65f,.76f);
+                if(listener.texture)listener.color=new Color(.52f,.57f,.65f,.76f);
             }
             if(!string.IsNullOrEmpty(l.Portrait)){
                 string id=l.Portrait;for(int i=0;i<CharacterIds.Length;i++)if(id.Equals(CharacterIds[i],StringComparison.OrdinalIgnoreCase)||id==CharacterNames[i])id=CharacterIds[i];
                 var portrait=Character(screen,id,115,62,810,1100,!reducedMotion);
                 bool speaking=CampaignCharacterName(id)==l.Speaker;
-                portrait.color=speaking?Color.white:new Color(.67f,.70f,.75f,1);
+                if(portrait.texture)portrait.color=speaking?Color.white:new Color(.67f,.70f,.75f,1);
                 if(id!=lastStoryPortrait&&!reducedMotion)StartCoroutine(RevealPortrait(portrait,screenVersion));
                 lastStoryPortrait=id;
             }
@@ -124,33 +125,23 @@ namespace RequiemLantern.Presentation
             Label(screen,"Role",CharacterRoles[selected],829,361,1010,45,27,Gold);
             Box(screen,"Description rule",832,442,940,1,new Color(.4f,.45f,.5f,.6f));
             Label(screen,"Biography",descriptions[selected],830,484,935,172,28,Muted);
-            Label(screen,"Character quote","“"+CharacterQuotes[selected]+"”",830,650,920,81,27);
+            Label(screen,"Character quote","“"+CharacterQuotes[selected]+"”",830,650,920,57,27);
             if(selected<5){
                 string id=CharacterIds[selected].ToLowerInvariant();var growth=progress.GetCharacter(id);
                 Label(screen,"Character growth",$"레벨 {growth.Level}   ·   동기화 {growth.SyncLevel}",831,404,920,34,21,Gold);
-                var sync=Button(screen,"Synchronize "+id,growth.SyncLevel>0?"동기화 완료 · 3스킬 해금":"동기화 · 등불 조각 10 → 3스킬 해금",832,740,938,55,()=>{
+                var chapter=CampaignCatalog.Chapters.Find(c=>c.FocusCharacterId==id);
+                if(chapter!=null){
+                    bool available=CampaignRules.IsUnlocked(progress.Data,chapter.Stages[0])||CampaignRules.IsCleared(progress.Data,chapter.Stages[0]);
+                    var mainStory=Button(screen,"Main chapter "+id,$"{chapter.Number}장 · {CharacterNames[selected]}의 본편 이야기"+(available?" →":" · 앞 장 완료 필요"),832,710,938,43,()=>ShowCharacterChapter(id));
+                    mainStory.interactable=available;
+                }
+                var sync=Button(screen,"Synchronize "+id,growth.SyncLevel>0?"동기화 완료 · 3스킬 해금":"동기화 · 등불 조각 10 → 3스킬 해금",832,765,938,41,()=>{
                     if(progress.Synchronize(id,out string error)){Persist();ShowRoster(selected);Notify("동기화가 완료되어 3스킬이 열렸습니다.");}else Notify(error);
                 },growth.SyncLevel==0);
                 sync.interactable=growth.SyncLevel==0;
             }
             for(int i=0;i<7;i++){int n=i;Button(screen,"Select "+CharacterIds[i],CharacterNames[i],833+(i%4)*241,817+(i/4)*82,220,65,()=>ShowRoster(n),i==selected);}
             Footer("원화 기준 캐릭터 기록  ·  후반부 인물의 핵심 반전은 숨겨져 있습니다");
-        }
-        void ShowCharacterStories()
-        {
-            Clear("character-stories");Header("AFTERGLOW / CHARACTER STORIES","캐릭터 이야기",ShowArchive);
-            Label(screen,"Spoiler note","인물의 과거와 후반부 내용이 포함됩니다. 권장 감상 순서를 확인하고 읽어 주세요.",126,178,1650,62,23,Muted);
-            for(int i=0;i<CharacterStoryCatalog.All.Count;i++){
-                var entry=CharacterStoryCatalog.All[i];float x=126+i*566;
-                Box(screen,"Story card "+entry.Id,x,284,536,710,new Color(.045f,.073f,.105f,.96f));
-                Label(screen,"Story owner "+entry.Id,entry.Name+" · ★5",x+28,300,480,40,25,Gold);
-                Character(screen,ArtId(entry.Id),x+55,345,426,369,!reducedMotion);
-                Label(screen,"Story title "+entry.Id,entry.Title,x+28,727,480,60,31,Ivory);
-                Label(screen,"Story summary "+entry.Id,entry.Summary,x+28,794,480,93,22,Muted);
-                Label(screen,"Story order "+entry.Id,entry.RecommendedAfter,x+28,887,480,38,17,Gold);
-                Button(screen,"Read character "+entry.Id,"이야기 읽기 →",x+28,931,480,50,()=>StartStory(entry.Lines,ShowCharacterStories),true);
-            }
-            Footer("세 잔영의 합류, 상실, 그리고 스스로 고른 결의");
         }
         void ShowSettings()
         {

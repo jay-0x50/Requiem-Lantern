@@ -27,11 +27,15 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='skill-deck-v2'
+    assert data and data['runtimeRevision']=='character-chapters-v3'
+    assert 'characterStories' not in data
+    assert [c['focusCharacterId'] for c in data['campaign']['chapters']]==['lian','sera','noa','heidel','minato']
+    assert all(c['focusStorySummary'] for c in data['campaign']['chapters'])
     assert sum(len(c['stages']) for c in data['campaign']['chapters'])==50
     assert [s['id'] for c in data['campaign']['chapters'] for s in c['stages'] if s['unlocked']]==['c1s01']
     data=call('stage-enter',400,stageId='c1s02');assert data['campaign']['activeStage'] is None
     data=call('stage-enter',stageId='c1s01');assert data['campaign']['phase']=='BeforeStory'
+    assert all('리안' in line['caption'] and '1-1' in line['caption'] for line in data['campaign']['currentStory'])
     data=call('resolve',400);assert data['campaign']['phase']=='BeforeStory'
     data=call('stage-story',400,stageId='c1s02',expectedPhase='BeforeStory')
     data=call('stage-story',stageId='c1s01',expectedPhase='BeforeStory')

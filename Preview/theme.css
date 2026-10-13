@@ -354,9 +354,9 @@
 /* The campaign is a sequence of scenes and battles; each chapter stays readable
    on the fixed 1600 x 900 game canvas. */
 .chapter-tabs{position:absolute;left:75px;right:75px;top:123px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
-.chapter-tabs button{height:78px;text-align:left;padding:13px 22px}
+.chapter-tabs button{height:90px;text-align:left;padding:11px 19px}
 .chapter-tabs small{display:block;font-size:11px;letter-spacing:.14em;color:#a7b2bf}
-.chapter-tabs strong{display:block;font-size:20px;font-weight:500;margin-top:6px}
+.chapter-tabs strong{display:block;font-size:17px;line-height:1.35;word-break:keep-all;font-weight:500;margin-top:5px}
 .chapter-tabs .primary small{color:#e6cda1}
 .campaign-heading{position:absolute;left:90px;right:95px;top:223px}
 .campaign-heading p{font-size:16px;color:#b6bfcb;line-height:1.6;margin:8px 0}
@@ -404,3 +404,8 @@
 .enemy-stats{z-index:6;pointer-events:none}.enemy-stats .name,.enemy-sanity,.enemy-stats small{text-shadow:0 2px 4px #000,0 0 6px #000}
 
 .deck-status{font-size:10px;color:#95a6bb;letter-spacing:.03em;margin:0 0 6px}.skills{grid-template-columns:repeat(2,minmax(0,1fr))}.skill-panel .skill-title{margin-bottom:3px}.skills button:last-child:nth-child(odd){grid-column:1 / -1}.campaign-map{align-items:start}
+
+.roster-story-entry{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin-top:13px}
+.roster-story-entry button{height:42px;padding:0 20px;font-size:13px}
+.roster-story-entry small{color:#acb9ca;font-size:11px;line-height:1.5}
+.chapter-tabs small{letter-spacing:.055em}.campaign-heading .eyebrow{letter-spacing:.14em}

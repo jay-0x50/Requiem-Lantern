@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Build.Reporting;
@@ -49,11 +50,29 @@ namespace RequiemLantern.Editor
         [MenuItem("Requiem Lantern/Build Windows Preview")]
         public static void BuildWindows()
         {
-            Prepare();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
+            Prepare();ValidateStoryArt();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName=Path.Combine(folder,"RequiemLantern.exe"),
                 target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
             if(report.summary.result!=BuildResult.Succeeded)throw new System.Exception("Windows build failed: "+report.summary.result);
+        }
+        static void ValidateStoryArt()
+        {
+            var lines=RequiemLantern.Core.CampaignCatalog.Chapters.SelectMany(c=>c.Stages).SelectMany(s=>s.Before.Concat(s.After));
+            var portraits=lines.SelectMany(line=>new[]{line.Portrait,line.ListenerPortrait})
+                .Concat(RequiemLantern.Core.CampaignCatalog.Chapters.SelectMany(c=>c.Stages).Where(s=>s.HasBattle).Select(s=>s.EnemyArt))
+                .Where(id=>!string.IsNullOrEmpty(id)).Distinct();
+            foreach(string id in portraits){
+                var texture=Resources.Load<Texture2D>("Art/"+id);
+                if(!texture){
+                    string path="Assets/Resources/Art/"+id+".png";
+                    AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
+                    texture=Resources.Load<Texture2D>("Art/"+id);
+                    var main=AssetDatabase.LoadMainAssetAtPath(path);
+                    Debug.Log("STORY_ART_IMPORT: "+id+"; file="+File.Exists(path)+"; asset="+(main?main.GetType().Name:"missing")+"; resource="+(texture?texture.name:"missing"));
+                }
+                if(!texture)throw new System.Exception("Story art cannot be loaded: Art/"+id);
+            }
         }
     }
     public sealed class ArtImporter : AssetPostprocessor
@@ -62,6 +81,7 @@ namespace RequiemLantern.Editor
         {
             if(!assetPath.StartsWith("Assets/Resources/Art/"))return;
             var importer=(TextureImporter)assetImporter;importer.textureType=TextureImporterType.Default;
+            importer.textureShape=TextureImporterShape.Texture2D;
             importer.alphaIsTransparency=true;importer.mipmapEnabled=false;importer.maxTextureSize=2048;
             importer.textureCompression=TextureImporterCompression.Uncompressed;
         }

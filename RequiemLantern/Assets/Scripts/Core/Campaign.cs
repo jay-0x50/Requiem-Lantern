@@ -8,7 +8,7 @@ namespace RequiemLantern.Core
     public enum CampaignPhase { None, BeforeStory, Battle, AfterStory, Complete }
     [Serializable] public sealed class ChapterData
     {
-        public int Number; public string Title, Summary;
+        public int Number; public string Title, Summary, FocusCharacterId, FocusStorySummary;
         public List<StageData> Stages = new List<StageData>();
     }
     [Serializable] public sealed class StageData

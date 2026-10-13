@@ -308,31 +308,9 @@ internal static class CoreTests
             Equal(string.Join(",",roll.FlameStates),string.Join(",",hit.FlameStates));
         });
         Test("story preserves names, quotations and prototype flags", () => {
-            True(StoryCatalog.Prologue.Any(x => x.Speaker == "리안" && x.Text == "…움직이지 마. 그림자가 소리에 반응해." && !x.IsPrototype));
-            True(StoryCatalog.Prologue.Any(x => x.IsPrototype)); True(StoryCatalog.FirstMeal.Any(x => x.Speaker == "미나토"));
-            False(StoryCatalog.Prologue.Any(x => x.Text.Contains("실험체")));
-        });
-        Test("character stories retain scope, complete scene metadata and ordered music cues", () => {
-            Equal("lian,sera,noa",string.Join(",",CharacterStoryCatalog.All.Select(s=>s.Id)));
-            Equal(null,CharacterStoryCatalog.Get("minato"));Equal(null,CharacterStoryCatalog.Get("unknown"));
-            foreach(var story in CharacterStoryCatalog.All){
-                True(story.Lines.Count>=48);Equal(story.Id=="lian"?7:8,story.Lines.Select(l=>l.Caption).Distinct().Count());
-                True(story.Lines.All(l=>l.IsPrototype&&!string.IsNullOrWhiteSpace(l.Text)&&!string.IsNullOrWhiteSpace(l.Location)));
-                Equal(story.MusicId+"_phase1,"+story.MusicId+"_phase2,"+story.MusicId+"_afterglow",
-                    string.Join(",",story.Lines.Where(l=>!string.IsNullOrEmpty(l.MusicCue)).Select(l=>l.MusicCue)));
-                False(story.Lines.Any(l=>l.Text.Contains("실험 총책임자")));
-            }
-        });
-        Test("human antagonists speak before their boss fight and remain distinct from Umbra", () => {
-            Equal("umbra",CharacterStoryCatalog.Get("lian").BossKind);
-            foreach(var pair in new[]{new[]{"sera","엘렌"},new[]{"noa","이브"}}){
-                var story=CharacterStoryCatalog.Get(pair[0]);Equal("human",story.BossKind);
-                True(!string.IsNullOrWhiteSpace(story.BossFaction));True(story.BossName.Contains(pair[1]));
-                int encounter=story.Lines.FindIndex(l=>l.MusicCue==story.MusicId+"_phase1");
-                True(encounter>0);True(story.Lines.Take(encounter).Any(l=>l.Speaker==pair[1]));
-                True(story.Lines.Skip(encounter).Any(l=>l.Text.Contains("구금")));
-            }
-            True(CharacterStoryCatalog.Get("lian").Lines.Any(l=>l.Speaker=="로웬"));
+            True(CampaignCatalog.Get("c1s02").Before.Any(x => x.Speaker == "리안" && x.Text == "…움직이지 마. 그림자가 소리에 반응해."));
+            True(CampaignCatalog.Get("c1s02").Before.Any(x => x.IsPrototype)); True(CampaignCatalog.Get("c1s07").Before.Any(x => x.Speaker == "미나토"));
+            False(CampaignCatalog.Get("c1s01").Before.Any(x => x.Text.Contains("실험체")));
         });
         Console.WriteLine("PASS: " + passed + " tests");
     }

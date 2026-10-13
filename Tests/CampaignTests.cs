@@ -32,6 +32,9 @@ internal static class CampaignTests
                 var chapters=source.RootElement.GetProperty("chapters").EnumerateArray().ToList();Equal(5,chapters.Count);
                 int authoredLines=0,compiledLines=0;
                 foreach(var chapter in chapters){
+                    var compiledChapter=CampaignCatalog.Chapters.Single(c=>c.Number==chapter.GetProperty("number").GetInt32());
+                    Equal(chapter.GetProperty("focusCharacterId").GetString(),compiledChapter.FocusCharacterId);
+                    Equal(chapter.GetProperty("focusStorySummary").GetString(),compiledChapter.FocusStorySummary);
                     foreach(var sourceStage in chapter.GetProperty("stages").EnumerateArray()){
                         var stage=CampaignCatalog.Get(sourceStage.GetProperty("id").GetString());True(stage!=null);
                         Equal(sourceStage.GetProperty("number").GetString(),stage.Number);Equal(sourceStage.GetProperty("kind").GetString(),stage.Kind.ToString());
@@ -49,6 +52,21 @@ internal static class CampaignTests
                 True(chapter.Stages.SelectMany(s=>Speakers(s)).Distinct().Count()>=4);
             }
             True(Stages.SelectMany(s=>s.Before.Concat(s.After)).Any(line=>!string.IsNullOrEmpty(line.ListenerPortrait)));
+        });
+        Test("the five main chapters carry character arcs and human friend encounters",()=>{
+            Equal("lian,sera,noa,heidel,minato",string.Join(",",CampaignCatalog.Chapters.Select(c=>c.FocusCharacterId)));
+            var names=new Dictionary<string,string>{{"lian","리안"},{"sera","세라"},{"noa","노아"},{"heidel","하이델"},{"minato","미나토"}};
+            foreach(var chapter in CampaignCatalog.Chapters){
+                string name=names[chapter.FocusCharacterId];True(!string.IsNullOrWhiteSpace(chapter.FocusStorySummary));
+                True(chapter.Stages.Count(stage=>stage.Before.Concat(stage.After).Any(line=>line.Speaker==name))>=6,"The focal character disappeared from the main arc: "+name);
+                True(chapter.Stages.Last().Before.Concat(chapter.Stages.Last().After).Any(line=>line.Speaker==name),"The final main stage did not conclude the focal character's arc: "+name);
+                foreach(var stage in chapter.Stages)foreach(var line in stage.Before.Concat(stage.After))
+                    True(line.Caption.Contains("제"+chapter.Number+"장")&&line.Caption.Contains(name)&&line.Caption.Contains(stage.Number),"Main story caption lost its character/chapter/stage context.");
+            }
+            foreach(var pair in new[]{new[]{"lian","로웬"},new[]{"sera","엘렌"},new[]{"noa","이브"}}){
+                var chapter=CampaignCatalog.Chapters.Single(c=>c.FocusCharacterId==pair[0]);
+                True(chapter.Stages.Any(stage=>stage.HasBattle&&stage.Before.Any(line=>line.Speaker==pair[1])),"Human friend dialogue is missing from the main battle flow: "+pair[1]);
+            }
         });
         Test("old prologue and isolated legacy victory do not bypass intervening stages",()=>{
             var data=new ProgressData{PrologueCompleted=true};data.ClearedStages.Add("chapter1_beacon_defense");

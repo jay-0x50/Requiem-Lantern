@@ -34,13 +34,14 @@ namespace RequiemLantern.Presentation
             for(int i=0;i<chapters.Count;i++){
                 var c=chapters[i];int number=c.Number;
                 int clear=c.Stages.Count(s=>CampaignRules.IsCleared(progress.Data,s));
-                Button(screen,"Chapter "+number,$"{number}장 · {c.Title}  {clear}/{c.Stages.Count}",78+i*356,140,338,68,()=>{
+                Button(screen,"Chapter "+number,$"{number}장 · {CampaignCharacterName(c.FocusCharacterId)}  {clear}/{c.Stages.Count}",78+i*356,140,338,68,()=>{
                     selectedChapter=number;selectedStage=c.Stages.FirstOrDefault(s=>!archive&&CampaignRules.IsUnlocked(progress.Data,s)&&!CampaignRules.IsCleared(progress.Data,s))?.Id
                         ??c.Stages.FirstOrDefault(s=>CampaignRules.IsCleared(progress.Data,s))?.Id??c.Stages[0].Id;ShowCampaign(archive);
                 },number==selectedChapter);
             }
             Label(screen,"Chapter title",chapter.Number+"장  "+chapter.Title,92,236,1680,64,45,Gold);
-            Label(screen,"Chapter summary",chapter.Summary,97,312,1700,75,24,Muted);
+            Label(screen,"Chapter summary",string.IsNullOrEmpty(chapter.FocusStorySummary)?chapter.Summary:chapter.FocusStorySummary,97,312,1700,75,24,Muted);
+            Label(screen,"Chapter focus",CampaignCharacterName(chapter.FocusCharacterId)+"의 본편 이야기",97,387,1680,25,18,Gold);
             for(int i=0;i<visible.Count;i++){
                 var stageData=visible[i];float x=91+(i%5)*355,y=414+(i/5)*176;
                 bool cleared=CampaignRules.IsCleared(progress.Data,stageData);
@@ -67,6 +68,7 @@ namespace RequiemLantern.Presentation
         }
         string CampaignCharacterName(string id)
         {
+            if(string.IsNullOrEmpty(id))return "동료들";
             switch(id.ToLowerInvariant()){
                 case "lian":return "리안";case "sera":return "세라";case "minato":return "미나토";case "heidel":return "하이델";case "noa":return "노아";case "kai":return "카이";
                 case "rowan":return "로웬";case "ellen":return "엘렌";case "eve":return "이브";case "orphe":return "오르페";default:return id;
@@ -107,6 +109,16 @@ namespace RequiemLantern.Presentation
         void LeaveCampaignBattle()
         {
             if(campaign.Active!=null)ShowCampaign(false);else ShowHub();
+        }
+        void ShowCharacterChapter(string id)
+        {
+            var chapter=CampaignCatalog.Chapters.FirstOrDefault(c=>c.FocusCharacterId==id);
+            if(chapter==null)return;
+            if(!CampaignRules.IsUnlocked(progress.Data,chapter.Stages[0])&&!CampaignRules.IsCleared(progress.Data,chapter.Stages[0])){
+                Notify(chapter.Number+"장에서 이어지는 이야기입니다. 앞 장의 여정을 먼저 마쳐 주세요.");return;
+            }
+            selectedChapter=chapter.Number;selectedStage=chapter.Stages.FirstOrDefault(s=>CampaignRules.IsUnlocked(progress.Data,s)&&!CampaignRules.IsCleared(progress.Data,s))?.Id??chapter.Stages[0].Id;
+            ShowCampaign(false);
         }
         void ShowArchive() { ShowCampaign(true); }
     }

@@ -1,0 +1,26 @@
+Character Chapters browser QA — 2026-10-13
+Host: http://127.0.0.1:8128/ (isolated QA save; no game actions on live 8127)
+Revision: character-chapters-v3
+
+PASS — Fresh start opens main stage 1-1. Caption includes 제1장 · 리안 · 1-1 · 얼어붙은 폐허.
+PASS — Finishing story-only 1-1 unlocks 1-2; map shows only completed 1-1 and next 1-2. Later chapters and stages remain hidden.
+PASS — Chapter badge/heading name 리안의 장 and display title 돌아올 사람을 위한 불. Long title fits inside the tab after CSS fix.
+PASS — Roster button 메인 스토리 · 리안의 장 보기 opens the same main chapter map without a separate story session.
+PASS — Locked Noa roster note identifies chapter 3. Clicking the main-story button displays current Lian frontier with status: 노아의 장(제3장)은 앞선 스테이지를 완료하면 열립니다. 현재 진행할 수 있는 장을 표시합니다. No chapter-3 tab or extra stage unlocked. Screenshot 04 shows the resulting current map after the temporary toast disappeared; the status was verified in DOM.
+PASS — Archive exposes only completed main stage 1-1, with character-focused chapter heading; independent character story selection absent.
+PASS — Replay from archive opens the same main-stage caption and returns without reward; coins 0 and lantern fragments 0 remain unchanged.
+PASS — Keep follows current main focus and focusStorySummary; static obsolete chapter title removed.
+PASS — Roster growth, story entry, and seven-character selector fit inside the game canvas.
+PASS — Browser console error/warning list empty.
+PASS — Preview regression: 40 cases, including retired independent routes, unlocked/locked roster focus navigation, and current frontier hub title.
+PASS — JS syntax and owned-file diff whitespace checks.
+
+Screenshots:
+01-main-stage-caption.png
+02-main-lian-map.png
+03-roster-main-story.png
+04-locked-noa-current-map.png
+05-main-archive.png
+06-main-hub.png
+
+Browser tab 1516714911 remains QA-only and should be moved to live 8127 after root restarts it; do not present isolated-save tab as playable deliverable.

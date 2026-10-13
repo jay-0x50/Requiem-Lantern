@@ -115,22 +115,50 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeReplay||page!="stages")throw new Exception("Campaign replay changed rewards or did not return to the map.");
             ShowHub();yield return Capture(directory,"03-hub");
             ShowRoster(0);yield return Capture(directory,"04-roster");
-            ShowCharacterStories();yield return Capture(directory,"08-character-stories");
-            foreach(var entry in CharacterStoryCatalog.All){
-                StartStory(entry.Lines,ShowCharacterStories);yield return Capture(directory,"09-"+entry.Id+"-story");
-                var plaque=screen.Find("Location plaque");
-                if(!plaque||plaque.Find("Chapter").GetComponent<Text>().text!=entry.Lines[0].Caption)throw new Exception("Character story caption did not display for "+entry.Id);
-                string humanName=entry.Id=="lian"?"로웬":entry.Id=="sera"?"엘렌":"이브";
-                int humanLine=entry.Lines.FindIndex(line=>line.Speaker==humanName);
-                if(humanLine<0)throw new Exception("Character story is missing its human antagonist: "+entry.Id);
-                storyIndex=humanLine;DrawStory();revealed=999;
-                yield return Capture(directory,"11-"+entry.Id+"-human");
-                if(screen.Find("Dialogue panel").Find("Speaker").GetComponent<Text>().text!=humanName)throw new Exception("Human antagonist speaker did not display: "+humanName);
-                storyIndex=entry.Lines.Count-1;DrawStory();revealed=999;
-                yield return Capture(directory,"10-"+entry.Id+"-ending");NextStory();
-                if(page!="character-stories")throw new Exception("Character story did not return to its selection screen: "+entry.Id);
+            // Later-chapter captures use explicit completed-history fixtures and
+            // their own save paths. The ongoing player's tour/save is restored below.
+            var tourProgress=progress;var tourSave=save;
+            foreach(var chapter in CampaignCatalog.Chapters){
+                var first=chapter.Stages[0];UseSmokeChapterFixture(chapter,first);
+                ShowCharacterChapter(chapter.FocusCharacterId);
+                string focus=CampaignCharacterName(chapter.FocusCharacterId);
+                if(page!="stages"||screen.Find("Chapter focus").GetComponent<Text>().text!=focus+"의 본편 이야기")
+                    throw new Exception("Main chapter focus did not display for "+focus);
+                if(chapter.Number<5&&screen.Find("Chapter "+(chapter.Number+1)))throw new Exception("Focus chapter map exposed a future chapter.");
+                yield return Capture(directory,"09-chapter"+chapter.Number+"-"+chapter.FocusCharacterId+"-map");
+                string human=chapter.Number==1?"로웬":chapter.Number==2?"엘렌":chapter.Number==3?"이브":null;
+                if(human!=null){
+                    var scene=chapter.Stages.LastOrDefault(stage=>stage.HumanEnemy&&stage.Before.Any(line=>line.Speaker==human))
+                        ??chapter.Stages.LastOrDefault(stage=>stage.Before.Any(line=>line.Speaker==human));
+                    if(scene==null||!scene.HasBattle)throw new Exception("Main chapter is missing the human friend's pre-battle conversation: "+human);
+                    UseSmokeChapterFixture(chapter,scene);EnterCampaignStage(scene.Id);
+                    if(campaign.Active!=scene||campaign.Phase!=CampaignPhase.BeforeStory)throw new Exception("Friend dialogue did not enter the main stage flow.");
+                    storyIndex=campaign.CurrentStory.FindIndex(line=>line.Speaker==human);DrawStory();revealed=999;
+                    string humanArt=campaign.CurrentStory[storyIndex].Portrait;
+                    var humanImage=screen.Find(humanArt+" portrait").GetComponent<RawImage>();
+                    if(!humanImage.texture||humanImage.texture.name!=humanArt)throw new Exception("Main human dialogue is missing its own 2D portrait: "+humanArt);
+                    yield return Capture(directory,"11-"+chapter.FocusCharacterId+"-human");
+                    var plaque=screen.Find("Location plaque");string caption=plaque.Find("Chapter").GetComponent<Text>().text;
+                    if(!caption.Contains(focus)||!caption.Contains(scene.Number))throw new Exception("Friend dialogue caption lost its main chapter and stage.");
+                    if(screen.Find("Dialogue panel").Find("Speaker").GetComponent<Text>().text!=human)throw new Exception("Main-stage human friend speaker did not display.");
+                    int coins=progress.Data.Coins;FinishCurrentStory();
+                    if(page!="battle"||campaign.Phase!=CampaignPhase.Battle||CampaignRules.IsCleared(progress.Data,scene)||progress.Data.Coins!=coins)
+                        throw new Exception("Main friend story skipped its battle gate or paid rewards before victory.");
+                }
             }
-            if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Reading archived character drafts unexpectedly changed rewards.");
+            var finalChapter=CampaignCatalog.Chapters.Last();UseSmokeChapterFixture(finalChapter,finalChapter.Stages[0]);
+            selectedChapter=1;selectedStage=firstChapter.Stages[6].Id;ShowArchive();
+            if(screen.Find("Chapter 5")||!screen.Find("Stage "+firstChapter.Stages[6].Id))throw new Exception("Main archive failed to filter completed history.");
+            yield return Capture(directory,"08-main-archive");
+            campaign.Exit();progress=tourProgress;save=tourSave;ShowRoster(4);
+            var lockedStory=screen.Find("Main chapter noa").GetComponent<Button>();
+            if(lockedStory.interactable)throw new Exception("Noa roster story bypassed the locked third main chapter.");
+            lockedStory.onClick.Invoke();
+            if(page!="roster"||CampaignRules.IsUnlocked(progress.Data,CampaignCatalog.Chapters[2].Stages[0]))throw new Exception("Locked roster chapter action bypassed campaign progress.");
+            yield return Capture(directory,"19-roster-focus-lock");
+            ShowRoster(0);screen.Find("Main chapter lian").GetComponent<Button>().onClick.Invoke();
+            if(page!="stages"||selectedChapter!=1)throw new Exception("Roster story button did not open the character's main chapter map.");
+            if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Main chapter previews unexpectedly changed the ongoing player's rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
             int coinsBeforeLegacy=progress.Data.Coins;
             // Use an actual shuffled duplicate S1 hand so the UI is exercised with
@@ -231,15 +259,23 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not granted exactly once.");
             if(save.Load().Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not persisted to the isolated save.");
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
-                "08-character-stories","09-lian-story","10-lian-ending","09-sera-story","10-sera-ending","09-noa-story","10-noa-ending",
-                "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble","16-stage-frontier","17-skill-bag","18-flame-suspense"};
+                "08-main-archive","09-chapter1-lian-map","09-chapter2-sera-map","09-chapter3-noa-map","09-chapter4-heidel-map","09-chapter5-minato-map",
+                "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble",
+                "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
                 if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-seven fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; character story selection and all three introductions/endings/human antagonists.\nRowan, Ellen and Eve speaker labels displayed; archived character drafts returned to selection without changing rewards. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Two offered duplicate skill cards displayed, reserved individually and restored by action selection. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Two offered duplicate skill cards displayed, reserved individually and restored by action selection. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
+        }
+        void UseSmokeChapterFixture(ChapterData chapter,StageData current)
+        {
+            campaign.Exit();progress=new ProgressService(new ProgressData());
+            foreach(var preceding in CampaignCatalog.Chapters.SelectMany(c=>c.Stages).TakeWhile(s=>s.Id!=current.Id))CampaignRules.Complete(progress.Data,preceding);
+            save=new SaveStore(Path.Combine(smokeDirectory,"chapter-"+chapter.Number+"-fixture.xml"));
+            selectedChapter=chapter.Number;selectedStage=current.Id;
         }
         bool FreshSmokeScreenshot(string path)
         {return File.Exists(path)&&new FileInfo(path).Length>0&&File.GetLastWriteTimeUtc(path)>=smokeStartedUtc.AddSeconds(-1);}
