@@ -81,16 +81,18 @@ namespace RequiemLantern.Presentation
         {
             var hit=e.pointerCurrentRaycast.gameObject;
             var direct=hit?hit.GetComponentInParent<LinkTarget>():null;
-            if(direct&&CanConnect(direct.Id))return direct.Id;
+            if(direct)return CanConnect(direct.Id)?direct.Id:null;
             var point=Pointer(e);
             var closest=anchors.Where(a=>CanConnect(a.Key)).OrderBy(a=>(a.Value-point).sqrMagnitude).FirstOrDefault();
             return closest.Key!=null&&(closest.Value-point).sqrMagnitude<145*145?closest.Key:null;
         }
-        void BeginLinkDrag(PointerEventData e,string actor,int slot,string previousSkill)
+        void BeginLinkDrag(PointerEventData e,string actor,int slot,string previousSkill,bool fromCard=false)
         {
             if(page!="battle"||overlay||resolving||!battle.Unit(actor).Alive)return;
             CancelDragVisuals();
-            if(selectedActor!=actor||selectedSlot!=slot)ChooseSkillForSlot(actor,slot);
+            if(!fromCard||selectedActor!=actor||selectedSlot!=slot)ChooseSkillForSlot(actor,slot);
+            if(!fromCard)explicitSlotFocus=true;
+            RefreshDockFocus();
             dragVisuals=MakeRect(screen,"Live light thread",0,0,1920,1080);
             dragLine=Thread(dragVisuals,"Gold filament",slotAnchors[actor+":"+slot],Pointer(e),Gold,false,4);
             dragLine.Glow=true;dragLine.Pulse=true;dragLine.ReducedMotion=reducedMotion;
@@ -105,7 +107,7 @@ namespace RequiemLantern.Presentation
             Color color=Gold;string hint=battle.Skill(selectedActor,selectedSkill).Name+" · 연결할 대상을 선택하세요";
             if(snappedTarget!=null){
                 hint=TargetName(snappedTarget);
-                if(battle.Intent(snappedTarget)!=null){var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;hint=preview.Summary;}
+                if(battle.Intent(snappedTarget)!=null){var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,CardId=selectedCard,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;hint=preview.Summary;}
                 else if(battle.Skill(selectedActor,selectedSkill).Kind!=SkillKind.Attack)color=Teal;
             }
             dragLine.To=ToMesh(point);dragLine.color=color;dragLine.SetVerticesDirty();
@@ -118,7 +120,7 @@ namespace RequiemLantern.Presentation
             string target=page=="battle"&&!overlay&&!resolving?DropTarget(e):null;
             CancelDragVisuals();
             if(page!="battle"||overlay||resolving)return;
-            if(target!=null)Target(target);else Notify("대상 위에서 놓으면 빛실이 연결됩니다.");
+            if(target!=null)Target(target);else {DrawBattle();Notify("대상 위에서 놓으면 빛실이 연결됩니다.");}
         }
         IEnumerator ConnectionPulse(Vector2 from,Vector2 to,Color color,int version)
         {

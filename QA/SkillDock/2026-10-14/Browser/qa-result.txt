@@ -1,0 +1,29 @@
+PASS: Browser skill dock verification (2026-10-14, Asia/Seoul)
+Runtime: compact-skill-dock-v5, isolated http://127.0.0.1:8128/, Chrome tab 1516715194.
+Save: QA/SkillDock/2026-10-14/Browser/progress.xml only. Fixture completes c1s01 through c1s07 to expose the actual three-person c1s08 battle. User save was not changed.
+
+Actual UI checks:
+- All three fighters show both actual offered cards (six cards), portrait, HP, sanity, defense, two action chips and target summaries.
+- Core-generated colon CardIds (lian:card:1 etc.) survive direct card clicks.
+- Clicking Sera card directly switches the selected fighter. A -> intent -> B -> body fills Sera actions 0 and 1 without replacing A.
+- Clicking reserved Sera A returns to action 0; changing its target to weapon preserves Sera B in action 1.
+- Explicit Lian action-0 chip then the second identical S1 card replaces only that action; the two identical S1 cards retain distinct CardIds.
+- Dragging Minato's actual Heal card to Lian creates a Support reservation in action 0.
+- Dragging Heal to enemy rejects the target with a clear toast and retains 4/6 reservations.
+- Dropping a card in empty header space cancels without adding or replacing a reservation.
+- Escape opens retreat modal; dragging behind it retains the modal and 4/6 reservations. Exact pointerdown -> move -> Escape -> pointerup API-zero behavior is covered by the separate deterministic Preview regression (the browser drag API does not expose an interleaved pointer sequence).
+- Six actions planned, cost 2/4. Large resolve button starts a complete authoritative FX playback and arrives at Round 02 with six fresh cards and editable controls.
+- Round 02: enemy 84/127, rift17/60, weapon4/26; Lian150/150 sanity+2, Sera110/110, Minato91/100 sanity-2.
+- Actual Round-02 attack-card drag to enemy intent creates one Clash reservation using minato:card:3.
+- Console warn/error inventory is empty.
+
+Layout (1600x900 normalized canvas):
+- Card rectangles 166x88, y659..747; every name fully fits.
+- Dock y650..856, footer y856..900.
+- Field HP/name bottom y643 after 10px upward adjustment, gap 7px before dock.
+- Resolve x1218..1569, y768..848; no clipping.
+- Action-chip centers x111+360*allyIndex+174*slot, y821. All six thread source points match measured centers; confirmed-link FX uses the same callback.
+
+Evidence: 01-six-cards.png, 02-six-actions-linked.png, 03-execution-effects.png, 04-next-round.png, layout-measurements.json.
+Focused automated suites after layout corrections: Preview48 / CombatFX37 / CombatAudio8 PASS.
+After QA, the tab was switched to live8127 and marked deliverable without changing player progress. Isolated QA host PID19928 was stopped; live preview remains available.

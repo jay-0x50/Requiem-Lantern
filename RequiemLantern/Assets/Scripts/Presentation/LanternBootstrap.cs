@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using RequiemLantern.Core;
 
 namespace RequiemLantern.Presentation
@@ -168,6 +169,29 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Main chapter previews unexpectedly changed the ongoing player's rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
             int coinsBeforeLegacy=progress.Data.Coins;
+            // Isolated UI fixture: choosing an expensive new card should use
+            // the empty action and report insufficient ember, not refund an
+            // existing action unless the player explicitly selects it.
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,1448);battle.State.Ember=2;
+            var budgetActor=battle.Unit("minato");budgetActor.SyncLevel=1;budgetActor.SkillHand.Clear();
+            var budgetHeal=new SkillCard{Id="smoke-minato-heal",SkillId="minato_heal"};
+            var budgetCare=new SkillCard{Id="smoke-minato-care",SkillId="minato_care"};
+            budgetActor.SkillHand.Add(budgetHeal);budgetActor.SkillHand.Add(budgetCare);PrepareBattlePresentation();
+            screen.Find("Skill card "+budgetHeal.Id).GetComponent<Button>().onClick.Invoke();Target("lian");
+            if(battle.State.Links.Count!=1||battle.State.Links[0].CardId!=budgetHeal.Id||battle.State.Links[0].Slot!=0||battle.AvailableEmber!=1)
+                throw new Exception("Budget fixture did not reserve the first healing card in action 1.");
+            if(OfferedCardSlot(budgetActor,budgetCare)!=1||screen.Find("Skill card "+budgetCare.Id).GetComponent<Button>().interactable)
+                throw new Exception("An unaffordable new card bypassed the empty second action by refunding the first action.");
+            screen.Find("Skill card "+budgetCare.Id).GetComponent<Button>().onClick.Invoke();
+            if(battle.State.Links.Count!=1||battle.State.Links[0].CardId!=budgetHeal.Id||budgetActor.SkillHand.Count!=2)
+                throw new Exception("Selecting an unaffordable new card changed the existing reservation or consumed a hand card.");
+            SelectSlot("minato",0);
+            if(!screen.Find("Skill card "+budgetCare.Id).GetComponent<Button>().interactable)
+                throw new Exception("Explicit action selection did not allow replacing its reservation within the ember budget.");
+            screen.Find("Skill card "+budgetCare.Id).GetComponent<Button>().onClick.Invoke();Target("lian");
+            if(battle.State.Links.Count!=1||battle.State.Links[0].CardId!=budgetCare.Id||battle.State.Links[0].Slot!=0||battle.PlannedCost!=2||ActionAt(budgetActor,1)!=null||budgetActor.SkillHand.Count!=2)
+                throw new Exception("Explicit healing S3 replacement lost its one-action semantics or consumed cards before resolution.");
+            toastText="";toastUntil=0;
             // Use an actual shuffled duplicate S1 hand so the UI is exercised with
             // two distinct copies, rather than substituting an authored test hand.
             int duplicateSeed=Enumerable.Range(0,100).First(seed=>{
@@ -176,16 +200,29 @@ namespace RequiemLantern.Presentation
             });
             campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,duplicateSeed);PrepareBattlePresentation();
             var duplicateCards=battle.Unit("lian").SkillHand.ToArray();
-            if(screen.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal))!=2)
-                throw new Exception("Battle sidebar did not display exactly two offered skill cards.");
+            if(screen.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal))!=battle.State.Allies.Sum(actor=>actor.SkillHand.Count))
+                throw new Exception("Battle dock did not display every ally's two offered skill cards.");
+            var otherActor=battle.State.Allies.First(actor=>actor.Id!="lian");var otherCard=otherActor.SkillHand.First();
+            screen.Find("Skill card "+otherCard.Id).GetComponent<Button>().onClick.Invoke();
+            if(selectedActor!=otherActor.Id||selectedCard!=otherCard.Id||selectedSlot!=0)throw new Exception("An ally's direct skill card did not focus its owner and first action.");
             screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().onClick.Invoke();Target(battle.State.Intents[0].Id);
             if(battle.State.Links.Single(l=>l.ActorId=="lian").CardId!=duplicateCards[0].Id)throw new Exception("Selected card identity was not retained in its action link.");
-            SelectSlot("lian",1);
-            if(selectedCard!=duplicateCards[1].Id||screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().interactable)
-                throw new Exception("Reserved duplicate card remained available for the other action slot.");
-            Target(battle.State.Intents[1].Id);
+            screen.Find("Skill card "+duplicateCards[1].Id).GetComponent<Button>().onClick.Invoke();
+            if(selectedActor!="lian"||selectedSlot!=1||selectedCard!=duplicateCards[1].Id)
+                throw new Exception("Selecting the next offered card replaced the first action instead of using the empty second action.");
+            var directCardNode=screen.Find("Skill card "+duplicateCards[1].Id);var cardDrag=directCardNode.GetComponent<LinkDrag>();
+            var pointer=new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left};
+            var cardRect=directCardNode.GetComponent<RectTransform>();pointer.position=RectTransformUtility.WorldToScreenPoint(null,cardRect.TransformPoint(cardRect.rect.center));
+            pointer.pointerCurrentRaycast=new RaycastResult{gameObject=directCardNode.gameObject};cardDrag.OnBeginDrag(pointer);
+            if(!dragVisuals||!directCardNode.gameObject.activeInHierarchy||selectedCard!=duplicateCards[1].Id||selectedSlot!=1)
+                throw new Exception("Direct skill drag destroyed its source or lost its owner/card/action identity.");
+            var intentNode=screen.Find("Intent "+battle.State.Intents[1].Id);var intentRect=intentNode.GetComponent<RectTransform>();
+            pointer.position=RectTransformUtility.WorldToScreenPoint(null,intentRect.TransformPoint(intentRect.rect.center));
+            pointer.pointerCurrentRaycast=new RaycastResult{gameObject=intentNode.gameObject};cardDrag.OnDrag(pointer);cardDrag.OnEndDrag(pointer);
             if(battle.State.Links.Where(l=>l.ActorId=="lian").Select(l=>l.CardId).Distinct().Count()!=2)throw new Exception("Two actions reused the same offered card.");
-            SelectSlot("lian",0);if(selectedCard!=duplicateCards[0].Id)throw new Exception("Selecting an existing action did not restore its card.");
+            screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().onClick.Invoke();
+            if(selectedSlot!=0||selectedCard!=duplicateCards[0].Id||!screen.Find("Skill card "+duplicateCards[0].Id).GetComponent<Button>().interactable)
+                throw new Exception("A reserved skill card did not return to its own action for editing.");
             SelectSlot("lian",1);if(selectedCard!=duplicateCards[1].Id)throw new Exception("Selecting the second existing action did not restore its card.");
             yield return Capture(directory,"17-skill-bag");
             battle.RecommendLinks();DrawBattle();yield return Capture(directory,"06-battle");
@@ -277,7 +314,7 @@ namespace RequiemLantern.Presentation
                 if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-seven fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Two offered duplicate skill cards displayed, reserved individually and restored by action selection. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
         }
         void UseSmokeChapterFixture(ChapterData chapter,StageData current)

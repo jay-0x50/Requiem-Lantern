@@ -215,7 +215,7 @@ class LanternCombatFX {
   cursor.querySelector('span').textContent=focus?(this.battle.intents.some(i=>i.id===focus)?'놓아서 맞불 연결':'놓아서 연결'):'빛실을 이으세요';
  }
  connected(actor,slot,target,kind){
-  const a={x:113+this.battle.allies.findIndex(u=>u.id===actor)*340+slot*146,y:756},b=this.point(target),c=this.tint(actor);
+  const a=this.options.slotPoint?.(actor,slot)||{x:111+this.battle.allies.findIndex(u=>u.id===actor)*360+slot*174,y:821},b=this.point(target),c=this.tint(actor);
   this.beam(a,b,c);this.shards(b,c);this.expire(this.node('fx-link-label',b,c,kind==='Clash'?'맞불 연결':kind==='Support'?'치유 연결':kind==='Guard'?'호위 연결':'공격 연결'),1000);
  }
  applyEvent(e){

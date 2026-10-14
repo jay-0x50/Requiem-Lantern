@@ -27,7 +27,7 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='physical-combat-audio-v4'
+    assert data and data['runtimeRevision']=='compact-skill-dock-v5'
     assert 'characterStories' not in data
     assert [c['focusCharacterId'] for c in data['campaign']['chapters']]==['lian','sera','noa','heidel','minato']
     assert all(c['focusStorySummary'] for c in data['campaign']['chapters'])

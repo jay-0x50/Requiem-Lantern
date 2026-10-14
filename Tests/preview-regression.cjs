@@ -360,11 +360,11 @@ async function main() {
   env = environment();
   env.run(`data.battle.allies[0].syncLevel=0;data.battle.allies[0].slotCount=1;data.battle.allies[0].sanity=-20;data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:1,slots:1,kind:'Attack'});showBattle();`);
   assert.ok(env.game.innerHTML.includes('정신력 -20'));assert.ok(env.game.innerHTML.includes('점등 10%'));
-  assert.ok(!env.game.innerHTML.includes('세 번째 불'));assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
+  assert.ok(!env.game.innerHTML.includes('세 번째 불'));assert.equal((env.game.innerHTML.match(/data-action="skill-card:lian:/g)||[]).length,2);
   assert.equal((env.game.innerHTML.match(/data-action="slot:lian:/g)||[]).length,1);
   assert.ok(env.game.innerHTML.includes('카드 구성 1×3 / 2×2'));
   env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].sanity=20;data.battle.allies[0].skillHand[1]={id:'lian-card-3',skillId:'lian_third'};showBattle();`);
-  assert.ok(env.game.innerHTML.includes('3스킬 · 세 번째 불'));assert.ok(env.game.innerHTML.includes('/ 3×1'));assert.ok(env.game.innerHTML.includes('점등 90%'));
+  assert.ok(env.game.innerHTML.includes('3스킬</b>')&&env.game.innerHTML.includes('세 번째 불'));assert.ok(env.game.innerHTML.includes('/ 3×1'));assert.ok(env.game.innerHTML.includes('점등 90%'));
   pass('battle offers exactly two actual cards plus defense, with synchronized third skills appearing only when drawn');
 
   env = environment();
@@ -407,18 +407,19 @@ async function main() {
 
   env=environment();
   env.run(`data.battle.allies[0].skillHand=[{id:'duplicate-one',skillId:'lian_glimmer'},{id:'duplicate-two',skillId:'lian_glimmer'}];selectFirstFighter();showBattle();tone=()=>{};globalThis.cardCalls=[];command=async(action,args)=>{cardCalls.push({action,...args});return true;};`);
-  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
-  await env.click('skill-card:duplicate-two');await env.context.linkTarget('intent1');
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:lian:/g)||[]).length,2);
+  await env.click('skill-card:lian:duplicate-two');await env.context.linkTarget('intent1');
   assert.equal(env.context.cardCalls[0].cardId,'duplicate-two');assert.equal(env.context.cardCalls[0].skillId,'lian_glimmer');
   env.run(`data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'duplicate-two',kind:'Clash',targetId:'intent1'}];selectedSlot=1;selectedCardId='';selectedSkill='lian_glimmer';showBattle();`);
   assert.equal(env.run('selectedCardId'),'duplicate-one');
-  assert.ok(env.game.innerHTML.includes('data-card-id="duplicate-two" title="제시된 카드 2 · 기본 위력 4 · 켜진 불마다 +2" disabled'));
+  assert.equal(env.run("dockChoice('lian','duplicate-two').slot"),0);assert.equal(env.run("dockChoice('lian','duplicate-two').disabled"),false);await env.click('skill-card:lian:duplicate-two');assert.equal(env.run('selectedSlot'),0);assert.equal(env.run('selectedCardId'),'duplicate-two');
   await env.click('slot:lian:0');assert.equal(env.run('selectedCardId'),'duplicate-two');
-  pass('identical offered skills retain distinct card identities and another slot cannot reserve the same card');
+  pass('identical offered skills retain distinct card identities and reserved-card clicks edit their own action');
 
   env=environment();
   env.run(`page='battle';selectedActor='lian';selectedSlot=0;selectedSkill='lian_glimmer';selectedCardId='lian-card-1';data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'lian-card-1',kind:'Strike',targetId:'anger'}];tone=()=>{};command=async(action,args)=>{globalThis.dragCardCall={action,...args};return true;};`);
-  await env.click('skill-card:lian-card-2');
+  await env.click('slot:lian:0');
+  await env.click('skill-card:lian:lian-card-2');
   env.gameEvents.pointerdown({clientX:113,clientY:756,pointerId:2,target:{closest:()=>({dataset:{actor:'lian',slot:'0'},disabled:false})}});
   env.events.pointermove({clientX:945,clientY:270,pointerId:2});env.setHit('intent1');await env.events.pointerup({clientX:945,clientY:270,pointerId:2});
   assert.equal(env.context.dragCardCall.cardId,'lian-card-2');assert.equal(env.context.dragCardCall.skillId,'lian_breakthrough');
@@ -426,10 +427,76 @@ async function main() {
 
   env=environment();
   env.run(`tone=()=>{};selectedCardId='lian-card-2';globalThis.guardCardCall=null;command=async(action,args)=>{guardCardCall={action,...args};return true;};`);
-  await env.click('skill:lian_guard');await env.context.linkTarget('lian');
+  await env.click('defense:lian:lian_guard');await env.context.linkTarget('lian');
   assert.equal(env.context.guardCardCall.cardId,'');assert.equal(env.context.guardCardCall.kind,'Guard');
   assert.equal(env.run('selectedCardId'),'');
   pass('defense remains available outside the card bag and sends no attack card identity');
+
+  env=environment();
+  env.run(`showBattle();tone=()=>{};globalThis.directCalls=[];command=async(action,args)=>{directCalls.push({action,...args});if(action==='link'){data.battle.links=data.battle.links.filter(l=>l.actorId!==args.actorId||l.slot!==args.slot);data.battle.links.push(args);}return true;};`);
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,4);
+  assert.ok(env.game.innerHTML.includes('class="dock-portrait"'));assert.ok(env.game.innerHTML.includes('class="command-rail"'));assert.ok(!env.game.innerHTML.includes('class="skill-panel"'));
+  await env.click('skill-card:lian:lian-card-1');await env.click('target:intent1');
+  await env.click('skill-card:lian:lian-card-2');await env.click('target:arm');
+  assert.deepEqual(Array.from(env.context.directCalls).map(c=>[c.actorId,c.slot,c.cardId]),[['lian',0,'lian-card-1'],['lian',1,'lian-card-2']]);
+  assert.equal(env.run('data.battle.links.length'),2);assert.ok(env.game.innerHTML.includes('2개 행동으로 전투 시작'));
+  assert.equal(env.run('manualSlotFocus'),false);
+  pass('all fighters offer both cards and successive direct-card links fill two actions without replacing the first');
+
+  const colonEnv=environment();
+  colonEnv.run(`data.battle.allies[0].skillHand[0].id='lian:card:11';tone=()=>{};command=async(action,args)=>{globalThis.colonCardCall={action,...args};return true;};showBattle();`);
+  await colonEnv.click('skill-card:lian:lian:card:11');await colonEnv.click('target:intent1');
+  assert.equal(colonEnv.run('selectedCardId'),'lian:card:11');assert.equal(colonEnv.context.colonCardCall.cardId,'lian:card:11');
+  pass('actor-aware card routing preserves the colon-separated card IDs generated by the actual core');
+
+  await env.click('skill-card:lian:lian-card-1');assert.equal(env.run('selectedSlot'),0);
+  await env.click('target:core');assert.equal(env.run('data.battle.links.length'),2);assert.equal(env.run("slotLink('lian',0).targetId"),'core');assert.equal(env.run("slotLink('lian',1).targetId"),'arm');
+  await env.click('skill-card:minato:minato-card-2');assert.equal(env.run('selectedActor'),'minato');assert.equal(env.run('selectedSlot'),0);
+  await env.click('target:lian');assert.equal(env.context.directCalls.at(-1).kind,'Support');assert.equal(env.context.directCalls.at(-1).cardId,'minato-card-2');
+  pass('reserved cards return to their own action and another fighter’s healing card keeps its card identity');
+
+  env=environment();
+  env.run(`page='battle';tone=()=>{};command=async(action,args)=>{globalThis.directDragCall={action,...args};return true;};`);
+  env.gameEvents.pointerdown({clientX:646,clientY:704,pointerId:8,target:{closest:()=>({dataset:{actor:'minato',cardId:'minato-card-2'},disabled:false})}});
+  assert.equal(env.run('dragInfo.actor'),'minato');assert.equal(env.run('dragInfo.cardId'),'minato-card-2');
+  env.events.pointermove({clientX:172,clientY:446,pointerId:8});env.setHit('lian');await env.events.pointerup({clientX:172,clientY:446,pointerId:8});
+  assert.equal(env.context.directDragCall.actorId,'minato');assert.equal(env.context.directDragCall.slot,0);assert.equal(env.context.directDragCall.cardId,'minato-card-2');assert.equal(env.context.directDragCall.kind,'Support');
+  const directDragCall=env.context.directDragCall;await env.click('skill-card:lian:lian-card-1');assert.equal(env.context.directDragCall,directDragCall);assert.equal(env.run('selectedActor'),'minato');
+  pass('direct card drag selects its owner, validates ally healing, and suppresses the release click');
+
+  env.run('suppressClickUntil=0');env.context.directDragCall=null;
+  env.gameEvents.pointerdown({clientX:646,clientY:704,pointerId:9,target:{closest:()=>({dataset:{actor:'minato',cardId:'minato-card-2'},disabled:false})}});
+  env.events.pointermove({clientX:1330,clientY:550,pointerId:9});env.setHit('anger');await env.events.pointerup({clientX:1330,clientY:550,pointerId:9});assert.equal(env.context.directDragCall,null);
+  env.run('suppressClickUntil=0');env.gameEvents.pointerdown({clientX:110,clientY:704,pointerId:10,target:{closest:()=>({dataset:{actor:'lian',cardId:'lian-card-1'},disabled:false})}});
+  env.events.pointermove({clientX:900,clientY:350,pointerId:10});assert.ok(env.thread.d);env.events.pointercancel({pointerId:10});assert.equal(env.run('dragInfo'),null);assert.equal(env.thread.d,'');assert.equal(env.context.directDragCall,null);
+  pass('direct card drag rejects an enemy for healing and pointer cancellation commits no action');
+
+  env=environment();
+  env.run(`page='battle';tone=()=>{};globalThis.modalDragCalls=[];command=async(action,args)=>{modalDragCalls.push({action,...args});return true;};`);
+  env.gameEvents.pointerdown({clientX:110,clientY:704,pointerId:11,target:{closest:()=>({dataset:{actor:'lian',cardId:'lian-card-1'},disabled:false})}});
+  env.events.pointermove({clientX:945,clientY:270,pointerId:11});env.events.keydown({code:'Escape'});
+  assert.equal(env.run('dragInfo'),null);assert.equal(env.thread.d,'');assert.ok(env.game.querySelector('.modal'));
+  env.setHit('intent1');await env.events.pointerup({clientX:945,clientY:270,pointerId:11});await env.context.linkTarget('intent1');
+  env.gameEvents.pointerdown({clientX:110,clientY:704,pointerId:12,target:{closest:()=>({dataset:{actor:'lian',cardId:'lian-card-1'},disabled:false})}});
+  assert.equal(env.run('dragInfo'),null);assert.equal(env.context.modalDragCalls.length,0);assert.ok(env.game.querySelector('.modal'));
+  pass('a modal cancels card drag and blocks underlying target links without dismissing the modal');
+
+  env=environment();
+  env.run(`data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:2,slots:2,kind:'Attack'});data.battle.allies[0].skillHand[1]={id:'lian-third-card',skillId:'lian_third'};selectedSlot=1;manualSlotFocus=true;showBattle();`);
+  assert.equal(env.run("dockChoice('lian','lian-third-card').disabled"),true);
+  assert.equal(env.run("selectDockChoice('lian','lian-third-card')"),false);
+  env.run('data.battle.allies[0].syncLevel=1');assert.equal(env.run("selectDockChoice('lian','lian-third-card')"),true);assert.equal(env.run('selectedSlot'),0);
+  env.run(`data.battle.allies[1].skills.push({id:'minato_care',name:'포기하지 않는 손',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:2,slots:1,kind:'Heal'});data.battle.allies[1].syncLevel=1;data.battle.allies[1].skillHand[1]={id:'minato-care-card',skillId:'minato_care'};data.battle.links=[{actorId:'minato',slot:0,cardId:'minato-card-1',skillId:'minato_glimmer',targetId:'arm',kind:'Strike'}];`);
+  assert.equal(env.run("selectDockChoice('minato','minato-care-card')"),true);assert.equal(env.run('selectedSlot'),1);assert.equal(env.run('selectedCardId'),'minato-care-card');
+  pass('synchronization gates third cards, two-action attacks use action zero, and the one-action third heal uses an empty action');
+
+  env=environment();
+  env.run(`data.battle.allies[0].skills[0].cost=2;data.battle.allies[0].skills[1].cost=3;data.availableEmber=0;data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'lian-card-1',targetId:'arm',kind:'Strike'}];selectedSlot=0;manualSlotFocus=true;`);
+  assert.equal(env.run("dockChoice('lian','lian-card-1').disabled"),false);assert.equal(env.run("dockChoice('lian','lian-card-2').reason"),'불씨 부족');
+  assert.equal(env.run("selectDockChoice('lian','lian-card-2')"),false);
+  env.run('data.availableEmber=1');assert.equal(env.run("selectDockChoice('lian','lian-card-2')"),true);assert.equal(env.run('selectedSlot'),0);
+  env.run('data.battle.allies[1].hp=0');assert.equal(env.run("selectDockChoice('minato','minato-card-1')"),false);
+  pass('direct-card availability includes refunded replacement cost, rejects insufficient ember, and prevents dead actors acting');
 
 
   env=environment();campaignFixture(env);

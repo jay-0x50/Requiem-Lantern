@@ -409,3 +409,34 @@
 .roster-story-entry button{height:42px;padding:0 20px;font-size:13px}
 .roster-story-entry small{color:#acb9ca;font-size:11px;line-height:1.5}
 .chapter-tabs small{letter-spacing:.055em}.campaign-heading .eyebrow{letter-spacing:.14em}
+
+/* Every fighter keeps two offered cards above their own portrait and actions. */
+.battle .action-dock{height:206px;padding:8px 28px;gap:20px;background:linear-gradient(180deg,#111b29f5,#080f1afc);border-top:1px solid #c2a06d88;box-shadow:0 -10px 28px #050912aa;align-items:stretch}
+.battle .field-name{top:604px}
+.battle .fighter{width:340px;flex:0 0 340px;padding:0;background:none;min-width:0}
+.battle .fighter.focused:before{content:'';position:absolute;left:-6px;right:-6px;top:-5px;bottom:-5px;border:1px solid #e1bd7250;pointer-events:none;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.fighter-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;height:88px}
+#game .fighter-cards .skill-card{height:88px;width:100%;padding:8px 12px 6px;display:flex;flex-direction:column;text-align:left;gap:2px;touch-action:none;letter-spacing:0;--button-cut:8px;--button-trim:color-mix(in srgb,var(--actor-color) 40%,transparent);--button-fill:linear-gradient(180deg,#213045,#111d2c 72%,#172332)}
+#game .fighter-cards .skill-card.primary{--button-fill:linear-gradient(180deg,#455050,#273449 65%,#38413d);--button-trim:#ffe0a28c;box-shadow:inset 0 0 22px #d5b67636}
+.card-topline,.card-bottomline{width:100%;display:flex;justify-content:space-between;align-items:center;gap:4px}
+.card-topline b{font-size:11px;color:var(--actor-color);font-weight:600}.card-power{font-size:10px;color:#ccdae8;white-space:nowrap}
+.card-name{font-size:16px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.card-bottomline{margin-top:auto;min-height:16px}.card-bottomline .flame-badges{gap:4px;margin:0}.card-bottomline .flame{width:8px;height:12px}.card-bottomline small{font-size:10px;color:#b7c4d5;white-space:nowrap}
+.card-state{font-size:9px;color:#a7b6c9;line-height:1.2}.skill-card.selected .card-state,.skill-card.reserved .card-state{color:#f0d5a0}.skill-card.reserved .card-state:before{content:'◆ ';font-size:7px}.empty-hand{grid-column:1/-1;display:grid;place-items:center;border:1px solid #4b596b;font-size:13px;color:#8392a7}
+.fighter-identity{display:flex;align-items:center;gap:10px;height:54px;margin-top:4px;background:#111b28cc}
+.dock-portrait{width:51px;height:51px;overflow:hidden;background:linear-gradient(135deg,#826c4899,#182334);border:1px solid var(--actor-color);flex-shrink:0;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.dock-portrait img{width:160px;height:178px;object-fit:contain;max-width:none;position:relative;left:-53px;top:-8px;pointer-events:none}
+.fighter-vitals{flex:1;min-width:0}.fighter-vitals .fighter-title{font-size:14px;line-height:1.3}.fighter-title strong{color:var(--actor-color);font-weight:500}.fighter-title small{font-size:10px}.fighter-vitals .bar{height:4px;margin-top:4px}.fighter-vitals .fighter-sanity{font-size:10px;margin-top:4px;gap:4px;white-space:nowrap}.fighter-sanity small{font-size:9px}
+.fighter-defense{display:flex;flex-direction:column;gap:3px;margin-right:4px;max-width:74px}
+#game .fighter-defense .defense-button{font-size:11px;padding:5px 9px;height:28px;white-space:nowrap;--button-cut:6px}
+.battle .fighter .slots{margin-top:4px;gap:8px;height:40px}.battle .fighter .slot-wrap{width:calc(50% - 4px)}
+#game .fighter .slot{height:24px;display:flex;align-items:center;gap:7px;padding:3px 8px;font-size:11px;text-align:left;--button-cut:5px}
+.fighter .slot b{font-size:11px;color:#c0ab82;font-weight:500}.fighter .slot span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fighter .slot-target{font-size:9px;margin-top:2px;line-height:14px;text-align:left;padding:0 8px}.fighter>.deck-status{display:none}
+.fighter.incapacitated .dock-portrait{filter:grayscale(1);opacity:.5}.fighter.incapacitated .fighter-vitals{opacity:.5}
+.command-rail{min-width:0;flex:1;display:flex;flex-direction:column;padding:5px 3px 0 12px;border-left:1px solid #ad916747}
+.rail-overline{font-size:10px;letter-spacing:.18em;color:#bfa881}.planned-actions{display:flex;align-items:center;gap:14px;height:32px}.planned-actions strong{font-size:26px;line-height:1.2;color:#f1d8a9;font-weight:500}.planned-actions strong small{font-size:15px;color:#9aa9ba}.planned-actions>span{font-size:11px;color:#aebcd0;white-space:nowrap}
+.selected-action{height:49px;display:flex;flex-direction:column;justify-content:center;gap:3px;border-top:1px solid #59647455;margin-top:3px}.selected-action b{font-size:12px;color:#deca9f;font-weight:500}.selected-action>span{font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#d6dfeb}.selected-action small{font-size:10px;color:#899aaf}
+.command-actions{display:flex;gap:10px;align-items:center;margin-top:auto;height:80px}
+#game .command-actions>button:not(.resolve-button){height:40px;width:87px;flex-shrink:0;font-size:12px;padding:0 10px}
+#game .command-actions .resolve-button{height:80px;flex:1;min-width:0;padding:12px 19px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:7px;--button-cut:12px}
+.resolve-button strong{display:flex;align-items:center;justify-content:space-between;font-size:25px;font-weight:500}.resolve-button strong span{font-size:28px}.resolve-button small{font-size:10px;font-weight:400;color:#d6c59e;letter-spacing:0;white-space:nowrap}
