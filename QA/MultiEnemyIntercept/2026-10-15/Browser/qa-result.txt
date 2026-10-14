@@ -1,0 +1,62 @@
+Multi-enemy and interception browser verification — 2026-10-15 (Asia/Seoul)
+
+Isolated host: port 8128, bin/qa-multi-enemy/PreviewHost.dll.
+Runtime: multi-enemy-intercept-v7. Save: Browser/progress.xml in this QA folder.
+The save copies the earlier disposable FourPartySD QA fixture (Chapters 1–3 cleared).
+The player save and live host were not changed for these tests.
+
+Automated verification:
+- Preview regression: 63 cases passed.
+- Combat FX regression: 40 cases passed.
+- PreviewHost Release build: zero warnings or errors.
+- Three enemies have unique body, HP, part and intent ownership.
+- The second ally can intercept an exact second-enemy intent for the first ally;
+  remove/edit restores the original route. Area threats retain all recipients.
+- Fourth-actor direct-card drag preserves the complete third-enemy intent ID.
+- One enemy's death or part break never changes another enemy's HP or parts.
+- Minato and the third enemy meet at their actual midpoint with exact atlas
+  weapon contact; the defeated enemy returns to its own original body.
+- Both extra enemies use the correct Anger portrait pose in both directed
+  clashes against Sera, independent of the logical enemy_2/enemy_3 IDs.
+- Existing eight cards, card ownership, cost checks, healing, cancel and modal
+  guards still pass, as do original main/roster/story illustration checks.
+
+Actual Chrome UI (isolated c2s04, four allies and three enemies):
+- Stage list and detail show '적 3명' before entering the story battle.
+- All three enemy bodies, numbered names, own health, two part controls,
+  body controls and four forecasts were visible together with eight skill cards.
+- Sera's first card intercepted the primary enemy attack originally aimed at
+  Lian. The forecast retained original Lian and showed '가로막기 · 세라'.
+  The green route moved to Sera while the original Lian route remained muted.
+- Removing Sera's card reservation cleared only that interception and restored
+  '맞불 미지정'; reconnecting restored the route and badge.
+- Actually dragged Heidel's first card to 1:enemy_3_arm, originally aimed at
+  Minato; the forecast showed Heidel as interceptor and kept Minato original.
+- Minato separately intercepted 1:enemy_2_arm, originally aimed at Sera.
+- Lian met the primary area forecast; it kept '아군 전체' and
+  '(광역 전체 유지)' rather than promising single-recipient protection.
+- Sera's second real card targeted enemy_3_core and retained her earlier
+  primary-enemy interception. The two same-skill card identities stayed separate.
+- Round 2 enemy HP was 41/62, 55/62, 44/62, independently tracked.
+  All four allies were unharmed at 150/150,110/110,100/100,120/120.
+- Next round only Heidel's attack matched the third enemy. The live moving
+  pair was heidel + enemy_3, using HeidelSDActions and AngerActions, with
+  the third enemy's own foot and compact 187.5 logical-pixel body height.
+- Round 3 enemy HP was 41/62,55/62,33/62: only the third enemy changed.
+  Each original body returned visible and all eight offered cards returned.
+- Actual visual QA caught inherited button ornament pseudo-elements covering
+  enemy bodies; body hit targets now keep them transparent and all enemies visible.
+- Chrome emitted no warning/error console entries during these interactions.
+
+Screenshots:
+01-sera-intercepts-lian.png — original Lian and Sera interception.
+02-four-forecast-links.png — four assigned intents across all three enemies.
+03-third-enemy-part-selection.png — separate third-enemy core attack.
+04-live-melee.png — actual SD/boss weapon contact during the first round.
+06-third-enemy-duel.png — Heidel and the third enemy during approach.
+08-later-round-independent-hp.png — separate HP after third-enemy-only attack.
+
+QA save, logs and PNGs are disposable ignored local artifacts. No boss music,
+main character illustrations, combat audio assets or player progression changed.
+
+Cleanup: Chrome QA tab 1516715401 now shows live 8127 title (GET only) and is marked as the deliverable. Verified workspace/qa-multi-enemy/QA save/port 8128 command line before stopping only QA PID 1828. Isolated coins and fragments remained 0. Representative clean planning screenshot: 01-sera-intercepts-lian.png (connection pulse finished).

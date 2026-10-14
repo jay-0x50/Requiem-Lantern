@@ -68,7 +68,7 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='four-party-sd-v6'
+    assert data and data['runtimeRevision']=='multi-enemy-intercept-v7'
     four_party(data)
     assert data['battle']['ember']==3
     original_hands={actor['id']:actor['skillHand'] for actor in data['battle']['allies']}
@@ -112,6 +112,9 @@ try:
     established=[s for s in all_stages if s['hasBattle'] and (s['chapter']>2 or s['chapter']==2 and int(s['number'].split('-')[1])>=4)]
     assert len(established)==19 and all(len(s['party'])==len(set(s['party']))==4 for s in established)
     assert all(set(s['party']).issubset(s['participants']) for s in established)
+    assert all(s['enemyCount']==0 for s in all_stages if not s['hasBattle'])
+    assert all(s['enemyCount']==1 for s in all_stages if s['isBoss'] or s['number']=='1-2')
+    assert all(2<=s['enemyCount']<=3 for s in all_stages if s['hasBattle'] and not s['isBoss'] and s['number']!='1-2')
     assert stage(data,'c1s02')['party']==['lian'] and stage(data,'c1s04')['party']==['lian','sera']
     assert stage(data,'chapter1_beacon_defense')['party']==['lian','sera','minato']
     assert stage(data,'c2s04')['party']==['lian','sera','minato','heidel']
@@ -181,15 +184,40 @@ try:
         call('stage-exit')
     data=call('stage-enter',stageId='c2s04');assert data['campaign']['phase']=='BeforeStory'
     data=call('stage-story',stageId='c2s04',expectedPhase='BeforeStory');four_party(data,('lian','sera','minato','heidel'))
+    enemies=data['battle']['enemies'];intents=data['battle']['intents']
+    assert [enemy['id'] for enemy in enemies]==['anger','enemy_2','enemy_3']
+    assert len({part['id'] for enemy in enemies for part in enemy['parts']})==6
+    assert len(intents)==len({intent['id'] for intent in intents})==4
+    for intent in intents:
+        owner=next(enemy for enemy in enemies if enemy['id']==intent['actorId'])
+        assert any(part['id']==intent['partId'] for part in owner['parts'])
+        assert intent['targetId']=='all' or any(ally['id']==intent['targetId'] for ally in data['battle']['allies'])
     fourth=next(actor for actor in data['battle']['allies'] if actor['id']=='heidel');card=fourth['skillHand'][0]
-    data=call('link',actorId='heidel',slot=0,skillId=card['skillId'],cardId=card['id'],kind='Clash',targetId=data['battle']['intents'][0]['id'])
-    assert data['battle']['links'][0]['actorId']=='heidel' and data['battle']['links'][0]['cardId']==card['id']
+    # A fourth actor intercepts the second enemy's attack aimed at a different ally.
+    intent=next(intent for intent in intents if intent['actorId']=='enemy_2')
+    assert intent['targetId']!='heidel'
+    data=call('link',actorId='heidel',slot=0,skillId=card['skillId'],cardId=card['id'],kind='Clash',targetId=intent['id'])
+    link=data['battle']['links'][0]
+    assert link['actorId']=='heidel' and link['cardId']==card['id'] and link['intentActorId']=='enemy_2' and link['intentPartId']=='enemy_2_arm'
+    assert next(i for i in data['battle']['intents'] if i['id']==intent['id'])['targetId']==intent['targetId']
+    lian=next(actor for actor in data['battle']['allies'] if actor['id']=='lian');another=lian['skillHand'][0]
+    data=call('link',400,actorId='lian',slot=0,skillId=another['skillId'],cardId=another['id'],kind='Clash',targetId=intent['id'])
+    assert len(data['battle']['links'])==1 and data['battle']['links'][0]['actorId']=='heidel'
+    data=call('resolve')
+    take=next(event for event in data['battle']['events'] if event['type']=='Intercept' and event['intentId']==intent['id'])
+    assert take['actorId']=='heidel' and take['targetId']=='enemy_2' and take['originalTargetId']==intent['targetId']
+    win=next(event for event in data['battle']['events'] if event['type']=='ClashWin' and event['intentId']==intent['id'])
+    hit=next(event for event in data['battle']['events'] if event['type']=='Damage' and event['intentId']==intent['id'])
+    assert hit['actorId']==win['actorId'] and hit['targetId']==win['targetId']
+    assert {hit['actorId'],hit['targetId']}=={'heidel','enemy_2'} and hit['originalTargetId']==intent['targetId']
     before_id=data['battle']['battleId'];data=call('restart');four_party(data,('lian','sera','minato','heidel'))
     assert data['battle']['battleId']!=before_id and data['battle']['stageId']=='c2s04'
+    assert len(data['battle']['enemies'])==3 and len({i['id'] for i in data['battle']['intents']})==4
+    assert all(enemy['hp']==enemy['maxHp'] for enemy in data['battle']['enemies'])
     assert not stage(data,'c2s04')['cleared'] and not data['battle']['links']
-    print('PASS: actual HTTP four-person card bindings, staged story progression to 2-4 and four-person campaign factory/restart.')
+    print('PASS: actual HTTP four-person cards, staged progression to three-enemy 2-4, exact-owner interception/events and complete encounter restart.')
     combat_art_routes()
-    print('PASS: v6 HTTP revision; four allies/eight distinct cards and slots; all four actor card bindings and fourth-actor clash/consumption/refill; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins, all nineteen four-person parties and actual 2-4 factory/restart; stage locks, story completion, card reservation/clear, S3 lock, victory/after-story rewards, stale requests, replay and synchronization funds.')
+    print('PASS: v7 HTTP revision; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth actor intercepts second enemy without changing original target; clash winner and actual damage agree; duplicate interception stays atomic; four allies/eight distinct cards and slots; all four actor card bindings and fourth-actor clash/consumption/refill; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins, all nineteen four-person parties and actual 2-4 factory/restart; stage locks, story completion, card reservation/clear, S3 lock, victory/after-story rewards, stale requests, replay and synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)

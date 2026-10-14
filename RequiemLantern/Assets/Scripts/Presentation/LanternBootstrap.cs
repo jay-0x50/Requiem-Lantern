@@ -344,19 +344,107 @@ namespace RequiemLantern.Presentation
             ShowResult();yield return Capture(directory,"07-result");
             if(progress.Data.Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not granted exactly once.");
             if(save.Load().Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not persisted to the isolated save.");
+            yield return SmokeMultipleEnemies(directory);
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
                 "08-main-archive","09-chapter1-lian-map","09-chapter2-sera-map","09-chapter3-noa-map","09-chapter4-heidel-map","09-chapter5-minato-map",
                 "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble",
-                "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock"};
+                "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock","20-three-enemies-intercept","21-third-enemy-target","22-enemy-2-impact","23-enemy-3-impact","24-single-boss"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
-                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all twenty-seven fresh screenshots.");yield return null;
+                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all thirty-two fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 32 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Four-person standard party, eight visible skill cards at least 160 canvas pixels wide; selection details in the right rail. All five battle SD atlases retained their six poses and planted-foot geometry. Fielded allies stayed at 220/1080 body height through planning and action; original hub, dialogue, roster and dock face portraits remained separate.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Multiple-enemy acceptance: 32 fresh screenshots total. Campaign 2-4 fielded three uniquely selectable enemies and four SD allies; every intent displayed its owning enemy number and original named recipient. Sera's real offered card intercepted the second enemy's attack aimed at Lian; only that intent's route changed to Sera, with Lian retained as original target. Direct card drag selected the third enemy's body. Actual core damage events from enemies 2 and 3 animated their own art and applied damage only at contact to the exact target; losing the intercepted clash hit Sera rather than Lian. A main chapter boss still rendered as one larger enemy.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
         }
+        IEnumerator SmokeMultipleEnemies(string directory)
+        {
+            smokePhase="multiple enemies and teammate interception";smokeDeadline=Time.realtimeSinceStartup+60;
+            campaign.Exit();var stageData=CampaignCatalog.Chapters[1].Stages[3];
+            battle=CampaignBattleFactory.Create(stageData,new ProgressData(),41);PrepareBattlePresentation();
+            if(battle.State.Enemies.Count!=3||battle.State.Allies.Count!=4)throw new Exception("Campaign 2-4 must field three enemies against the four-person party.");
+            AssertSmallBattleAvatars();
+            foreach(var enemy in battle.State.Enemies){
+                if(!fighters.ContainsKey(enemy.Id)||!screen.Find("Enemy life "+enemy.Id)||!screen.Find("Enemy body target "+enemy.Id))
+                    throw new Exception("An enemy is missing its own art, HP or body selection: "+enemy.Id);
+                var marker=fighters[enemy.Id].GetComponent<BattleAvatarMarker>();
+                if(!marker||marker.BodyHeight!=225||!anchors.ContainsKey(enemy.Id))throw new Exception("Multiple enemy field geometry was not compact: "+enemy.Id);
+                foreach(var intent in battle.State.Intents.Where(intent=>intent.ActorId==enemy.Id)){
+                    var card=screen.Find("Intent "+intent.Id);
+                    if(!card||!card.Find("Intent name").GetComponent<Text>().text.Contains(EnemyNumber(enemy))
+                        ||!card.Find("Intent original target").GetComponent<Text>().text.Contains(IntentOriginalTarget(intent)))
+                        throw new Exception("Enemy intent did not identify its owner and original recipient: "+intent.Id);
+                }
+            }
+            var second=battle.State.Enemies[1];var third=battle.State.Enemies[2];
+            var intercepted=battle.State.Intents.First(intent=>intent.ActorId==second.Id&&intent.Kind==IntentKind.Normal);
+            var original=battle.State.Allies[0];var substitute=battle.State.Allies[1];intercepted.TargetId=original.Id;
+            var otherTargets=battle.State.Intents.Where(intent=>intent!=intercepted).ToDictionary(intent=>intent.Id,intent=>intent.TargetId);
+            DrawBattle();var cardToUse=substitute.SkillHand.First(card=>battle.Skill(substitute.Id,card.SkillId).Kind==SkillKind.Attack);
+            screen.Find("Skill card "+cardToUse.Id).GetComponent<Button>().onClick.Invoke();Target(intercepted.Id);
+            var linked=battle.State.Links.Single();var intentCard=screen.Find("Intent "+intercepted.Id);
+            if(linked.ActorId!=substitute.Id||linked.Kind!=LinkKind.Clash||linked.TargetId!=intercepted.Id||intercepted.TargetId!=original.Id
+                ||!intentCard.Find("Intent original target").GetComponent<Text>().text.Contains(original.Name)
+                ||!intentCard.Find("Intent target").GetComponent<Text>().text.Contains("가로막기 · "+substitute.Name))
+                throw new Exception("A teammate's selected card did not create the visible interception while preserving the original target.");
+            var route=screen.Find("Thread layer").Find("Intent thread "+intercepted.Id).GetComponent<ThreadGraphic>();
+            if(route.To!=ToMesh(anchors[substitute.Id])||!screen.Find("Thread layer").Find("Original intent "+intercepted.Id)
+                ||otherTargets.Any(pair=>battle.Intent(pair.Key).TargetId!=pair.Value))
+                throw new Exception("Interception redirected unrelated intents or failed to show its new recipient.");
+            yield return Capture(directory,"20-three-enemies-intercept");
+            var striker=battle.State.Allies[3];var strikeCard=striker.SkillHand.First(card=>battle.Skill(striker.Id,card.SkillId).Kind==SkillKind.Attack);
+            var source=screen.Find("Skill card "+strikeCard.Id);var drag=source.GetComponent<LinkDrag>();
+            var pointer=new PointerEventData(EventSystem.current){button=PointerEventData.InputButton.Left};
+            pointer.pointerCurrentRaycast=new RaycastResult{gameObject=source.gameObject};drag.OnBeginDrag(pointer);
+            var target=screen.Find("Enemy body target "+third.Id);var targetRect=target.GetComponent<RectTransform>();
+            pointer.position=RectTransformUtility.WorldToScreenPoint(null,targetRect.TransformPoint(targetRect.rect.center));
+            pointer.pointerCurrentRaycast=new RaycastResult{gameObject=target.gameObject};drag.OnDrag(pointer);drag.OnEndDrag(pointer);
+            if(!battle.State.Links.Any(link=>link.ActorId==striker.Id&&link.TargetId==third.Id&&link.Kind==LinkKind.Strike&&link.CardId==strikeCard.Id))
+                throw new Exception("Direct card drag did not select the third enemy's own body.");
+            yield return Capture(directory,"21-third-enemy-target");
+            battle.RemoveLink(striker.Id,0);DrawBattle();
+            // Force a losing contest only in this isolated acceptance fixture so the
+            // original recipient's protection is checked independently of random rolls.
+            intercepted.BasePower=90;intercepted.FlamePower=1;
+            var events=battle.ResolveRound(IgniteGrade.Good);
+            var secondHit=events.FirstOrDefault(e=>e.Type=="Damage"&&e.ActorId==second.Id);
+            var thirdHit=events.FirstOrDefault(e=>e.Type=="Damage"&&e.ActorId==third.Id);
+            if(secondHit==null||thirdHit==null||secondHit.TargetId!=substitute.Id||events.Any(e=>e.Type=="Damage"&&e.ActorId==second.Id&&e.TargetId==original.Id))
+                throw new Exception("Losing the intercepted clash did not hit its substitute, or another enemy failed to act independently.");
+            overlay=MakeRect(stage,"Multiple enemy action fixture",0,0,1920,1080);page="resolve";
+            var status=CreateActionStatus(overlay);
+            var subtitle=status.GetComponent<RectTransform>();
+            if(subtitle.anchoredPosition.x+subtitle.sizeDelta.x>700)throw new Exception("Action subtitles overlap the enemy identity and HP columns.");
+            yield return SmokeEnemyImpact(secondHit,overlay,status,directory,"22-enemy-2-impact");
+            yield return SmokeEnemyImpact(thirdHit,overlay,status,directory,"23-enemy-3-impact");
+            if(overlay)Destroy(overlay.gameObject);overlay=null;
+            var boss=CampaignCatalog.Chapters[0].Stages.Last(stage=>stage.IsBoss);
+            battle=CampaignBattleFactory.Create(boss,new ProgressData(),42);PrepareBattlePresentation();
+            if(battle.State.Enemies.Count!=1||fighters[battle.State.Enemies[0].Id].GetComponent<BattleAvatarMarker>().BodyHeight!=310)
+                throw new Exception("Single-boss field scale regressed after rendering multiple enemies.");
+            yield return Capture(directory,"24-single-boss");
+        }
+        IEnumerator SmokeEnemyImpact(BattleEvent e,RectTransform layer,Text status,string directory,string screenshot)
+        {
+            bool complete=false,captured=false;int targetBefore=visibleHealth[e.TargetId];
+            var untouched=battle.State.Enemies.Where(enemy=>enemy.Id!=e.ActorId).ToDictionary(enemy=>enemy.Id,enemy=>visibleHealth[enemy.Id]);
+            StartCoroutine(SmokeEventPresentation(e,layer,status,()=>complete=true));
+            while(!complete){
+                var marker=layer.GetComponentInChildren<CombatPhaseMarker>();
+                if(!captured&&marker&&marker.Phase=="contact"){
+                    if(marker.ActorId!=e.ActorId||marker.TargetId!=e.TargetId||marker.Attacker.texture!=fighters[e.ActorId].texture
+                        ||marker.ContactSoundCount!=1||visibleHealth[e.TargetId]!=targetBefore-e.Amount
+                        ||untouched.Any(pair=>visibleHealth[pair.Key]!=pair.Value))throw new Exception("An enemy's melee performer or contact damage used the wrong unit.");
+                    yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,screenshot);captured=true;
+                }
+                yield return null;
+            }
+            if(!captured)throw new Exception("Smoke did not capture the enemy's actual contact: "+e.ActorId);
+        }
+        IEnumerator SmokeEventPresentation(BattleEvent e,RectTransform layer,Text status,Action completed)
+        {yield return PresentBattleEvent(e,layer,status,screenVersion);completed();}
         void AssertOriginalPortraits(string context)
         {
             var images=screen.GetComponentsInChildren<RawImage>().Where(image=>image.name.EndsWith(" portrait",StringComparison.Ordinal)

@@ -45,9 +45,11 @@ namespace RequiemLantern.Presentation
         {
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))RefreshHealth(unit.Id,unit.Hp);
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))RefreshSanity(unit.Id,unit.Sanity);
-            var enemy=battle.State.Enemies[0];var rift=screen.Find("Enemy rift");
-            if(rift)rift.GetComponent<Text>().text=$"균열 {enemy.Rift} / {enemy.MaxRift}";
-            foreach(var part in enemy.Parts)if(part.Destroyed)ShowPartBroken(part.Id);
+            foreach(var enemy in battle.State.Enemies){
+                var rift=screen.Find("Enemy rift "+enemy.Id);
+                if(rift)rift.GetComponent<Text>().text=$"균열 {enemy.Rift} / {enemy.MaxRift}";
+                foreach(var part in enemy.Parts)if(part.Destroyed)ShowPartBroken(part.Id);
+            }
         }
         void ShowPartBroken(string id)
         {
@@ -61,7 +63,8 @@ namespace RequiemLantern.Presentation
             var card=screen.Find("Intent "+id);
             if(card){var group=card.GetComponent<CanvasGroup>()??card.gameObject.AddComponent<CanvasGroup>();group.alpha=.32f;}
             var lineRoot=screen.Find("Thread layer");if(!lineRoot)return;
-            foreach(var line in lineRoot.GetComponentsInChildren<ThreadGraphic>())if(line.name=="Intent thread "+id||line.name=="Area intent "+id)line.gameObject.SetActive(false);
+            foreach(var line in lineRoot.GetComponentsInChildren<ThreadGraphic>())
+                if(new[]{"Intent thread ","Area intent ","Original intent ","Enemy intent "}.Any(prefix=>line.name==prefix+id||line.name.StartsWith(prefix+id+" ",StringComparison.Ordinal)))line.gameObject.SetActive(false);
         }
         void CancelDragVisuals()
         {
@@ -107,7 +110,7 @@ namespace RequiemLantern.Presentation
             Color color=Gold;string hint=battle.Skill(selectedActor,selectedSkill).Name+" · 연결할 대상을 선택하세요";
             if(snappedTarget!=null){
                 hint=TargetName(snappedTarget);
-                if(battle.Intent(snappedTarget)!=null){var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,CardId=selectedCard,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;hint=preview.Summary;}
+                if(battle.Intent(snappedTarget)!=null){var intent=battle.Intent(snappedTarget);var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,CardId=selectedCard,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;hint=preview.Summary+"\n"+(intent.Kind==IntentKind.Area?"전체 공격에 맞불":intent.TargetId==selectedActor?"자신을 향한 공격에 맞불":IntentOriginalTarget(intent)+" 대신 "+battle.Unit(selectedActor).Name+" 가로막기");}
                 else if(battle.Skill(selectedActor,selectedSkill).Kind!=SkillKind.Attack)color=Teal;
             }
             dragLine.To=ToMesh(point);dragLine.color=color;dragLine.SetVerticesDirty();
@@ -258,7 +261,7 @@ namespace RequiemLantern.Presentation
             foreach(Transform child in screen){
                 string name=child.name;
                 bool planning=name=="Thread layer"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
-                    ||name.StartsWith("Support target ",StringComparison.Ordinal)||name=="Enemy body target"||name=="Clash prediction"
+                    ||name.StartsWith("Support target ",StringComparison.Ordinal)||name.StartsWith("Enemy body target ",StringComparison.Ordinal)||name=="Clash prediction"
                     ||name=="Recommend"||name=="Reuse"||name=="Clear links"||name=="Auto mode"||name=="Release lantern"||name=="Battle log";
                 if(planning&&child.gameObject.activeSelf){planningWidgets.Add(child.gameObject);child.gameObject.SetActive(false);}
             }
@@ -267,14 +270,16 @@ namespace RequiemLantern.Presentation
             Vector2 stageOrigin=stage.anchoredPosition;
             bool applied=false,swung=false;
             try {
-                attacker=new CombatPosePlayer(fx,actorImage,CombatArt(actor.Id),!actor.IsEnemy,actor.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight,"Duel attacker");
-                defender=new CombatPosePlayer(fx,targetImage,CombatArt(target.Id),!target.IsEnemy,target.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight,"Duel defender");
+                attacker=new CombatPosePlayer(fx,actorImage,CombatArt(actor.Id),!actor.IsEnemy,BodyHeight(actor),"Duel attacker");
+                defender=new CombatPosePlayer(fx,targetImage,CombatArt(target.Id),!target.IsEnemy,BodyHeight(target),"Duel defender");
                 int facing=actor.IsEnemy?-1:1;
                 bool lowClash=clash&&(actor.Id=="sera"||target.Id=="sera")&&(attacker.HasAtlas&&defender.HasAtlas);
                 int attackContactPose=lowClash&&actor.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 int defendContactPose=lowClash&&target.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 Vector2 attackContact=attacker.ContactOffset(attackContactPose),defendContact=defender.ContactOffset(defendContactPose);
-                const float contactX=1155,contactY=570,groundY=BattleAvatar.GroundY;
+                float contactX=Mathf.Clamp((attacker.OriginalFoot.x+defender.OriginalFoot.x)*.5f,1020,1540);
+                float contactY=BattleAvatar.GroundY-Mathf.Min(BodyHeight(actor),BodyHeight(target))*.5f;
+                const float groundY=BattleAvatar.GroundY;
                 // The SD weapon tip and the larger enemy weapon share one contact.
                 // Foot placement follows each frame's metadata, then returns to the floor.
                 Vector2 actorMeet=new Vector2(contactX-attackContact.x,contactY-attackContact.y);
@@ -282,8 +287,8 @@ namespace RequiemLantern.Presentation
                 // the target's body instead of stopping at its extended weapon.
                 Vector2 targetMeet=new Vector2(clash?contactX-defendContact.x:contactX+facing*35,clash?contactY-defendContact.y:groundY);
                 Vector2 contact=new Vector2(contactX,contactY);
-                if(reducedMotion){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,(target.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight)*.48f);}
-                marker.Attacker=attacker.Image;marker.Defender=defender.Image;marker.ContactPoint=contact;marker.AtlasActive=attacker.HasAtlas;marker.FrameLayoutActive=attacker.HasFrameLayout;marker.SDActive=attacker.HasSDAtlas;marker.BodyHeight=actor.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight;
+                if(reducedMotion){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,BodyHeight(target)*.48f);}
+                marker.ActorId=actor.Id;marker.TargetId=target.Id;marker.Attacker=attacker.Image;marker.Defender=defender.Image;marker.ContactPoint=contact;marker.AtlasActive=attacker.HasAtlas;marker.FrameLayoutActive=attacker.HasFrameLayout;marker.SDActive=attacker.HasSDAtlas;marker.BodyHeight=BodyHeight(actor);
                 var shadowA=Box(fx,"Attacker ground",0,0,96,7,new Color(0,0,0,.25f));
                 var shadowB=Box(fx,"Defender ground",0,0,106,8,new Color(0,0,0,.27f));
                 shadowA.transform.SetAsFirstSibling();shadowB.transform.SetAsFirstSibling();
@@ -406,7 +411,7 @@ namespace RequiemLantern.Presentation
             bool summary=e.Type=="Clash"||e.Type=="ClashWin",shatter=e.Type=="PartBreak"||e.Type=="Rift",resonance=e.Type=="Resonance"||e.Type=="Lantern";
             Color color=heal?Teal:guard?Hex("A7D4E9"):actor!=null?ElementColor(actor.Element):Gold;
             Vector2 source=BattlePoint(e.ActorId,new Vector2(960,480)),destination=BattlePoint(e.TargetId,new Vector2(1155,510));
-            Vector2 point=e.Type=="Ignite"?source:summary?new Vector2(1155,510):destination;
+            Vector2 point=e.Type=="Ignite"?source:summary?Vector2.Lerp(source,destination,.5f):destination;
             var fx=MakeRect(layer,"FX "+e.Type,0,0,1920,1080);
             Text number=null;ThreadGraphic support=null;RingGraphic ring=null;
             RawImage targetImage=null;fighters.TryGetValue(e.TargetId??"",out targetImage);
@@ -424,10 +429,16 @@ namespace RequiemLantern.Presentation
                 string defenseText=e.Type=="Evade"?"회 피":e.Type=="EvadeFail"?"회피 실패":e.Type=="Counter"?"반 격":actor!=null&&actor.Skills.Any(s=>s.Kind==SkillKind.Evade)?"회피 준비":actor!=null&&actor.Skills.Any(s=>s.Kind==SkillKind.Counter)?"반격 준비":"호 위";
                 number=Label(fx,"Battle feedback",heal?"+"+e.Amount:defenseText,point.x-160,point.y-132,320,85,39,color,TextAnchor.MiddleCenter);
             }
+            else if(e.Type=="Intercept"){
+                point=source;color=Teal;duration=autoMode?.24f:.42f;
+                ring=Ring(fx,"Interception seal",point.x-48,point.y-48,96,color,3);
+                string intercepted=e.OriginalTargetId=="all"?"전체 공격에 맞불\n"+(actor?.Name??""):(battle.Unit(e.OriginalTargetId)?.Name??"동료")+" 대신\n"+(actor?.Name??"")+" · 가로막기";
+                number=Label(fx,"Interception feedback",intercepted,point.x-180,point.y-158,360,92,28,color,TextAnchor.MiddleCenter);
+            }
             else if(summary){number=Label(fx,"Clash result",e.Type=="ClashWin"?"2연승 · 공격권 확보":"맞불 종료",point.x-270,point.y-160,540,85,34,Gold,TextAnchor.MiddleCenter);duration=autoMode?.20f:.30f;}
             else if(shatter||resonance){
                 if(e.Type=="PartBreak")ShowPartBroken(e.TargetId);
-                if(e.Type=="Rift"){var rift=screen.Find("Enemy rift");if(rift)rift.GetComponent<Text>().text="균열 · 행동 중단";}
+                if(e.Type=="Rift"){var rift=screen.Find("Enemy rift "+e.TargetId);if(rift)rift.GetComponent<Text>().text="균열 · 행동 중단";}
                 if(e.Type=="Lantern")point=new Vector2(960,480);
                 ring=Ring(fx,"Expanding seal",point.x-42,point.y-42,84,color,3);
                 number=Label(fx,"Break feedback",e.Type=="PartBreak"?"부위 파괴":e.Type=="Rift"?"균 열":e.Type=="Lantern"?"등불 해방":"공 명",point.x-220,point.y-150,440,95,44,color,TextAnchor.MiddleCenter);duration=autoMode?.37f:.56f;

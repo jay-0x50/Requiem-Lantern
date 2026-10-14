@@ -33,7 +33,7 @@ namespace RequiemLantern.Presentation
         public bool AtlasActive, FrameLayoutActive, SDActive, Clash;
         public float BodyHeight;
         public int Pose, SkillNumber, ContactSoundCount;
-        public string SkillId;
+        public string SkillId, ActorId, TargetId;
     }
 
     public sealed class FlameRevealMarker : MonoBehaviour

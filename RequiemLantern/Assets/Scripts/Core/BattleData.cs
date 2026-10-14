@@ -80,6 +80,8 @@ namespace RequiemLantern.Core
     public sealed class LinkCommand
     {
         public string ActorId, SkillId, TargetId, Reason, CardId;
+        // Clash ownership survives round-local intent IDs when a plan is reused.
+        public string IntentActorId, IntentPartId;
         public int Slot;
         public LinkKind Kind;
         public LinkCommand Copy() { return (LinkCommand)MemberwiseClone(); }
@@ -97,6 +99,7 @@ namespace RequiemLantern.Core
     public sealed class BattleEvent
     {
         public string Type, ActorId, TargetId, Message;
+        public string IntentId, OriginalTargetId;
         public int Amount, Round;
         public bool[] FlameStates = new bool[0], EnemyFlameStates = new bool[0];
         public float ActorPower, TargetPower;

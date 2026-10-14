@@ -14,12 +14,13 @@ def main():
     assert [chapter['focusCharacterId'] for chapter in chapters]==list(FOCUS)
     ids=set();counts={k:0 for k in KINDS};lines_total=0
     code=['// Generated from 기획서/메인스토리/campaign.json by Tools/compile-campaign.py.','using System;','using System.Collections.Generic;','using System.Linq;','namespace RequiemLantern.Core','{','    public static class CampaignCatalog','    {','        public static readonly List<ChapterData> Chapters = new List<ChapterData>','        {']
-    doc=['# 메인 스토리 · 캐릭터 중심의 장과 스테이지 구성','', '갱신일: 2026-10-14 · 초안 v0.3','',
+    doc=['# 메인 스토리 · 캐릭터 중심의 장과 스테이지 구성','', '갱신일: 2026-10-15 · 초안 v0.4','',
          '메인 스토리는 1~5장으로 구분하고, 각 장에 10개 스테이지를 둔다. 번호는 1-1, 1-2 … 5-10이다. 스테이지 수는 JSON 데이터에서 늘릴 수 있으며 화면과 진행 규칙은 목록 길이에 따라 동작한다.','',
          '스토리·전투·스토리와 전투를 구분한다. 혼합 스테이지는 전투 전 대화 → 전투 → 전투 후 대화 → 완료로 이어진다. 전투에서 패배하면 다음 스테이지가 열리지 않고, 후속 대화가 남아 있으면 그것을 마친 뒤 진행이 열린다. 스토리 전용 구간은 전투 없이 완료되며 전투 보상을 지급하지 않는다.','',
          '메인스토리의 한 장이 곧 한 캐릭터의 이야기다. 1장 리안, 2장 세라, 3장 노아, 4장 하이델, 5장 미나토를 중심으로 과거의 갈등이 현재의 원정 목적·인간과 군체의 대립·장 결전에 이어진다. 합류 이유와 기억의 대가, 증오와 미련, 새로운 결의는 해당 장의 스테이지 대화에서 드러난다.','',
          '중심 인물 혼자 진행하는 개인편이 아니다. 카이와 동료들이 함께 이동하고 서로의 선택에 답하며, 그 과정에서 영야·잔영·교단·관측소와 등불지기의 비밀이 순차적으로 드러난다. 다음 장은 앞 장의 결과를 이어받는다.','',
          '스토리 진입은 작전실의 메인 스테이지로 통일한다. 캐릭터 화면은 해당 인물이 중심인 메인 장으로 안내하고, 기록실은 완료한 메인 스테이지를 재생한다. 이전 독립 캐릭터 대본은 개발 참고 자료로 보관하며 별도의 게임 콘텐츠로 배포하지 않는다.','',
+         '일반 전투는 적 2~3명을 배치하고, 첫 튜토리얼 1-2와 보스는 1명을 배치한다. 적 수는 스테이지의 `enemyCount`를 원본으로 공용 카탈로그에 전달한다. 각 적은 독립 체력·부위·균열·정신력·예고선을 갖고, 모든 적을 쓰러뜨려야 승리한다. 예고선은 원래 공격 대상을 표시하며, 다른 동료의 공격 스킬로 대리 맞불을 연결할 수 있다. 속도 제한을 추가하지 않고 기존 행동칸·손패·불씨 비용을 사용한다. 단일 공격의 맞불에서 패하면 대리자가 맞고, 전체 공격은 패배 시 생존 아군 전체가 피해를 받는다.','',
          '현재 전투는 공용 프로토타입 규칙에 단계별 적 수치·예고선 유형·파티·인간/군체 외형을 적용한다. 보스의 최종 다중 페이즈와 전용 음악은 추가 제작 대상이며, 대본의 음악 큐는 향후 음원 연결용이다.','',
          '전투 파티 정원은 4명이다. 기본 연습 전투는 리안·세라·미나토·노아로 구성한다. 메인 스토리는 합류 순서를 지켜 1-2는 리안 1명, 1-4·1-5는 리안·세라 2명, 1-8·1-9·2-2는 리안·세라·미나토 3명으로 싸운다. 하이델이 합류한 2-4부터 모든 전투는 4명이며, 노아는 추격에서 구조받은 뒤 3-6에서 처음 전투에 함께한다. 각 장의 중심 인물과 동료들의 호위·치료·관측 역할을 함께 편성한다. 파티 인원이 늘어도 개인 행동칸과 불씨 비용, 스킬 주머니 비율은 그대로 유지한다.','',
          '원본: `메인스토리/campaign.json`. `python Tools/compile-campaign.py`로 공용 C# 카탈로그와 이 문서를 갱신한다.','',
@@ -32,16 +33,18 @@ def main():
             assert s['number']==f'{ci}-{ni}' and s['chapter']==ci and s['id'] not in ids
             ids.add(s['id']);counts[s['kind']]+=1
             assert s['kind'] in KINDS and len(s['participants'])>=1
-            if s['kind']=='Story':assert s['before'] and not s['after'] and not s['party']
+            if s['kind']=='Story':assert s['before'] and not s['after'] and not s['party'] and s['enemyCount']==0
             elif s['kind']=='Battle':assert not s['before'] and not s['after'] and s['enemyName']
             else:assert s['before'] and s['after'] and s['enemyName']
             if s['kind']!='Story':
                 assert 1<=len(s['party'])<=4 and len(s['party'])==len(set(s['party'])) and set(s['party']).issubset(s['participants'])
                 assert all(id in FOCUS for id in s['party'])
+                assert isinstance(s['enemyCount'],int) and 1<=s['enemyCount']<=3
+                assert s['enemyCount']==1 if s['isBoss'] or s['number']=='1-2' else s['enemyCount']>=2
             code.append('                    new StageData {')
             for field,key in [('Id','id'),('Number','number'),('Title','title'),('Summary','summary'),('Location','location'),('EnemyName','enemyName'),('EnemyArt','enemyArt'),('BattleProfile','battleProfile'),('MusicId','musicId')]:
                 code.append(f'                        {field}={cs(s[key])},')
-            code.append(f'                        Chapter={ci}, Kind=StageKind.{s["kind"]}, IsBoss={str(s["isBoss"]).lower()}, HumanEnemy={str(s["humanEnemy"]).lower()},')
+            code.append(f'                        Chapter={ci}, EnemyCount={s["enemyCount"]}, Kind=StageKind.{s["kind"]}, IsBoss={str(s["isBoss"]).lower()}, HumanEnemy={str(s["humanEnemy"]).lower()},')
             for field,key in [('Participants','participants'),('Party','party')]:code.append(f'                        {field}=new string[] {{'+','.join(cs(v) for v in s[key])+'},')
             for field,key in [('Before','before'),('After','after')]:
                 code.extend([f'                        {field}=new List<StoryLine> {{'])
@@ -74,7 +77,7 @@ def main():
                 for line in s[key]:
                     if len(line)==3:doc.extend([f'음악 큐: `{line[2]}`',''])
                     doc.extend([f'**{line[0] or "서술"}**: {line[1]}',''])
-            if s['kind']!='Story':doc.extend([f'**전투:** {s["enemyName"]} / {"인간" if s["humanEnemy"] else "군체"} · 프로필 `{s["battleProfile"]}` · {"보스" if s["isBoss"] else "일반/중간 전투"}.', '', f'**출전 파티 ({len(s["party"])}명):** {" · ".join(FOCUS[id] for id in s["party"])}.',''])
+            if s['kind']!='Story':doc.extend([f'**전투:** 적 {s["enemyCount"]}명 · {s["enemyName"]} / {"인간" if s["humanEnemy"] else "군체"} · 프로필 `{s["battleProfile"]}` · {"보스" if s["isBoss"] else "일반/중간 전투"}.', '', f'**출전 파티 ({len(s["party"])}명):** {" · ".join(FOCUS[id] for id in s["party"])}.',''])
     doc.insert(4,f'규모: {len(chapters)}장 · {len(ids)}스테이지 · 대사/서술 {lines_total}행. 스토리 {counts["Story"]}, 전투 {counts["Battle"]}, 스토리+전투 {counts["StoryBattle"]}.')
     doc.insert(5,'')
     (ROOT/'RequiemLantern/Assets/Scripts/Core/CampaignCatalog.cs').write_text('\n'.join(code),encoding='utf-8')

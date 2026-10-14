@@ -66,7 +66,7 @@ namespace RequiemLantern.Core
             if (kind == LinkKind.Clash)
             {
                 var intent = Intent(targetId);
-                if (intent == null || intent.Cancelled || intent.Resolved) { error = "유효한 예고선을 선택해 주세요."; return false; }
+                if (intent == null || intent.Resolved || !IntentActive(intent)) { error = "유효한 예고선을 선택해 주세요."; return false; }
                 if (State.Links.Any(x => x.Kind == LinkKind.Clash && x.TargetId == targetId && !(x.ActorId == actorId && (skill.Slots == 2 || Occupies(x, slot)))))
                 { error = "이 예고선에는 이미 맞불이 연결되어 있습니다."; return false; }
             }
@@ -94,7 +94,9 @@ namespace RequiemLantern.Core
             int newCost = PlannedCost - replaced.Sum(x => Skill(x.ActorId, x.SkillId).Cost) + skill.Cost;
             if (newCost > State.Ember) { error = "불씨가 부족합니다. 연결을 바꾸거나 잔광을 선택해 주세요."; return false; }
             foreach (var link in replaced) State.Links.Remove(link);
-            State.Links.Add(new LinkCommand { ActorId = actorId, Slot = slot, SkillId = skillId, Kind = kind, TargetId = targetId, CardId = card == null ? null : card.Id, Reason = "직접 연결" });
+            var linkedIntent = kind == LinkKind.Clash ? Intent(targetId) : null;
+            State.Links.Add(new LinkCommand { ActorId = actorId, Slot = slot, SkillId = skillId, Kind = kind, TargetId = targetId, CardId = card == null ? null : card.Id,
+                IntentActorId=linkedIntent == null ? null : linkedIntent.ActorId, IntentPartId=linkedIntent == null ? null : linkedIntent.PartId, Reason = "직접 연결" });
             return true;
         }
 
@@ -184,7 +186,10 @@ namespace RequiemLantern.Core
                 if (old.Kind == LinkKind.Clash)
                 {
                     string suffix = target.Substring(target.IndexOf(':') + 1);
-                    var equivalent = State.Intents.FirstOrDefault(x => x.Id.EndsWith(":" + suffix, StringComparison.Ordinal));
+                    var equivalent = State.Intents.FirstOrDefault(x => !x.Cancelled && !x.Resolved &&
+                        (string.IsNullOrEmpty(old.IntentActorId) || x.ActorId == old.IntentActorId) &&
+                        (string.IsNullOrEmpty(old.IntentPartId) || x.PartId == old.IntentPartId) &&
+                        x.Id.EndsWith(":" + suffix, StringComparison.Ordinal));
                     if (equivalent == null) continue;
                     target = equivalent.Id;
                 }
@@ -382,30 +387,34 @@ namespace RequiemLantern.Core
         private void Observe()
         {
             State.Intents.Clear(); State.Phase = BattlePhase.Observe;
+            // Rotate over living allies so every enemy forecast names its actual recipient.
+            // Health ordering keeps a wounded ally first while stable roster order breaks ties.
+            var targets = State.Allies.Where(x => x.Alive).OrderBy(x => (float)x.Hp / x.MaxHp).ToList();
             foreach (var enemy in State.Enemies.Where(x => x.Alive))
             {
                 if (enemy.BrokenThroughRound >= State.Round) { Log("Skip", enemy.Id, "", enemy.Name + " — 균열로 이번 라운드 행동 불가", 0); continue; }
-                var target = State.Allies.Where(x => x.Alive).OrderBy(x => (float)x.Hp / x.MaxHp).ThenBy(x => x.Id, StringComparer.Ordinal).FirstOrDefault();
-                if (target == null) continue;
+                if (targets.Count == 0) continue;
+                var target = targets[(State.Round - 1 + State.Enemies.IndexOf(enemy)) % targets.Count];
+                string intentPrefix = State.Round + ":" + enemy.Id + "_";
                 var arm = enemy.Parts.FirstOrDefault(x => x.Id.EndsWith("arm", StringComparison.Ordinal));
                 var core = enemy.Parts.FirstOrDefault(x => x.Id.EndsWith("core", StringComparison.Ordinal));
                 int anger = Math.Min(5, State.Round - 1);
                 if(!string.IsNullOrEmpty(enemy.IntentProfile)){
                     string profile=enemy.IntentProfile;bool solo=State.Allies.Count==1;
-                    if(arm==null||!arm.Destroyed)State.Intents.Add(new IntentState { Id=State.Round+":anger_arm",ActorId=enemy.Id,TargetId=target.Id,PartId=arm==null?null:arm.Id,
+                    if(arm==null||!arm.Destroyed)State.Intents.Add(new IntentState { Id=intentPrefix+"arm",ActorId=enemy.Id,TargetId=target.Id,PartId=arm==null?null:arm.Id,
                         Name=enemy.IsHuman?"진입 저지":profile=="tutorial"?"첫 습격":"연속 공격",HitPowers=profile=="tutorial"?new[]{5}:new[]{7+anger,7+anger},Speed=10,Element=enemy.Element,
                         Kind=profile=="piercing"?IntentKind.Piercing:IntentKind.Normal });
-                    if(!solo&&profile!="tutorial"&&profile!="skirmish"&&(core==null||!core.Destroyed))State.Intents.Add(new IntentState { Id=State.Round+":anger_core",ActorId=enemy.Id,
+                    if(!solo&&profile!="tutorial"&&profile!="skirmish"&&(core==null||!core.Destroyed))State.Intents.Add(new IntentState { Id=intentPrefix+"core",ActorId=enemy.Id,
                         TargetId=profile=="command"?target.Id:"all",PartId=core==null?null:core.Id,Name=profile=="illusion"?"기억의 잔향 · 허상":enemy.IsHuman?"강제 집행":"번지는 어둠",
                         HitPowers=profile=="command"?new[]{6+anger,6+anger}:new[]{4+anger,5+anger,4+anger},Speed=8,Element=enemy.Element,
                         Kind=profile=="illusion"?IntentKind.Illusion:profile=="command"?IntentKind.Piercing:IntentKind.Area });
-                    if(State.Intents.All(x=>x.ActorId!=enemy.Id))State.Intents.Add(new IntentState { Id=State.Round+":anger_body",ActorId=enemy.Id,TargetId=target.Id,
+                    if(State.Intents.All(x=>x.ActorId!=enemy.Id))State.Intents.Add(new IntentState { Id=intentPrefix+"body",ActorId=enemy.Id,TargetId=target.Id,
                         Name=enemy.IsHuman?"남은 저항":"남은 어둠",HitPowers=new[]{6+anger},Speed=8,Element=enemy.Element });
                     continue;
                 }
-                if (arm == null || !arm.Destroyed) State.Intents.Add(new IntentState { Id = State.Round + ":anger_arm", ActorId = enemy.Id, TargetId = target.Id, PartId = arm == null ? null : arm.Id, Name = "난타", HitPowers = new[] { 10 + anger, 10 + anger }, Speed = 11, Element = Element.Shadow, Kind = IntentKind.Normal });
-                if (core == null || !core.Destroyed) State.Intents.Add(new IntentState { Id = State.Round + ":anger_core", ActorId = enemy.Id, TargetId = "all", PartId = core == null ? null : core.Id, Name = "절규", HitPowers = new[] { 6 + anger, 6 + anger, 6 + anger }, Speed = 9, Element = Element.Shadow, Kind = IntentKind.Area });
-                if (State.Intents.All(x => x.ActorId != enemy.Id)) State.Intents.Add(new IntentState { Id = State.Round + ":anger_body", ActorId = enemy.Id, TargetId = target.Id, Name = "남은 분노", HitPowers = new[] { 8 + anger }, Speed = 8, Element = Element.Shadow });
+                if (arm == null || !arm.Destroyed) State.Intents.Add(new IntentState { Id = intentPrefix + "arm", ActorId = enemy.Id, TargetId = target.Id, PartId = arm == null ? null : arm.Id, Name = "난타", HitPowers = new[] { 10 + anger, 10 + anger }, Speed = 11, Element = Element.Shadow, Kind = IntentKind.Normal });
+                if (core == null || !core.Destroyed) State.Intents.Add(new IntentState { Id = intentPrefix + "core", ActorId = enemy.Id, TargetId = "all", PartId = core == null ? null : core.Id, Name = "절규", HitPowers = new[] { 6 + anger, 6 + anger, 6 + anger }, Speed = 9, Element = Element.Shadow, Kind = IntentKind.Area });
+                if (State.Intents.All(x => x.ActorId != enemy.Id)) State.Intents.Add(new IntentState { Id = intentPrefix + "body", ActorId = enemy.Id, TargetId = target.Id, Name = "남은 분노", HitPowers = new[] { 8 + anger }, Speed = 8, Element = Element.Shadow });
             }
             foreach (var intent in State.Intents)
             {
@@ -476,22 +485,25 @@ namespace RequiemLantern.Core
             if (skill != null) SetSkillMetadata(e, skill);
             else if (intent != null) SetIntentMetadata(e, intent);
             if (enemyIntent != null) { e.EnemyBasePower = BattleRules.Base(enemyIntent); e.EnemyFlamePower = BattleRules.Flame(enemyIntent); }
+            if (enemyIntent != null) SetIntentContext(e, enemyIntent);
             State.Events.Add(e); return e;
         }
         private static void SetSkillMetadata(BattleEvent e, SkillData skill)
         { e.SkillId = skill.Id; e.SkillName = skill.Name; e.SkillNumber = skill.Number; e.BasePower = BattleRules.Base(skill); e.FlamePower = BattleRules.Flame(skill); }
         private static void SetIntentMetadata(BattleEvent e, IntentState intent)
-        { e.SkillId = intent.Id; e.SkillName = intent.Name; e.SkillNumber = 0; e.BasePower = BattleRules.Base(intent); e.FlamePower = BattleRules.Flame(intent); }
+        { e.SkillId = intent.Id; e.SkillName = intent.Name; e.SkillNumber = 0; e.BasePower = BattleRules.Base(intent); e.FlamePower = BattleRules.Flame(intent); SetIntentContext(e,intent); }
+        private static void SetIntentContext(BattleEvent e, IntentState intent)
+        { e.IntentId = intent.Id; e.OriginalTargetId = intent.TargetId; }
         private void Strike(UnitState actor, SkillData skill, UnitState enemy, PartState part, float multiplier)
         {
             var roll = RollSkill(actor, skill, enemy, multiplier); LogRoll(actor, enemy, roll, null, 0, skill);
             ApplyStrike(actor, skill, enemy, part, roll);
         }
-        private void ApplyStrike(UnitState actor, SkillData skill, UnitState enemy, PartState part, RolledPower roll)
+        private void ApplyStrike(UnitState actor, SkillData skill, UnitState enemy, PartState part, RolledPower roll, IntentState clashIntent = null)
         {
             if (!actor.Alive || !enemy.Alive) return;
             // The whole skill deals its final rolled total once; lit flames never multiply hit count.
-            Hurt(actor, enemy, Damage(actor, enemy, roll.Power, 1), skill, roll); RiftHit(enemy, skill.RiftDamage, part, skill.PartDamage); React(skill.Element, enemy);
+            Hurt(actor, enemy, Damage(actor, enemy, roll.Power, 1), skill, roll, clashIntent); RiftHit(enemy, skill.RiftDamage, part, skill.PartDamage); React(skill.Element, enemy);
         }
 
         private void ResolveClash(UnitState actor, SkillData skill, IntentState intent, float multiplier)
@@ -499,6 +511,13 @@ namespace RequiemLantern.Core
             var enemy = Unit(intent.ActorId);
             if (intent.Kind == IntentKind.Illusion)
             { intent.Resolved = true; Log("Illusion", actor.Id, enemy.Id, "허상선 — 빛실이 허공을 가릅니다.", 0); return; }
+            if (intent.TargetId != actor.Id)
+            {
+                var protectedAlly = Unit(intent.TargetId);
+                var intercept = new BattleEvent("Intercept", actor.Id, enemy.Id,
+                    intent.Kind == IntentKind.Area ? actor.Name + " — 전체 공격에 맞불" : actor.Name + " → " + (protectedAlly == null ? "동료" : protectedAlly.Name) + " 대신 맞불", 0, State.Round);
+                SetSkillMetadata(intercept, skill); SetIntentContext(intercept, intent); State.Events.Add(intercept);
+            }
             int streakOwner = 0, streak = 0;
             for (int i = 1; i <= BattleRules.MaxClashContests; i++)
             {
@@ -511,7 +530,7 @@ namespace RequiemLantern.Core
                     result == 0 ? "챙! 위력 동률 — 연승 초기화" : "챙! " + (result > 0 ? actor.Name : enemy.Name) + " " + streak + "/2 연승", result, State.Round)
                 { ActorPower = own.Power, TargetPower = other.Power, FlameStates = own.Flames, EnemyFlameStates = other.Flames,
                     ActorSanity = actor.Sanity, TargetSanity = enemy.Sanity, ClashIndex = i, WinnerStreak = streak };
-                SetSkillMetadata(clash, skill); clash.EnemyBasePower = BattleRules.Base(intent); clash.EnemyFlamePower = BattleRules.Flame(intent);
+                SetSkillMetadata(clash, skill); SetIntentContext(clash,intent); clash.EnemyBasePower = BattleRules.Base(intent); clash.EnemyFlamePower = BattleRules.Flame(intent);
                 State.Events.Add(clash);
                 if (streak < 2) continue;
                 intent.Resolved = true;
@@ -522,11 +541,12 @@ namespace RequiemLantern.Core
                     ActorSanity = winner.Sanity, TargetSanity = loser.Sanity, ClashIndex = i, WinnerStreak = 2 };
                 if (result > 0) { SetSkillMetadata(win, skill); win.EnemyBasePower = BattleRules.Base(intent); win.EnemyFlamePower = BattleRules.Flame(intent); }
                 else { SetIntentMetadata(win, intent); win.EnemyBasePower = BattleRules.Base(skill); win.EnemyFlamePower = BattleRules.Flame(skill); }
+                SetIntentContext(win,intent);
                 State.Events.Add(win); ChangeSanity(winner, 2); ChangeSanity(loser, -2);
                 if (result > 0)
                 {
                     AddLantern(10); if (clashEmber < 2) { clashEmber++; State.Ember = Math.Min(6, State.Ember + 1); }
-                    ApplyStrike(actor, skill, enemy, null, own);
+                    ApplyStrike(actor, skill, enemy, null, own, intent);
                 }
                 else EnemyHit(enemy, intent, other, actor);
                 return;
@@ -541,6 +561,12 @@ namespace RequiemLantern.Core
             if (intent.Kind != IntentKind.Illusion)
             {
                 var target = intent.TargetId == "all" ? State.Allies.FirstOrDefault(x => x.Alive) : Unit(intent.TargetId);
+                if (target == null || !target.Alive)
+                {
+                    intent.Resolved = true;
+                    var cancelled = new BattleEvent("Cancel", enemy.Id, intent.Id, intent.Name + " 취소 — 예고한 대상이 전투불능", 0, State.Round);
+                    SetIntentContext(cancelled,intent); State.Events.Add(cancelled); return;
+                }
                 var roll = RollIntent(enemy, intent, target); LogRoll(enemy, target, roll, null, 0, null, intent); EnemyHit(enemy, intent, roll, null);
             }
             intent.Resolved = true;
@@ -605,6 +631,7 @@ namespace RequiemLantern.Core
             var e = new BattleEvent("Damage", actor.Id, target.Id, actor.Name + " → " + target.Name + "  " + damage, damage, State.Round)
             { ActorSanity = actor.Sanity, TargetSanity = target.Sanity };
             if (skill != null) SetSkillMetadata(e, skill); else if (intent != null) SetIntentMetadata(e, intent);
+            if (intent != null) SetIntentContext(e,intent);
             if (roll != null) { e.FlameStates = roll.Flames; e.ActorPower = roll.Power; }
             State.Events.Add(e);
             if (target.Hp == 0)

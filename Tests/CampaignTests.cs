@@ -38,6 +38,7 @@ internal static class CampaignTests
                     foreach(var sourceStage in chapter.GetProperty("stages").EnumerateArray()){
                         var stage=CampaignCatalog.Get(sourceStage.GetProperty("id").GetString());True(stage!=null);
                         Equal(sourceStage.GetProperty("number").GetString(),stage.Number);Equal(sourceStage.GetProperty("kind").GetString(),stage.Kind.ToString());
+                        Equal(sourceStage.GetProperty("enemyCount").GetInt32(),stage.EnemyCount);
                         Equal(string.Join(",",sourceStage.GetProperty("party").EnumerateArray().Select(x=>x.GetString())),string.Join(",",stage.Party));
                         Equal(string.Join(",",sourceStage.GetProperty("participants").EnumerateArray().Select(x=>x.GetString())),string.Join(",",stage.Participants));
                         foreach(string part in new[]{"before","after"}){
@@ -74,6 +75,40 @@ internal static class CampaignTests
         Test("campaign rejects oversized and repeated parties before mutating player growth",()=>{
             foreach(var party in new[]{new[]{"lian","sera","minato","noa","heidel"},new[]{"lian","sera","minato","lian"},new string[0]}){
                 var stage=new StageData{Kind=StageKind.Battle,Party=party};var data=new ProgressData();bool rejected=false;
+                try{CampaignBattleFactory.Create(stage,data,0);}catch(InvalidOperationException){rejected=true;}
+                True(rejected);Equal(0,data.Characters.Count);
+            }
+        });
+        Test("authored encounter counts distinguish groups, tutorial and single bosses",()=>{
+            foreach(var stage in Stages){
+                if(!stage.HasBattle){Equal(0,stage.EnemyCount);continue;}
+                if(stage.IsBoss||stage.Number=="1-2")Equal(1,stage.EnemyCount,stage.Number);
+                else True(stage.EnemyCount>=2&&stage.EnemyCount<=3,stage.Number);
+                var battle=CampaignBattleFactory.Create(stage,seed:0);Equal(stage.EnemyCount,battle.State.Enemies.Count,stage.Number);
+                Equal(stage.EnemyCount,battle.State.Enemies.Select(e=>e.Id).Distinct().Count());
+                Equal(stage.EnemyCount*2,battle.State.Enemies.SelectMany(e=>e.Parts).Select(p=>p.Id).Distinct().Count());
+                Equal(battle.State.Intents.Count,battle.State.Intents.Select(i=>i.Id).Distinct().Count());
+                foreach(var intent in battle.State.Intents){
+                    var owner=battle.Unit(intent.ActorId);True(owner!=null&&owner.IsEnemy);True(owner.Parts.Any(p=>p.Id==intent.PartId));
+                    True(intent.TargetId=="all"||battle.State.Allies.Any(a=>a.Id==intent.TargetId&&a.Alive));
+                }
+                if(stage.HumanEnemy&&stage.EnemyCount>1)True(battle.State.Enemies.Skip(1).All(e=>e.Portrait=="HumanGuard"&&e.IsHuman));
+            }
+            var group=Stages.Single(s=>s.Number=="2-4");Equal(3,group.EnemyCount);
+        });
+        Test("group restarts rebuild every enemy, target, part and cost without changing rewards",()=>{
+            var stage=Stages.Single(s=>s.Number=="2-4");var battle=CampaignBattleFactory.Create(stage,seed:42);
+            var ids=string.Join(",",battle.State.Enemies.Select(e=>e.Id));var intents=string.Join(",",battle.State.Intents.Select(i=>i.Id+"="+i.ActorId+"/"+i.TargetId));
+            int coin=battle.State.CoinReward,lantern=battle.State.FirstLanternReward,memory=battle.State.MemoryReward;
+            battle.RecommendLinks();battle.ResolveRound();battle.Restart();
+            Equal(ids,string.Join(",",battle.State.Enemies.Select(e=>e.Id)));Equal(intents,string.Join(",",battle.State.Intents.Select(i=>i.Id+"="+i.ActorId+"/"+i.TargetId)));
+            True(battle.State.Enemies.All(e=>e.Alive&&e.Hp==e.MaxHp&&e.Parts.All(p=>p.Hp==p.MaxHp)));
+            Equal(coin,battle.State.CoinReward);Equal(lantern,battle.State.FirstLanternReward);Equal(memory,battle.State.MemoryReward);
+            Equal(0,battle.PlannedCost);Equal(0,battle.State.Links.Count);Equal(8,battle.State.Allies.Sum(a=>a.SkillHand.Count));
+        });
+        Test("invalid encounter sizes are rejected before player growth changes",()=>{
+            foreach(int count in new[]{0,4,-1}){
+                var stage=new StageData{Kind=StageKind.Battle,Party=new[]{"lian"},EnemyCount=count};var data=new ProgressData();bool rejected=false;
                 try{CampaignBattleFactory.Create(stage,data,0);}catch(InvalidOperationException){rejected=true;}
                 True(rejected);Equal(0,data.Characters.Count);
             }

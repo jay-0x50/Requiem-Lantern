@@ -14,7 +14,7 @@ namespace RequiemLantern.Core
     [Serializable] public sealed class StageData
     {
         public string Id, Number, Title, Summary, Location, EnemyName, EnemyArt, BattleProfile, MusicId;
-        public int Chapter; public bool IsBoss, HumanEnemy;
+        public int Chapter, EnemyCount; public bool IsBoss, HumanEnemy;
         public StageKind Kind;
         public string[] Participants, Party;
         public List<StoryLine> Before = new List<StoryLine>(), After = new List<StoryLine>();
@@ -102,25 +102,34 @@ namespace RequiemLantern.Core
         {
             if(stage.Party == null || stage.Party.Length == 0 || stage.Party.Length > PrototypeData.PartyCapacity || stage.Party.Distinct().Count() != stage.Party.Length)
                 throw new InvalidOperationException("Campaign party must have one to four distinct allies.");
+            if(stage.EnemyCount < 1 || stage.EnemyCount > 3)
+                throw new InvalidOperationException("Campaign encounters must have one to three enemies.");
             var state = PrototypeData.CreateBattle(progress, seed);
             state.StageId = stage.Id; state.StageName = stage.Number + "  " + stage.Title;
             state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
             if(progress != null)new ProgressService(progress).ApplyToBattle(state);
             var enemy=state.Enemies[0];enemy.Name=stage.EnemyName;enemy.Portrait=stage.EnemyArt;enemy.IsHuman=stage.HumanEnemy;
             if(stage.Id=="chapter1_beacon_defense")return state; // Preserve the previously delivered fight and reward identity.
-            enemy.IntentProfile=stage.BattleProfile;
-            enemy.Element=stage.HumanEnemy?Element.Frost:Element.Shadow;
-            int hp=stage.IsBoss?260+stage.Chapter*20:105+stage.Chapter*22;
-            if(state.Allies.Count==1)hp=65;
-            else if(state.Allies.Count==2)hp=Math.Min(hp,130);
-            enemy.Hp=enemy.MaxHp=hp;enemy.Attack=9;enemy.Defense=1;
-            enemy.Rift=enemy.MaxRift=stage.IsBoss?100:55+stage.Chapter*5;
-            enemy.Parts[0].Hp=enemy.Parts[0].MaxHp=stage.IsBoss?48:26;
-            enemy.Parts[1].Hp=enemy.Parts[1].MaxHp=stage.IsBoss?64:40;
-            enemy.Parts[0].Name=stage.HumanEnemy?"무기":"팔";
-            enemy.Parts[1].Name=stage.HumanEnemy?"지휘 장비":"핵";
-            if(stage.EnemyArt=="Eve"){enemy.Parts[0].Name="손종";enemy.Parts[1].Name="기록 봉인";}
-            if(stage.EnemyArt=="Ellen"){enemy.Parts[0].Name="무기";enemy.Parts[1].Name="인장 장비";}
+            for(int i=1;i<stage.EnemyCount;i++)state.Enemies.Add(new UnitState {
+                Id="enemy_"+(i+1), Name=stage.HumanEnemy?"호위 경비병 "+i:"그림자 군체 "+i,
+                Portrait=stage.HumanEnemy?"HumanGuard":"Anger", IsEnemy=true, IsHuman=stage.HumanEnemy,
+                Parts=new List<PartState>{new PartState{Id="enemy_"+(i+1)+"_arm"},new PartState{Id="enemy_"+(i+1)+"_core"}}
+            });
+            foreach(var foe in state.Enemies){
+                foe.IntentProfile=foe==enemy?stage.BattleProfile:"skirmish";
+                foe.Element=stage.HumanEnemy?Element.Frost:Element.Shadow;
+                int hp=stage.IsBoss?260+stage.Chapter*20:stage.EnemyCount>1?48+stage.Chapter*7:105+stage.Chapter*22;
+                if(state.Allies.Count==1)hp=65;
+                else if(state.Allies.Count==2)hp=Math.Min(hp,55);
+                foe.Hp=foe.MaxHp=hp;foe.Attack=stage.EnemyCount>1?7:9;foe.Defense=1;foe.Speed=11;
+                foe.Rift=foe.MaxRift=stage.IsBoss?100:stage.EnemyCount>1?32+stage.Chapter*3:55+stage.Chapter*5;
+                foe.Parts[0].Hp=foe.Parts[0].MaxHp=stage.IsBoss?48:26;
+                foe.Parts[1].Hp=foe.Parts[1].MaxHp=stage.IsBoss?64:40;
+                foe.Parts[0].Name=stage.HumanEnemy?"무기":"팔";
+                foe.Parts[1].Name=stage.HumanEnemy?"지휘 장비":"핵";
+                if(foe.Portrait=="Eve"){foe.Parts[0].Name="손종";foe.Parts[1].Name="기록 봉인";}
+                if(foe.Portrait=="Ellen"){foe.Parts[0].Name="무기";foe.Parts[1].Name="인장 장비";}
+            }
             state.Gloom=stage.BattleProfile=="illusion"?2:0;
             state.Ember=4;
             state.CoinReward=stage.IsBoss?120:40;state.FirstLanternReward=stage.IsBoss?10:2;

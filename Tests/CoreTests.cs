@@ -40,6 +40,99 @@ internal static class CoreTests
             True(b.TryLink("minato",0,"minato_heal",LinkKind.Support,"noa",out error));b.ResolveRound();
             True(b.Unit("noa").Hp>50);True(b.State.Events.Any(e=>e.Type=="Heal"&&e.TargetId=="noa"));
         });
+        Test("three enemies own distinct parts and independently addressable forecasts", () => {
+            var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);
+            Equal("anger,enemy_2,enemy_3",string.Join(",",b.State.Enemies.Select(u=>u.Id)));
+            var parts=b.State.Enemies.SelectMany(u=>u.Parts).ToList();Equal(6,parts.Select(p=>p.Id).Distinct().Count());
+            Equal(4,b.State.Intents.Count);Equal(4,b.State.Intents.Select(i=>i.Id).Distinct().Count());
+            True(b.Intent("1:anger_arm")!=null);True(b.Intent("1:enemy_2_arm")!=null);True(b.Intent("1:enemy_3_arm")!=null);
+            foreach(var intent in b.State.Intents){
+                var owner=b.Unit(intent.ActorId);True(owner.IsEnemy);True(owner.Parts.Any(p=>p.Id==intent.PartId));
+                Equal(owner.Id,b.TargetUnit(intent.PartId).Id);
+            }
+        });
+        Test("forecasts rotate across all living party members and never name a fallen ally", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);var named=new HashSet<string>();
+            for(int round=1;round<=4;round++){
+                b.State.Round=round;b.BeginCampaign();named.Add(b.State.Intents.First(i=>i.Kind==IntentKind.Normal).TargetId);
+            }
+            Equal(4,named.Count);True(named.SetEquals(b.State.Allies.Select(u=>u.Id)));
+            b.Unit("sera").Hp=0;
+            for(int round=5;round<=8;round++){b.State.Round=round;b.BeginCampaign();False(b.State.Intents.Any(i=>i.TargetId=="sera"));}
+        });
+        Test("slower teammate intercepts a forecast and preserves the original recipient", () => {
+            var b=Fixture(1,8,1,new ScriptedRandom());var defender=InterceptAlly(b,20);defender.Skills[0].Speed=1;b.State.Intents[0].Speed=99;
+            string error;True(b.TryLink("other",0,"intercept",LinkKind.Clash,"forecast",out error,defender.SkillHand[0].Id));
+            Equal("hero",b.Intent("forecast").TargetId);b.ResolveRound();Equal(100,b.Unit("hero").Hp);Equal(100,defender.Hp);
+            var take=b.State.Events.Single(e=>e.Type=="Intercept");Equal("hero",take.OriginalTargetId);Equal("forecast",take.IntentId);Equal("other",take.ActorId);
+            var hit=b.State.Events.Single(e=>e.Type=="Damage");Equal("other",hit.ActorId);Equal("enemy",hit.TargetId);Equal("hero",hit.OriginalTargetId);Equal("forecast",hit.IntentId);
+            Equal(1,defender.DiscardPile.Count);True(b.Intent("forecast").Resolved);
+        });
+        Test("losing teammate interception takes normal and piercing hits instead of the original ally", () => {
+            foreach(var kind in new[]{IntentKind.Normal,IntentKind.Piercing}){
+                var b=Fixture(1,20,1,new ScriptedRandom());var defender=InterceptAlly(b,1);b.State.Intents[0].Kind=kind;
+                string error;True(b.TryLink("other",0,"intercept",LinkKind.Clash,"forecast",out error));b.ResolveRound();
+                Equal(100,b.Unit("hero").Hp);Equal(80,defender.Hp);Equal(1,b.State.Events.Count(e=>e.Type=="Damage"));
+                var hit=b.State.Events.Single(e=>e.Type=="Damage");Equal("other",hit.TargetId);Equal("hero",hit.OriginalTargetId);Equal("forecast",hit.IntentId);
+            }
+        });
+        Test("winning one intercepted forecast leaves the same enemy's other attack intact", () => {
+            var b=Fixture(1,1,1,new ScriptedRandom());var defender=InterceptAlly(b,20);
+            b.State.Intents.Add(new IntentState{Id="second",ActorId="enemy",TargetId="hero",Name="다른 공격",BasePower=9,FlamePower=1,FlameCount=1,Element=Element.Flame,Speed=1});
+            string error;True(b.TryLink("other",0,"intercept",LinkKind.Clash,"forecast",out error));b.ResolveRound();
+            True(b.Intent("forecast").Resolved);False(b.Intent("second").Cancelled);True(b.Intent("second").Resolved);
+            Equal(91,b.Unit("hero").Hp);Equal(100,defender.Hp);Equal(1,b.State.Events.Count(e=>e.Type=="Damage"&&e.ActorId=="enemy"&&e.IntentId=="second"));
+        });
+        Test("unaffordable interception preserves the existing plan, ember and both hands", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);var actor=b.Unit("lian");var sera=b.Unit("sera");
+            ForceHand(actor,"lian_breakthrough","lian_glimmer");ForceHand(sera,"sera_slash","sera_glimmer");b.State.Ember=1;string error;
+            True(b.TryLink("sera",0,"sera_slash",LinkKind.Strike,"anger",out error,sera.SkillHand[0].Id));
+            string lianHand=BagTrace(actor),seraHand=BagTrace(sera);var old=b.State.Links.Single();
+            False(b.TryLink("lian",0,"lian_breakthrough",LinkKind.Clash,b.State.Intents[0].Id,out error,actor.SkillHand[0].Id));
+            Equal(1,b.State.Links.Count);Equal(old,b.State.Links.Single());Equal(1,b.PlannedCost);Equal(0,b.AvailableEmber);
+            Equal(lianHand,BagTrace(actor));Equal(seraHand,BagTrace(sera));
+        });
+        Test("a dead original recipient cancels an unopposed forecast but a living interceptor still acts", () => {
+            var b=Fixture(1,20,1,new ScriptedRandom());var defender=InterceptAlly(b,1);b.Unit("hero").Hp=0;
+            b.ResolveRound();Equal(100,defender.Hp);True(b.Intent("forecast").Resolved);
+            var cancelled=b.State.Events.Single(e=>e.Type=="Cancel");Equal("forecast",cancelled.IntentId);Equal("hero",cancelled.OriginalTargetId);
+            b=Fixture(1,20,1,new ScriptedRandom());defender=InterceptAlly(b,1);string error;
+            True(b.TryLink("other",0,"intercept",LinkKind.Clash,"forecast",out error));b.Unit("hero").Hp=0;
+            b.ResolveRound();Equal(80,defender.Hp);True(b.State.Events.Any(e=>e.Type=="ClashWin"));
+        });
+        Test("part break and rift cancel only the owning enemy forecasts", () => {
+            foreach(bool breakPart in new[]{true,false}){
+                var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);var foe=b.Unit("enemy_2");
+                foreach(var enemy in b.State.Enemies){enemy.Hp=enemy.MaxHp=10000;enemy.Rift=enemy.MaxRift=10000;}
+                if(breakPart)foe.Parts[0].Hp=1;else foe.Rift=1;
+                ForceHand(b.Unit("sera"),"sera_glimmer","sera_glimmer");string error;
+                True(b.TryLink("sera",0,"sera_glimmer",LinkKind.Strike,breakPart?foe.Parts[0].Id:foe.Id,out error));b.ResolveRound();
+                True(b.State.Intents.Where(i=>i.ActorId==foe.Id).All(i=>i.Cancelled));
+                True(b.State.Intents.Where(i=>i.ActorId!=foe.Id).All(i=>!i.Cancelled));
+                True(b.Unit("anger").Parts.All(p=>!p.Destroyed));True(b.Unit("enemy_3").Parts.All(p=>!p.Destroyed));
+            }
+        });
+        Test("enemy defeat preserves other enemies and victory waits for the final enemy", () => {
+            var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);var actor=b.Unit("lian");
+            actor.Skills.First(s=>s.Number==1).BasePower=1000;ForceHand(actor,"lian_glimmer","lian_glimmer");string error;
+            True(b.TryLink("lian",0,"lian_glimmer",LinkKind.Strike,"enemy_2",out error));b.ResolveRound();
+            Equal(BattleOutcome.Ongoing,b.State.Outcome);False(b.Unit("enemy_2").Alive);Equal(2,b.State.Enemies.Count(u=>u.Alive));
+            True(b.State.Intents.Where(i=>i.ActorId=="enemy_2").All(i=>i.Cancelled));True(b.State.Intents.Where(i=>i.ActorId!="enemy_2").All(i=>!i.Cancelled));
+            b.BeginNextRound();False(b.State.Intents.Any(i=>i.ActorId=="enemy_2"));ForceHand(actor,"lian_glimmer","lian_glimmer");
+            True(b.TryLink("lian",0,"lian_glimmer",LinkKind.Strike,"anger",out error,actor.SkillHand[0].Id));
+            True(b.TryLink("lian",1,"lian_glimmer",LinkKind.Strike,"enemy_3",out error,actor.SkillHand[1].Id));b.ResolveRound();
+            Equal(BattleOutcome.Victory,b.State.Outcome);True(b.State.Enemies.All(u=>!u.Alive));
+        });
+        Test("reuse retains the same enemy owner and drops a dead owner without reserving cards", () => {
+            var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);var actor=b.Unit("lian");
+            foreach(var foe in b.State.Enemies){foe.Hp=foe.MaxHp=10000;foe.Rift=foe.MaxRift=10000;}
+            ForceHand(actor,"lian_glimmer","lian_glimmer");string error;
+            True(b.TryLink("lian",0,"lian_glimmer",LinkKind.Clash,"1:enemy_2_arm",out error));
+            b.ResolveRound();b.BeginNextRound();string hand=BagTrace(actor);b.ReusePreviousLinks();
+            var link=b.State.Links.Single();Equal("2:enemy_2_arm",link.TargetId);Equal("enemy_2",link.IntentActorId);Equal("enemy_2_arm",link.IntentPartId);Equal(hand,BagTrace(actor));
+            b.ResolveRound();b.Unit("enemy_2").Hp=0;b.BeginNextRound();hand=BagTrace(actor);int ember=b.State.Ember;b.ReusePreviousLinks();
+            Equal(0,b.State.Links.Count);Equal(0,b.PlannedCost);Equal(ember,b.AvailableEmber);Equal(hand,BagTrace(actor));
+        });
         Test("fresh characters have sanity zero, three numbered skills and one defense", () => {
             foreach (string id in new[] { "lian", "sera", "minato", "noa", "heidel" }) {
                 var unit = PrototypeData.CreateCharacter(id); Equal(0, unit.Sanity); Equal(0, unit.SyncLevel);
@@ -356,6 +449,12 @@ internal static class CoreTests
         private readonly Queue<double> values; public int Calls;
         public ScriptedRandom(params double[] values) { this.values=new Queue<double>(values); }
         public double NextDouble() { Calls++;return values.Count>0?values.Dequeue():.99; }
+    }
+    private static UnitState InterceptAlly(BattleEngine battle,int basePower)
+    {
+        var ally=new UnitState{Id="other",Name="대리 잔영",Hp=100,MaxHp=100,Attack=10,Defense=0,Element=Element.Flame};
+        ally.Skills.Add(new SkillData{Id="intercept",Name="대리 맞불",Number=1,BasePower=basePower,FlamePower=1,FlameCount=1,Speed=1,Element=Element.Flame,RiftDamage=0});
+        battle.State.Allies.Add(ally);ForceHand(ally,"intercept","intercept");return ally;
     }
     private static BattleEngine Fixture(int allyBase,int enemyBase,int flames,IBattleRandom random)
     {

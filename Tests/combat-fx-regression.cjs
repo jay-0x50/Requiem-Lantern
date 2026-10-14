@@ -86,7 +86,7 @@ function environment(motion = true, mockImages = false, initialSnapshot = battle
     stage.appendChild(new Node('small', '', { hpText: u.id }));
     stage.appendChild(new Node('button', '', { action: 'target:' + u.id }));
   }
-  for (const id of [...initial.intents.map(i => i.id), ...initial.enemies[0].parts.map(p => p.id)])
+  for (const id of [...initial.intents.map(i => i.id), ...initial.enemies.flatMap(e=>e.parts.map(p => p.id))])
     stage.appendChild(new Node('button', '', { action: 'target:' + id }));
   for (const i of initial.intents) stage.appendChild(new Node('path', '', { intentLine: i.id }));
   let clock = 0, nextId = 0;
@@ -139,9 +139,9 @@ async function main() {
   let env = environment();
   assert.deepEqual(copy(env.fx.point('lian')), { x: 333.33333333333337, y: 495.83333333333337 });
   assert.deepEqual(copy(env.fx.point('minato')), { x: 529.1666666666667, y: 495.83333333333337 });
-  assert.deepEqual(copy(env.fx.point('anger')), { x: 1329.1666666666667, y: 470.83333333333337 });
-  assert.deepEqual(copy(env.fx.point('1:anger_core')), { x: 945, y: 392 });
-  assert.deepEqual(copy(env.fx.point('anger_arm')), { x: 1190, y: 550 });
+  assert.deepEqual(copy(env.fx.point('anger')), { x: 1329.1666666666667, y: 470.81666666666666 });
+  assert.deepEqual(copy(env.fx.point('1:anger_core')), { x: 996.6666666666667, y: 344.58333333333337 });
+  assert.deepEqual(copy(env.fx.point('anger_arm')), { x: 1270.8333333333335, y: 195 });
   assert.equal(env.fx.point('unknown'), null); assert.equal(env.fx.point(''), null);
   pass('unit, part and colon-containing intent IDs have correct anchors');
 
@@ -362,13 +362,13 @@ async function main() {
         x: parseFloat(fighter.wrapper.style.left) + (frame.contactX - frame.footX) * scale,
         y: parseFloat(fighter.wrapper.style.top) + 440 + (frame.contactY - frame.footY) * scale
       };
-      assert.ok(Math.abs(contact.x - 962.5) <= 1, label + ' weapon missed horizontal contact: ' + contact.x);
+      assert.ok(Math.abs(contact.x - Math.max(850,Math.min(1283.3333333333335,env.fx.meleePair.reduce((sum,f)=>sum+f.start,0)/2))) <= 1, label + ' weapon missed horizontal contact: ' + contact.x);
       assert.equal(fighter.wrapper.style.transform, 'translateX(-50%) rotate(0deg)');
       contactPoints.push(contact);
     }
     assert.equal(contactPoints.length, 2, label + ' requires both fighters');
     assert.ok(Math.abs(contactPoints[0].y - contactPoints[1].y) <= 1, label + ' weapon contact height mismatch');
-    assert.ok(Math.abs(contactPoints[0].y-475)<=1,label+' contact must match compact battlefield height');
+    assert.ok(Math.abs(contactPoints[0].y-(583.3333333333334-Math.min(...env.fx.meleePair.map(f=>f.bodyHeight))*.5))<=1,label+' contact must match compact battlefield height');
     assert.equal(env.root.querySelectorAll('.fx-beam').length, 0, label + ' contact must be physical');
     await env.drain(); assert.equal(await exchange, true);
     assert.equal(createdEffects.some(classes => classes.split(/\s+/).includes('fx-beam')), false,
@@ -630,6 +630,53 @@ async function main() {
   env.fx.clear();assert.equal(env.audioStops.length,stops+1);await env.drain();assert.equal(await audioCancelled,false);
   assert.equal(env.impacts.length,0);assert.equal(env.fx.units.get('anger').hp,190);
   pass('presentation cancellation stops the sample bank and suppresses future swings and contact sounds');
+
+  const multiple=battle();
+  multiple.allies.splice(1,0,{id:'sera',name:'세라',hp:100,maxHp:100,element:'Flame',parts:[]});
+  multiple.allies.push({id:'noa',name:'노아',hp:100,maxHp:100,element:'Shadow',parts:[]});
+  multiple.enemies[0].portrait='Anger';
+  for(let n=2;n<=3;n++){const id='enemy_'+n;multiple.enemies.push({...copy(multiple.enemies[0]),id,name:'군체 '+n,portrait:'Anger',parts:multiple.enemies[0].parts.map(p=>({...p,id:p.id.replace('anger',id)}))});multiple.intents.push({id:'1:'+id+'_arm',actorId:id,partId:id+'_arm',targetId:'lian'});}
+  env=environment(true,false,multiple);env.fx.options.layouts=realLayouts;
+  assert.ok(env.fx.point('enemy_3').x>env.fx.point('enemy_2').x);
+  assert.ok(env.fx.point('1:enemy_3_arm').x>env.fx.point('1:enemy_2_arm').x);
+  assert.ok(env.fx.point('enemy_3_core').x>env.fx.point('enemy_2_core').x);
+  env.fx.applyEvent(event('Damage','enemy_2',190,'sera'));
+  assert.equal(env.fx.units.get('enemy_2').hp,0);assert.equal(env.fx.units.get('anger').hp,190);assert.equal(env.fx.units.get('enemy_3').hp,190);
+  assert.equal(env.fx.portrait('enemy_2').classList.contains('dead'),true);assert.equal(env.fx.portrait('enemy_3').classList.contains('dead'),false);
+  env.fx.applyEvent(event('PartBreak','enemy_3_arm'));
+  assert.equal(env.fx.parts.get('enemy_3_arm').hp,0);assert.equal(env.fx.parts.get('anger_arm').hp,40);
+  assert.equal(env.fx.target('enemy_3_arm').classList.contains('part-broken'),true);
+  pass('three enemy anchors and independent HP/parts remain scoped to each actual owner when a second enemy dies');
+
+  env=environment(true,false,multiple);env.fx.options.layouts=realLayouts;
+  const thirdFinal=copy(multiple);thirdFinal.enemies[2].hp=0;
+  const thirdAttack=env.fx.play([event('Intercept','enemy_3',0,'minato'),event('Clash','enemy_3',0,'minato'),event('Damage','enemy_3',190,'minato')],thirdFinal);
+  await env.until(()=>env.stage.dataset.combatPhase==='contact');
+  assert.deepEqual(copy(env.fx.meleePair.map(f=>f.id)),['minato','enemy_3']);
+  assert.equal(env.fx.meleePair[1].start,1475);assert.equal(env.fx.meleePair[1].bodyHeight,187.5);
+  assert.ok(env.fx.meleePair[1].sprite.style.backgroundImage.includes('AngerActions.png'));
+  assert.equal(env.fx.meleePair[1].layout,realLayouts.anger);
+  const desiredX=(env.fx.meleePair[0].start+1475)/2;
+  const thirdFighter=env.fx.meleePair[1],thirdFrame=realLayouts.anger.frames[2],thirdScale=187.5/realLayouts.anger.bodyHeight;
+  assert.ok(Math.abs(parseFloat(thirdFighter.wrapper.style.left)+(thirdFrame.contactX-thirdFrame.footX)*thirdScale-desiredX)<1);
+  assert.equal(env.fx.portrait('anger').style.visibility,'');assert.equal(env.fx.portrait('enemy_2').style.visibility,'');
+  await env.drain();assert.equal(await thirdAttack,true);
+  assert.equal(env.fx.units.get('enemy_3').hp,0);assert.equal(env.fx.units.get('anger').hp,190);
+  assert.equal(env.fx.portrait('enemy_3').style.visibility,'');assert.equal(env.fx.portrait('enemy_3').classList.contains('dead'),true);
+  pass('the third ally duels the third enemy at their own shared contact using the enemy portrait atlas, then restores only its defeated body');
+
+  for(const enemyId of ['enemy_2','enemy_3'])for(const reverse of [false,true]){
+    env=environment(true,false,multiple);env.fx.options.layouts=realLayouts;
+    const actor=reverse?enemyId:'sera',target=reverse?'sera':enemyId;
+    const exchange=env.fx.play([{...event('Clash',target,0,actor),winnerStreak:1}],copy(multiple));
+    await env.until(()=>env.stage.dataset.combatPhase==='contact');
+    const enemy=env.fx.meleePair.find(f=>f.id===enemyId),ally=env.fx.meleePair.find(f=>f.id==='sera');
+    assert.equal(enemy.sprite.dataset.frame,'3');assert.equal(ally.sprite.dataset.frame,'2');
+    const tip=f=>{const frame=f.layout.frames[Number(f.sprite.dataset.frame)],scale=f.bodyHeight/f.layout.bodyHeight;return{x:parseFloat(f.wrapper.style.left)+(frame.contactX-frame.footX)*scale,y:parseFloat(f.wrapper.style.top)+440+(frame.contactY-frame.footY)*scale};};
+    assert.ok(Math.abs(tip(enemy).x-tip(ally).x)<1);assert.ok(Math.abs(tip(enemy).y-tip(ally).y)<1);
+    await env.drain();assert.equal(await exchange,true);
+  }
+  pass('both extra enemies use their Anger portrait contact pose in either direction against Sera, independent of logical unit ID');
 
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }

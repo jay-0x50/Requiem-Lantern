@@ -50,7 +50,7 @@ namespace RequiemLantern.Editor
         [MenuItem("Requiem Lantern/Build Windows Preview")]
         public static void BuildWindows()
         {
-            Prepare();ValidateStoryArt();ValidateCombatAudio();ValidateBattleAvatars();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
+            Prepare();ValidateStoryArt();ValidateCombatAudio();ValidateBattleAvatars();ValidateEnemyGroups();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName=Path.Combine(folder,"RequiemLantern.exe"),
                 target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
@@ -89,6 +89,18 @@ namespace RequiemLantern.Editor
                 if(!texture||layout==null)throw new System.Exception("Battle SD art or six-pose metadata cannot be loaded: "+key);
                 var original=Resources.Load<Texture2D>("Art/"+id);
                 if(!original||original==texture)throw new System.Exception("Original menu/dialogue portrait must remain separate: "+id);
+            }
+        }
+        static void ValidateEnemyGroups()
+        {
+            foreach(var stage in RequiemLantern.Core.CampaignCatalog.Chapters.SelectMany(chapter=>chapter.Stages).Where(stage=>stage.HasBattle)){
+                var battle=RequiemLantern.Core.CampaignBattleFactory.Create(stage,new RequiemLantern.Core.ProgressData(),0);
+                if(battle.State.Enemies.Count!=stage.EnemyCount||battle.State.Enemies.Count<1||battle.State.Enemies.Count>3)
+                    throw new System.Exception("Invalid enemy group for stage: "+stage.Id);
+                foreach(var enemy in battle.State.Enemies)if(!Resources.Load<Texture2D>("Art/"+enemy.Portrait))
+                    throw new System.Exception("Enemy group art is missing: "+stage.Id+" / "+enemy.Portrait);
+                if(battle.State.Intents.Any(intent=>!battle.State.Enemies.Any(enemy=>enemy.Id==intent.ActorId)))
+                    throw new System.Exception("Enemy intent lost its owning enemy: "+stage.Id);
             }
         }
     }

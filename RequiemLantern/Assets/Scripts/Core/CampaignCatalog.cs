@@ -22,7 +22,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -48,7 +48,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="tutorial",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian"},
                         Party=new string[] {"lian"},
                         Before=new List<StoryLine> {
@@ -80,7 +80,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -117,7 +117,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera"},
                         Party=new string[] {"lian","sera"},
                         Before=new List<StoryLine> {
@@ -148,7 +148,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=2, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera"},
                         Party=new string[] {"lian","sera"},
                         Before=new List<StoryLine> {
@@ -166,7 +166,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -194,7 +194,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -230,7 +230,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Rowan",
                         BattleProfile="command",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
+                        Chapter=1, EnemyCount=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","rowan"},
                         Party=new string[] {"lian","sera","minato"},
                         Before=new List<StoryLine> {
@@ -266,7 +266,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="boss",
                         MusicId="bgm_lian_last_watch",
-                        Chapter=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
+                        Chapter=1, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {"lian","sera","minato"},
                         Before=new List<StoryLine> {
@@ -302,7 +302,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=1, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=1, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -339,7 +339,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -369,7 +369,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="piercing",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=2, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {"lian","sera","minato"},
                         Before=new List<StoryLine> {
@@ -387,7 +387,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -414,7 +414,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="area",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -445,7 +445,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -475,7 +475,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="illusion",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -509,7 +509,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -540,7 +540,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="boss",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
+                        Chapter=2, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -572,7 +572,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Ellen",
                         BattleProfile="command",
                         MusicId="bgm_sera_sealed_route",
-                        Chapter=2, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
+                        Chapter=2, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","ellen"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -608,7 +608,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=2, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=2, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -647,7 +647,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -673,7 +673,7 @@ namespace RequiemLantern.Core
                         EnemyArt="HumanGuard",
                         BattleProfile="command",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
+                        Chapter=3, EnemyCount=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","noa","heidel"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -709,7 +709,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="area",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -727,7 +727,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","orphe"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -755,7 +755,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -790,7 +790,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="illusion",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -820,7 +820,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","eve"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -851,7 +851,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="boss",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
+                        Chapter=3, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","eve"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -881,7 +881,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Eve",
                         BattleProfile="command",
                         MusicId="bgm_noa_answering_eve",
-                        Chapter=3, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
+                        Chapter=3, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","eve"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -919,7 +919,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=3, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=3, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -957,7 +957,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -986,7 +986,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="piercing",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","minato","heidel","noa","sera"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -1004,7 +1004,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1035,7 +1035,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="illusion",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -1068,7 +1068,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1097,7 +1097,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="illusion",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=2, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","minato","heidel","noa"},
                         Before=new List<StoryLine> {
@@ -1115,7 +1115,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1147,7 +1147,7 @@ namespace RequiemLantern.Core
                         EnemyArt="HumanGuard",
                         BattleProfile="command",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
+                        Chapter=4, EnemyCount=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -1177,7 +1177,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="boss",
                         MusicId="bgm_chapter4_records",
-                        Chapter=4, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
+                        Chapter=4, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","minato","heidel","noa"},
                         Before=new List<StoryLine> {
@@ -1212,7 +1212,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=4, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=4, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1248,7 +1248,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1283,7 +1283,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="area",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -1301,7 +1301,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1335,7 +1335,7 @@ namespace RequiemLantern.Core
                         EnemyArt="HumanGuard",
                         BattleProfile="command",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
+                        Chapter=5, EnemyCount=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
@@ -1369,7 +1369,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1399,7 +1399,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="piercing",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -1417,7 +1417,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Orphe",
                         BattleProfile="command",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
+                        Chapter=5, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","orphe"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -1454,7 +1454,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
@@ -1486,7 +1486,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="boss",
                         MusicId="bgm_chapter5_threshold",
-                        Chapter=5, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
+                        Chapter=5, EnemyCount=1, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
@@ -1526,7 +1526,7 @@ namespace RequiemLantern.Core
                         EnemyArt="Anger",
                         BattleProfile="skirmish",
                         MusicId="",
-                        Chapter=5, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
+                        Chapter=5, EnemyCount=0, Kind=StageKind.Story, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {

@@ -33,7 +33,7 @@ namespace RequiemLantern.Presentation
             Label(screen,"Battle stage",s.StageName,121,23,690,44,30);
             Label(screen,"Phase",$"ROUND {s.Round:00}   /   ② 연결",124,74,720,27,19,Gold);
             Label(screen,"Resources",$"불씨  {s.Ember} / 6    예약  {battle.PlannedCost}       등불  {s.Lantern} / 100       어둠도  {s.Gloom}",865,24,1010,48,23,Gold,TextAnchor.MiddleRight);
-            Label(screen,"Battle instruction","아래 스킬을 골라 대상을 클릭하거나, 카드에서 직접 드래그해 연결하세요.",805,78,1066,28,18,Muted,TextAnchor.MiddleRight);
+            Label(screen,"Battle instruction","적의 표적을 확인하세요 · 동료의 스킬 → 적 예고에 연결하면 대신 맞불합니다.",805,78,1066,28,18,Muted,TextAnchor.MiddleRight);
             var lineLayer=MakeRect(screen,"Thread layer",0,0,1920,1080);
             for(int i=0;i<s.Allies.Count;i++){
                 var u=s.Allies[i];float footX=165+(4-s.Allies.Count)*117.5f+i*235;
@@ -47,30 +47,8 @@ namespace RequiemLantern.Presentation
                 RegisterHealth(u.Id,Gauge(screen,u.Id+" field HP",footX-66,738,132,u.Hp,u.MaxHp,ElementColor(u.Element)));
                 var target=Button(screen,"Support target "+u.Id,"",footX-98,475,196,229,()=>Target(u.Id));target.image.color=Color.clear;target.GetComponent<OrnateButton>().Frame.enabled=false;target.gameObject.AddComponent<LinkTarget>().Id=u.Id;
             }
-            var enemy=s.Enemies[0];string enemyArt=string.IsNullOrEmpty(enemy.Portrait)?"Anger":ArtId(enemy.Portrait);
-            Box(screen,enemy.Id+" ground",1517,700,156,10,new Color(0,0,0,.34f));
-            fighters[enemy.Id]=BattleAvatar.Create(screen,enemyArt,Texture(enemyArt),true,new Vector2(1595,702),BattleAvatar.EnemyBodyHeight);
-            anchors[enemy.Id]=new Vector2(1595,565);
-            Label(screen,"Enemy name",(enemy.IsHuman?"인간 / ":"UMBRA / ")+enemy.Name,1280,130,561,46,25,Violet,TextAnchor.MiddleCenter);
-            RegisterHealth(enemy.Id,Gauge(screen,"Enemy HP",1307,182,477,enemy.Hp,enemy.MaxHp,Violet),Label(screen,"Enemy life",$"{enemy.Hp} / {enemy.MaxHp}",1290,195,510,28,18,Muted,TextAnchor.MiddleCenter));
-            Label(screen,"Enemy rift",$"균열 {enemy.Rift} / {enemy.MaxRift}",1510,224,290,24,16,Muted,TextAnchor.MiddleRight);
-            Label(screen,"Sanity "+enemy.Id,$"정신력 {enemy.Sanity:+0;-0;0} · 어둠 활성 {BattleRules.FlameChance(enemy.Sanity):P0}",1270,728,545,26,18,Violet,TextAnchor.MiddleCenter);
-            var enemyTarget=Button(screen,"Enemy body target","본체 공격",1484,313,222,46,()=>Target(enemy.Id));
-            enemyTarget.gameObject.AddComponent<LinkTarget>().Id=enemy.Id;
-            for(int i=0;i<enemy.Parts.Count;i++){
-                var part=enemy.Parts[i];float x=1350+i*248;
-                anchors[part.Id]=new Vector2(x+116,290);
-                var b=Button(screen,"Part "+part.Id,part.Name+"  "+(part.Destroyed?"파괴됨":$"{part.Hp}/{part.MaxHp}"),x,265,232,47,()=>Target(part.Id));b.GetComponent<OrnateButton>().Caption.fontSize=19;b.interactable=!part.Destroyed;b.gameObject.AddComponent<LinkTarget>().Id=part.Id;
-            }
-            for(int i=0;i<s.Intents.Count;i++){
-                var intent=s.Intents[i];float x=1050,y=282+i*119;anchors[intent.Id]=new Vector2(x+150,y+48);
-                var b=Button(screen,"Intent "+intent.Id,"",x,y,302,97,()=>Target(intent.Id));
-                b.gameObject.AddComponent<LinkTarget>().Id=intent.Id;
-                Label(b.transform,"Intent name",intent.Name+(intent.Kind==IntentKind.Area?" · 광역":""),17,9,270,36,24,Violet);
-                Label(b.transform,"Power",$"어둠 {BattleRules.Flames(intent)}개 · 위력 {BattleRules.Base(intent)}~{BattleRules.Base(intent)+BattleRules.Flame(intent)*BattleRules.Flames(intent)} · 속도 {intent.Speed}",17,52,274,28,16,Muted);
-                if(anchors.TryGetValue(intent.TargetId,out var target))Thread(lineLayer,"Intent thread "+intent.Id,new Vector2(x+306,y+48),target,Violet,true,2);
-                else foreach(var unit in s.Allies)Thread(lineLayer,"Area intent "+intent.Id,new Vector2(x+306,y+48),anchors[unit.Id],new Color(.66f,.49f,.82f,.55f),true,2);
-            }
+            foreach(var enemy in s.Enemies)DrawEnemyField(enemy);
+            foreach(var enemy in s.Enemies)DrawEnemyIntents(enemy,lineLayer);
             Box(screen,"Action dock",0,758,1920,266,new Color(.025f,.041f,.065f,.98f));
             Box(screen,"Dock gold rail",0,758,1920,2,new Color(Gold.r,Gold.g,Gold.b,.55f));
             for(int i=0;i<s.Allies.Count;i++){
@@ -129,7 +107,7 @@ namespace RequiemLantern.Presentation
             foreach(var l in s.Links){
                 if(!anchors.TryGetValue(l.TargetId,out var end))continue;var color=Gold;
                 if(l.Kind==LinkKind.Clash){var preview=battle.Preview(l);color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;
-                    Label(screen,"Clash prediction",preview.Summary,660,154+28*s.Links.IndexOf(l),590,28,18,color);
+                    // The preview belongs to its selected intent card, alongside its target.
                 }
                 var linked=Thread(lineLayer,"Light thread",slotAnchors[l.ActorId+":"+l.Slot],end,color,false,3);linked.Glow=true;linked.Pulse=true;linked.ReducedMotion=reducedMotion;
             }
@@ -144,9 +122,84 @@ namespace RequiemLantern.Presentation
             Button(screen,"Remove selected","연결 해제",1752,906,132,31,()=>{battle.RemoveLink(selectedActor,selectedSlot);DrawBattle();}).GetComponent<OrnateButton>().Caption.fontSize=16;
             var resolve=Button(screen,"Resolve round","빛실 실행   →",1570,944,314,65,()=>{if(autoMode)battle.RecommendLinks();StartCoroutine(Resolve());},true);resolve.interactable=s.Links.Count>0;
             resolve.GetComponent<OrnateButton>().Caption.fontSize=28;
-            Footer("스킬 → 대상 클릭 / 드래그 · 행동칩: 연결 편집 · 초록: 유리 / 주황: 접전 / 붉음: 불리");
+            Footer("적 예고의 표적 확인 → 스킬로 맞불 / 가로막기 · 본체 클릭은 일방 공격 · 초록: 유리 / 주황: 접전 / 붉음: 불리");
         }
-        string TargetName(string id){var intent=battle.Intent(id);if(intent!=null)return "맞불 · "+intent.Name;var unit=battle.Unit(id);if(unit!=null)return unit.Name;return battle.State.Enemies.SelectMany(e=>e.Parts).FirstOrDefault(p=>p.Id==id)?.Name??id;}
+        Vector2 EnemyFoot(UnitState enemy)
+        {return BattleAvatar.EnemyFoot(battle.State.Enemies.IndexOf(enemy),battle.State.Enemies.Count);}
+        float EnemyBodyHeight(UnitState enemy)
+        {return BattleAvatar.EnemyHeight(battle.State.Enemies.Count);}
+        float BodyHeight(UnitState unit)
+        {return unit.IsEnemy?EnemyBodyHeight(unit):BattleAvatar.AllyBodyHeight;}
+        LinkCommand IntentClash(IntentState intent)
+        {return battle.State.Links.FirstOrDefault(link=>link.Kind==LinkKind.Clash&&link.TargetId==intent.Id);}
+        string IntentOriginalTarget(IntentState intent)
+        {return intent.Kind==IntentKind.Area?"아군 전체":battle.Unit(intent.TargetId)?.Name??"아군";}
+        string EnemyNumber(UnitState enemy)
+        {return battle.State.Enemies.Count<=1?"":(battle.State.Enemies.IndexOf(enemy)+1)+"번 · ";}
+        void DrawEnemyField(UnitState enemy)
+        {
+            int count=battle.State.Enemies.Count;bool solo=count==1;
+            Vector2 foot=EnemyFoot(enemy);float width=solo?506:292,x=foot.x-width/2;
+            string art=string.IsNullOrEmpty(enemy.Portrait)?"Anger":ArtId(enemy.Portrait);
+            Box(screen,enemy.Id+" ground",foot.x-62,700,124,8,new Color(0,0,0,.34f));
+            var image=BattleAvatar.Create(screen,art,Texture(art),true,foot,EnemyBodyHeight(enemy));fighters[enemy.Id]=image;
+            if(!enemy.Alive)image.color=new Color(.33f,.35f,.41f,.45f);
+            anchors[enemy.Id]=BattleAvatar.EnemyAnchor(battle.State.Enemies.IndexOf(enemy),count);
+            Label(screen,"Enemy name "+enemy.Id,EnemyNumber(enemy)+enemy.Name,x,130,width,35,solo?25:21,Violet,TextAnchor.MiddleCenter);
+            RegisterHealth(enemy.Id,Gauge(screen,"Enemy HP "+enemy.Id,x+18,174,width-36,enemy.Hp,enemy.MaxHp,Violet),
+                Label(screen,"Enemy life "+enemy.Id,$"{enemy.Hp} / {enemy.MaxHp}",x,184,width,23,16,Muted,TextAnchor.MiddleCenter));
+            Label(screen,"Enemy rift "+enemy.Id,$"균열 {enemy.Rift} / {enemy.MaxRift}",x,707,width,22,14,Muted,TextAnchor.MiddleCenter);
+            Label(screen,"Sanity "+enemy.Id,$"정신력 {enemy.Sanity:+0;-0;0} · 어둠 {BattleRules.FlameChance(enemy.Sanity):P0}",x,730,width,22,14,Violet,TextAnchor.MiddleCenter);
+            float hitWidth=solo?232:204,hitHeight=EnemyBodyHeight(enemy)+20;
+            var body=Button(screen,"Enemy body target "+enemy.Id,"",foot.x-hitWidth/2,foot.y-hitHeight,hitWidth,hitHeight,()=>Target(enemy.Id));
+            body.image.color=Color.clear;body.GetComponent<OrnateButton>().Frame.enabled=false;
+            body.interactable=enemy.Alive;body.gameObject.AddComponent<LinkTarget>().Id=enemy.Id;
+            Label(body.transform,"Body instruction","본체 공격",0,hitHeight-34,hitWidth,26,15,Muted,TextAnchor.MiddleCenter);
+            for(int i=0;i<enemy.Parts.Count;i++){
+                var part=enemy.Parts[i];float partWidth=(width-8)/Mathf.Max(1,enemy.Parts.Count),partX=x+i*(partWidth+8);
+                anchors[part.Id]=new Vector2(partX+partWidth/2,234);
+                var button=Button(screen,"Part "+part.Id,part.Name+" · "+(part.Destroyed?"파괴":$"{part.Hp}/{part.MaxHp}"),partX,215,partWidth,35,()=>Target(part.Id));
+                button.GetComponent<OrnateButton>().Caption.fontSize=15;button.interactable=enemy.Alive&&!part.Destroyed;button.gameObject.AddComponent<LinkTarget>().Id=part.Id;
+            }
+        }
+        void DrawEnemyIntents(UnitState enemy,Transform lineLayer)
+        {
+            var intents=battle.State.Intents.Where(intent=>intent.ActorId==enemy.Id).ToList();
+            bool solo=battle.State.Enemies.Count==1;
+            for(int i=0;i<intents.Count;i++){
+                var intent=intents[i];var clash=IntentClash(intent);var defender=clash==null?null:battle.Unit(clash.ActorId);
+                bool intercept=defender!=null&&intent.Kind!=IntentKind.Area&&defender.Id!=intent.TargetId;
+                float x=solo?1050:EnemyFoot(enemy).x-146,y=258+i*106;
+                anchors[intent.Id]=new Vector2(x+146,y+49);
+                var card=Button(screen,"Intent "+intent.Id,"",x,y,292,99,()=>Target(intent.Id));card.gameObject.AddComponent<LinkTarget>().Id=intent.Id;
+                card.interactable=enemy.Alive&&!intent.Cancelled&&!intent.Resolved;
+                Label(card.transform,"Intent name",EnemyNumber(enemy)+intent.Name+(intent.Kind==IntentKind.Area?" · 광역":""),12,5,270,24,18,Violet);
+                Label(card.transform,"Intent original target","원래 표적 · "+IntentOriginalTarget(intent),12,30,270,20,15,intercept?Muted:Ivory);
+                string recipient=intercept?"가로막기 · "+defender.Name:clash!=null?(intent.Kind==IntentKind.Area?"전체 공격 맞불 · ":"맞불 · ")+defender.Name:"표적 → "+IntentOriginalTarget(intent);
+                Label(card.transform,"Intent target",recipient,12,52,270,20,17,clash!=null?Teal:Gold);
+                string power=$"어둠 {BattleRules.Flames(intent)} · 위력 {BattleRules.Base(intent)}~{BattleRules.Base(intent)+BattleRules.Flame(intent)*BattleRules.Flames(intent)} · 속도 {intent.Speed}";
+                if(clash!=null){var preview=battle.Preview(clash);power=preview.Summary;}
+                var detail=Label(card.transform,"Power",power,12,75,270,20,14,Muted);detail.resizeTextForBestFit=true;detail.resizeTextMinSize=11;detail.resizeTextMaxSize=14;
+                var source=new Vector2(x+12,y+62);
+                Thread(lineLayer,"Enemy intent "+intent.Id,anchors[enemy.Id],new Vector2(x+270,y+94),new Color(.66f,.49f,.82f,.32f),true,1.5f);
+                if(intent.Kind==IntentKind.Area){
+                    foreach(var ally in battle.State.Allies.Where(ally=>ally.Alive))IntentRoute(lineLayer,"Area intent "+intent.Id,source,anchors[ally.Id],new Color(.66f,.49f,.82f,.37f),true,1.6f);
+                    if(defender!=null)IntentRoute(lineLayer,"Intent thread "+intent.Id,source,anchors[defender.Id],Teal,false,3);
+                }else{
+                    string recipientId=defender?.Id??intent.TargetId;
+                    if(intercept&&anchors.TryGetValue(intent.TargetId,out var original))IntentRoute(lineLayer,"Original intent "+intent.Id,source,original,new Color(.66f,.49f,.82f,.18f),true,1);
+                    if(anchors.TryGetValue(recipientId,out var target))IntentRoute(lineLayer,"Intent thread "+intent.Id,source,target,clash==null?Violet:Teal,clash==null,clash==null?2:3);
+                }
+            }
+        }
+        void IntentRoute(Transform parent,string name,Vector2 from,Vector2 to,Color color,bool dashed,float width)
+        {
+            Thread(parent,name,from,to,color,dashed,width);
+            Vector2 direction=(to-from).normalized,normal=new Vector2(-direction.y,direction.x),tip=to-direction*18;
+            Thread(parent,name+" arrow A",tip-direction*18+normal*9,tip,color,false,width+1);
+            Thread(parent,name+" arrow B",tip-direction*18-normal*9,tip,color,false,width+1);
+        }
+        string TargetName(string id){var intent=battle.Intent(id);if(intent!=null)return "맞불 · "+EnemyNumber(battle.Unit(intent.ActorId))+intent.Name;var unit=battle.Unit(id);if(unit!=null)return unit.IsEnemy?EnemyNumber(unit)+unit.Name:unit.Name;var owner=battle.State.Enemies.FirstOrDefault(e=>e.Parts.Any(p=>p.Id==id));return owner==null?id:EnemyNumber(owner)+owner.Parts.First(p=>p.Id==id).Name;}
         LinkCommand ActionAt(UnitState actor,int slot)
         {return battle.State.Links.FirstOrDefault(link=>link.ActorId==actor.Id&&(link.Slot==slot||battle.Skill(actor.Id,link.SkillId).Slots==2));}
         int OfferedCardSlot(UnitState actor,SkillCard card)
@@ -312,8 +365,7 @@ namespace RequiemLantern.Presentation
             if(version!=screenVersion)yield break;
             overlay=MakeRect(stage,"Battlefield effects",0,0,1920,1080);
             Box(overlay,"Resolution input lock",0,0,1920,1080,Color.clear).raycastTarget=true;
-            Box(overlay,"Action subtitle plate",495,130,1330,56,new Color(.018f,.030f,.050f,.76f));
-            var eventText=Label(overlay,"Current action","",521,135,1280,46,23,Ivory,TextAnchor.MiddleCenter);
+            var eventText=CreateActionStatus(overlay);
             foreach(var e in events){if(version!=screenVersion)yield break;yield return PresentBattleEvent(e,overlay,eventText,version);}
             if(version!=screenVersion)yield break;
             SyncBattlePresentation();
@@ -328,6 +380,16 @@ namespace RequiemLantern.Presentation
                 while(page=="battle"&&autoMode&&screenVersion==nextVersion&&overlay&&!resolving)yield return null;
                 if(page=="battle"&&autoMode&&screenVersion==nextVersion&&!overlay&&!resolving)StartCoroutine(Resolve());
             }
+        }
+        Text CreateActionStatus(Transform parent)
+        {
+            foreach(string name in new[]{"Recommend","Reuse","Clear links","Auto mode","Release lantern","Battle log"}){
+                var control=screen.Find(name);if(control)control.gameObject.SetActive(false);
+            }
+            Box(parent,"Action subtitle plate",40,130,620,94,new Color(.018f,.030f,.050f,.86f));
+            var status=Label(parent,"Current action","",55,135,590,84,23,Ivory,TextAnchor.MiddleLeft);
+            status.resizeTextForBestFit=true;status.resizeTextMinSize=17;status.resizeTextMaxSize=23;
+            return status;
         }
         void ShowResult()
         {

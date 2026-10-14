@@ -101,6 +101,11 @@ function fourParty(env){env.run(`
  data.battle.allies=[seed,companion('sera','세라','Flame'),data.battle.allies[1],companion('noa','노아','Shadow')];
  showBattle();
  `);}
+function threeEnemies(env){fourParty(env);env.run(`
+ const original=data.battle.enemies[0];original.isEnemy=true;original.portrait='Anger';
+ for(let n=2;n<=3;n++){const id='enemy_'+n;data.battle.enemies.push({...JSON.parse(JSON.stringify(original)),id,name:'그림자 군체 '+(n-1),parts:original.parts.map(p=>({...p,id:id+'_'+p.id,maxHp:p.hp}))});data.battle.intents.push({...JSON.parse(JSON.stringify(data.battle.intents[0])),id:'1:'+id+'_arm',actorId:id,targetId:'lian'});}
+ showBattle();
+ `);}
 
 async function main() {
   let env = environment('{broken');
@@ -564,7 +569,7 @@ async function main() {
 
   let renderedLine='';const measuredLink={dataset:{linkActor:'noa',linkSlot:'1',linkTarget:'arm'},setAttribute:(_key,value)=>{renderedLine=value;}};
   env.setGeometry({left:50,top:20,width:800,height:450},[{dataset:{actor:'noa',slot:'1'},getBoundingClientRect:()=>({left:620,top:411,width:73,height:12})}],[measuredLink]);
-  env.run('refreshBattleThreads()');assert.ok(renderedLine.startsWith('M1213,794 '));assert.ok(renderedLine.endsWith('1190,550'));
+  env.run('refreshBattleThreads()');assert.ok(renderedLine.startsWith('M1213,794 '));assert.ok(renderedLine.endsWith(env.run("(()=>{const p=targetPoint('arm');return p.x+','+p.y})()")));
   pass('reserved connection threads use the same measured slot anchor as dragging and contact feedback');
 
   env=environment();fourParty(env);
@@ -593,6 +598,69 @@ async function main() {
   assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
   assert.ok(env.game.innerHTML.includes('/ 2</small>'));
   pass('early story encounters with fewer recruited companions keep only their real offered cards and action capacity');
+
+  env=environment();threeEnemies(env);
+  assert.equal((env.game.innerHTML.match(/data-enemy-stats=/g)||[]).length,3);
+  for(const id of ['anger','enemy_2','enemy_3']){
+    assert.ok(env.game.innerHTML.includes('data-unit="'+id+'"'));
+    assert.ok(env.game.innerHTML.includes('data-action="target:'+id+'"'));
+    assert.ok(env.game.innerHTML.includes('data-hp-bar="'+id+'"'));
+  }
+  assert.ok(env.game.innerHTML.includes('data-action="target:enemy_3_core"'));
+  assert.ok(env.game.innerHTML.includes('data-owner="enemy_2"'));
+  assert.ok(env.game.innerHTML.includes('원래 대상 · 리안'));
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
+  pass('three opponents each own a body, HP, parts and forecast while four allies retain eight actual cards');
+
+  const second=JSON.parse(JSON.stringify(env.run("targetPoint('enemy_2')"))),third=JSON.parse(JSON.stringify(env.run("targetPoint('enemy_3')")));
+  assert.ok(third.x>second.x);
+  assert.ok(env.run("targetPoint('enemy_2_core').x < targetPoint('enemy_3_core').x"));
+  assert.ok(env.run("targetPoint('1:enemy_2_arm').x < targetPoint('1:enemy_3_arm').x"));
+  assert.equal(env.run("targetPoint('unknown')"),null);
+  env.run(`data.battle.enemies=JSON.parse(JSON.stringify(data.battle.enemies));data.battle.enemies[2].id='replacement';`);
+  assert.ok(env.run("targetPoint('replacement').x > targetPoint('enemy_2').x"));
+  pass('enemy, part and intent anchors use their real owner in the current state and unknown targets never fall back to the first enemy');
+
+  env=environment();threeEnemies(env);env.run(`tone=()=>{};command=async(action,args)=>{globalThis.interceptRecord={action,...args};if(action==='link')data.battle.links.push(args);return true;};`);
+  await env.click('skill-card:sera:sera-card-1');await env.click('target:1:enemy_2_arm');
+  assert.equal(env.context.interceptRecord.actorId,'sera');assert.equal(env.context.interceptRecord.kind,'Clash');
+  assert.equal(env.context.interceptRecord.targetId,'1:enemy_2_arm');
+  assert.ok(env.game.innerHTML.includes('data-original-target="lian" data-interceptor="sera"'));
+  assert.ok(env.game.innerHTML.includes('가로막기 · 세라'));
+  assert.ok(env.game.innerHTML.includes('class="thread-intercept"'));
+  assert.ok(env.game.innerHTML.includes('original-threat'));
+  assert.equal(env.run("targetHint('sera','1:enemy_2_arm')"),'리안 대신 가로막기');
+  env.run('data.battle.links=[];showBattle()');
+  assert.ok(!env.game.innerHTML.includes('class="thread-intercept"'));
+  assert.ok(!env.game.innerHTML.includes('가로막기 · 세라'));
+  pass('the second ally can intercept an exact second-enemy forecast for the first ally; removing it restores the original route and label');
+
+  env=environment();threeEnemies(env);env.run(`data.battle.intents[2].kind='Area';data.battle.links=[{actorId:'sera',slot:0,skillId:'sera_glimmer',cardId:'sera-card-1',kind:'Clash',targetId:'1:enemy_3_arm'}];showBattle();`);
+  assert.ok(env.game.innerHTML.includes('원래 대상 · 아군 전체'));
+  assert.ok(env.game.innerHTML.includes('광역 전체 유지'));
+  assert.ok(!env.game.innerHTML.includes('class="thread-intercept"'));
+  assert.equal(env.run("targetHint('sera','1:enemy_3_arm')"),'광역 맞불 · 패배 시 전원 피격');
+  pass('an area forecast keeps the whole-party threat and never promises single-character protection');
+
+  env=environment();threeEnemies(env);env.run(`data.battle.enemies[1].hp=0;showBattle();`);
+  assert.ok(!env.run("validDropTargets(skill('lian','lian_glimmer')).includes('enemy_2')"));
+  assert.ok(!env.run("validDropTargets(skill('lian','lian_glimmer')).includes('enemy_2_arm')"));
+  assert.ok(!env.run("validDropTargets(skill('lian','lian_glimmer')).includes('1:enemy_2_arm')"));
+  assert.ok(env.run("validDropTargets(skill('lian','lian_glimmer')).includes('enemy_3')"));
+  assert.ok(env.game.innerHTML.includes('data-unit="enemy_3"'));
+  pass('defeating one opponent removes only its eligible targets while the third opponent remains available');
+
+  env=environment();threeEnemies(env);env.run(`tone=()=>{};command=async(action,args)=>{globalThis.thirdDrop={action,...args};return true;};`);
+  env.gameEvents.pointerdown({clientX:1050,clientY:700,pointerId:4,target:{closest:()=>({dataset:{actor:'noa',cardId:'noa-card-1'},disabled:false})}});
+  env.events.pointermove({clientX:1475,clientY:256,pointerId:4});env.setHit('1:enemy_3_arm');
+  await env.events.pointerup({clientX:1475,clientY:256,pointerId:4});
+  assert.equal(env.context.thirdDrop.actorId,'noa');assert.equal(env.context.thirdDrop.targetId,'1:enemy_3_arm');
+  assert.equal(env.context.thirdDrop.cardId,'noa-card-1');
+  env.context.thirdDrop=null;env.run('suppressClickUntil=0');
+  env.gameEvents.pointerdown({clientX:1050,clientY:700,pointerId:5,target:{closest:()=>({dataset:{actor:'noa',cardId:'noa-card-2'},disabled:false})}});
+  env.events.pointermove({clientX:1475,clientY:256,pointerId:5});env.events.pointercancel({pointerId:5});
+  await env.events.pointerup({clientX:1475,clientY:256,pointerId:5});assert.equal(env.context.thirdDrop,null);
+  pass('direct-card dragging preserves the fourth actor and third-enemy intent IDs, and cancelling sends no action');
 
   console.log('TOTAL ' + passed + ' regression cases passed');
 }

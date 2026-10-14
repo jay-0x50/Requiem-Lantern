@@ -18,6 +18,13 @@ namespace RequiemLantern.Presentation
         public const float AllyBodyHeight=220, EnemyBodyHeight=310, GroundY=700;
         public static readonly string[] AllyArtIds={"Lian","Sera","Minato","Noa","Heidel"};
 
+        public static Vector2 EnemyFoot(int index,int count)
+        {return new Vector2(count<=1?1595:count==2?1310+350*index:1130+320*index,702);}
+        public static float EnemyHeight(int count)
+        {return count<=1?EnemyBodyHeight:count==2?250:225;}
+        public static Vector2 EnemyAnchor(int index,int count)
+        {return EnemyFoot(index,count)-new Vector2(0,EnemyHeight(count)*.48f);}
+
         public static Texture2D LoadAtlas(string artId,bool preferSD,out string key,out CombatPoseLayout layout)
         {
             key="Combat/"+artId+(preferSD?"SDActions":"Actions");

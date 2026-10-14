@@ -59,7 +59,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c1s02",
@@ -141,7 +142,8 @@
           "battleProfile": "tutorial",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 1
         },
         {
           "id": "c1s03",
@@ -240,7 +242,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c1s04",
@@ -320,7 +323,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c1s05",
@@ -346,7 +350,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c1s06",
@@ -411,7 +416,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c1s07",
@@ -508,7 +514,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c1s08",
@@ -611,7 +618,8 @@
           "battleProfile": "command",
           "isBoss": false,
           "humanEnemy": true,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "chapter1_beacon_defense",
@@ -715,7 +723,8 @@
           "battleProfile": "boss",
           "isBoss": true,
           "humanEnemy": false,
-          "musicId": "bgm_lian_last_watch"
+          "musicId": "bgm_lian_last_watch",
+          "enemyCount": 1
         },
         {
           "id": "c1s10",
@@ -793,7 +802,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         }
       ],
       "focusCharacterId": "lian",
@@ -875,7 +885,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c2s02",
@@ -903,7 +914,8 @@
           "battleProfile": "piercing",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c2s03",
@@ -965,7 +977,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c2s04",
@@ -1049,7 +1062,8 @@
           "battleProfile": "area",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c2s05",
@@ -1123,7 +1137,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c2s06",
@@ -1219,7 +1234,8 @@
           "battleProfile": "illusion",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c2s07",
@@ -1297,7 +1313,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c2s08",
@@ -1385,7 +1402,8 @@
           "battleProfile": "boss",
           "isBoss": true,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 1
         },
         {
           "id": "c2s09",
@@ -1492,7 +1510,8 @@
           "battleProfile": "command",
           "isBoss": true,
           "humanEnemy": true,
-          "musicId": "bgm_sera_sealed_route"
+          "musicId": "bgm_sera_sealed_route",
+          "enemyCount": 1
         },
         {
           "id": "c2s10",
@@ -1579,7 +1598,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         }
       ],
       "focusCharacterId": "sera",
@@ -1646,7 +1666,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c3s02",
@@ -1751,7 +1772,8 @@
           "battleProfile": "command",
           "isBoss": false,
           "humanEnemy": true,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c3s03",
@@ -1782,7 +1804,8 @@
           "battleProfile": "area",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c3s04",
@@ -1850,7 +1873,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c3s05",
@@ -1945,7 +1969,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c3s06",
@@ -2026,7 +2051,8 @@
           "battleProfile": "illusion",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c3s07",
@@ -2106,7 +2132,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c3s08",
@@ -2188,7 +2215,8 @@
           "battleProfile": "boss",
           "isBoss": true,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 1
         },
         {
           "id": "c3s09",
@@ -2304,7 +2332,8 @@
           "battleProfile": "command",
           "isBoss": true,
           "humanEnemy": true,
-          "musicId": "bgm_noa_answering_eve"
+          "musicId": "bgm_noa_answering_eve",
+          "enemyCount": 1
         },
         {
           "id": "c3s10",
@@ -2388,7 +2417,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         }
       ],
       "focusCharacterId": "noa",
@@ -2468,7 +2498,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c4s02",
@@ -2499,7 +2530,8 @@
           "battleProfile": "piercing",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c4s03",
@@ -2578,7 +2610,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c4s04",
@@ -2671,7 +2704,8 @@
           "battleProfile": "illusion",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c4s05",
@@ -2742,7 +2776,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c4s06",
@@ -2773,7 +2808,8 @@
           "battleProfile": "illusion",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 2
         },
         {
           "id": "c4s07",
@@ -2856,7 +2892,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c4s08",
@@ -2937,7 +2974,8 @@
           "battleProfile": "command",
           "isBoss": false,
           "humanEnemy": true,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c4s09",
@@ -3038,7 +3076,8 @@
           "battleProfile": "boss",
           "isBoss": true,
           "humanEnemy": false,
-          "musicId": "bgm_chapter4_records"
+          "musicId": "bgm_chapter4_records",
+          "enemyCount": 1
         },
         {
           "id": "c4s10",
@@ -3113,7 +3152,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         }
       ],
       "focusCharacterId": "heidel",
@@ -3217,7 +3257,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c5s02",
@@ -3248,7 +3289,8 @@
           "battleProfile": "area",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c5s03",
@@ -3339,7 +3381,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c5s04",
@@ -3436,7 +3479,8 @@
           "battleProfile": "command",
           "isBoss": false,
           "humanEnemy": true,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c5s05",
@@ -3511,7 +3555,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c5s06",
@@ -3542,7 +3587,8 @@
           "battleProfile": "piercing",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 3
         },
         {
           "id": "c5s07",
@@ -3652,7 +3698,8 @@
           "battleProfile": "command",
           "isBoss": true,
           "humanEnemy": true,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 1
         },
         {
           "id": "c5s08",
@@ -3735,7 +3782,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         },
         {
           "id": "c5s09",
@@ -3856,7 +3904,8 @@
           "battleProfile": "boss",
           "isBoss": true,
           "humanEnemy": false,
-          "musicId": "bgm_chapter5_threshold"
+          "musicId": "bgm_chapter5_threshold",
+          "enemyCount": 1
         },
         {
           "id": "c5s10",
@@ -3939,7 +3988,8 @@
           "battleProfile": "skirmish",
           "isBoss": false,
           "humanEnemy": false,
-          "musicId": ""
+          "musicId": "",
+          "enemyCount": 0
         }
       ],
       "focusCharacterId": "minato",

@@ -175,13 +175,13 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "four-party-sd-v6",
+                application = "RequiemLantern", runtimeRevision = "multi-enemy-intercept-v7",
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 campaign = new {
                     chapters = CampaignCatalog.Chapters.Select(chapter => new { chapter.Number, chapter.Title, chapter.Summary, chapter.FocusCharacterId, chapter.FocusStorySummary,
                         stages = chapter.Stages.Select(stage => new { stage.Id, stage.Number, stage.Title, stage.Summary, stage.Location, stage.Kind, stage.KindLabel,
-                            stage.Chapter, stage.Participants, stage.Party, stage.EnemyName, stage.EnemyArt, stage.IsBoss, stage.HumanEnemy, stage.MusicId,
+                            stage.Chapter, stage.Participants, stage.Party, stage.EnemyName, stage.EnemyArt, stage.EnemyCount, stage.IsBoss, stage.HumanEnemy, stage.MusicId,
                             stage.HasBattle, unlocked = CampaignRules.IsUnlocked(progress.Data, stage), cleared = CampaignRules.IsCleared(progress.Data, stage) }) }),
                     activeStage = campaign.Active, phase = campaign.Phase, replay = campaign.Replay, currentStory = campaign.CurrentStory
                 },

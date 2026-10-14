@@ -4,8 +4,11 @@
 const LanternBattleGeometry={
  allyFoot:(index,count=4)=>({x:137.5+(4-count)*97.91666666666667+195.83333333333334*index,y:583.3333333333334}),
  allyPoint:(index,count=4)=>({x:137.5+(4-count)*97.91666666666667+195.83333333333334*index,y:495.83333333333337}),
- enemyFoot:()=>({x:1329.1666666666667,y:585}),
- enemyPoint:()=>({x:1329.1666666666667,y:470.83333333333337}),
+ enemyFoot:(index=0,count=1)=>({x:(count===1?1595:count===2?[1310,1660][index]:[1130,1450,1770][index])/1.2,y:585}),
+ enemyHeight:(count=1)=>(count===1?310:count===2?250:225)/1.2,
+ enemyPoint:(index=0,count=1)=>{const foot=LanternBattleGeometry.enemyFoot(index,count);return{x:foot.x,y:foot.y-LanternBattleGeometry.enemyHeight(count)*.442};},
+ intentPoint:(battle,id)=>{const intent=battle.intents.find(i=>i.id===id);if(!intent)return null;const owner=battle.enemies.findIndex(e=>e.id===intent.actorId);if(owner<0)return null;const own=battle.intents.filter(i=>i.actorId===intent.actorId),index=own.findIndex(i=>i.id===id),foot=LanternBattleGeometry.enemyFoot(owner,battle.enemies.length);return{x:battle.enemies.length===1?996.6666666666667:foot.x,y:215+(own.length>2?73.33333333333334:88.33333333333334)*index+41.25};},
+ partPoint:(battle,id)=>{const owner=battle.enemies.findIndex(e=>e.parts.some(p=>p.id===id));if(owner<0)return null;const enemy=battle.enemies[owner],index=enemy.parts.findIndex(p=>p.id===id),foot=LanternBattleGeometry.enemyFoot(owner,battle.enemies.length);return{x:foot.x+(index-(enemy.parts.length-1)/2)*116.66666666666667,y:195};},
  allyBodyHeight:183.33333333333334,enemyBodyHeight:258.33333333333337,humanBodyHeight:258.33333333333337,
  slotPoint:(index,slot)=>({x:104.5+305*index+148.5*slot,y:821})
 };
@@ -57,9 +60,9 @@ class LanternCombatFX {
  point(id){
   if(!this.battle||!id)return null;
   let i=this.battle.allies.findIndex(u=>u.id===id);if(i>=0)return LanternBattleGeometry.allyPoint(i,this.battle.allies.length);
-  i=this.battle.intents.findIndex(u=>u.id===id);if(i>=0)return{x:945,y:270+i*122};
-  i=this.battle.enemies.flatMap(u=>u.parts).findIndex(u=>u.id===id);if(i>=0)return{x:1190+i*227,y:550};
-  return this.battle.enemies.some(u=>u.id===id)?LanternBattleGeometry.enemyPoint():null;
+  const intentPoint=LanternBattleGeometry.intentPoint(this.battle,id);if(intentPoint)return intentPoint;
+  const partPoint=LanternBattleGeometry.partPoint(this.battle,id);if(partPoint)return partPoint;
+  i=this.battle.enemies.findIndex(u=>u.id===id);return i>=0?LanternBattleGeometry.enemyPoint(i,this.battle.enemies.length):null;
  }
  tint(id){return this.options.color?.(this.units.get(id)?.element)||'#f2ba70';}
  target(id){return [...this.root.querySelectorAll('[data-action^="target:"]')].find(n=>n.dataset.action==='target:'+id);}
@@ -90,19 +93,19 @@ class LanternCombatFX {
  }
  createFighter(id,side){
   const original=this.portrait(id),start=this.point(id);if(!original||!start)return null;
-  const allyIndex=this.battle.allies.findIndex(u=>u.id===id),foot=allyIndex>=0?LanternBattleGeometry.allyFoot(allyIndex,this.battle.allies.length):LanternBattleGeometry.enemyFoot();
+  const allyIndex=this.battle.allies.findIndex(u=>u.id===id),enemyIndex=this.battle.enemies.findIndex(u=>u.id===id),foot=allyIndex>=0?LanternBattleGeometry.allyFoot(allyIndex,this.battle.allies.length):LanternBattleGeometry.enemyFoot(enemyIndex,this.battle.enemies.length);
   const wrapper=this.node('melee-fighter '+side,{x:foot.x,y:foot.y-440},this.tint(id));if(!wrapper)return null;
   const sprite=document.createElement('div');sprite.className='melee-sprite';sprite.dataset.unitPose=id;
-  const unit=this.units.get(id),name=LanternCombatAtlasNames[id],stem=name&&LanternCombatAtlasStem(id);
+  const unit=this.units.get(id),atlasId=allyIndex>=0?id:(unit?.portrait||id).toLowerCase(),name=LanternCombatAtlasNames[atlasId],stem=name&&LanternCombatAtlasStem(atlasId);
   const identityMatches=!!name&&!unit?.isHuman&&(!unit?.portrait||unit.portrait.toLowerCase()===name.toLowerCase());
-  const atlas=identityMatches&&(allyIndex>=0||!this.atlases.has(id)||this.atlases.get(id).ready);
+  const atlas=identityMatches&&(allyIndex>=0||!this.atlases.has(atlasId)||this.atlases.get(atlasId).ready);
   const source=original.dataset.combatSrc||original.src||original.querySelector('img')?.src||'';
   sprite.style.backgroundImage=atlas?`url('/combat/${stem}.png')`:`url('${source}')`;
-  const bodyHeight=allyIndex>=0?LanternBattleGeometry.allyBodyHeight:unit?.isHuman?LanternBattleGeometry.humanBodyHeight:LanternBattleGeometry.enemyBodyHeight;
+  const bodyHeight=allyIndex>=0?LanternBattleGeometry.allyBodyHeight:LanternBattleGeometry.enemyHeight(this.battle.enemies.length);
   if(!atlas){sprite.style.inset='auto';sprite.style.width=bodyHeight*.8+'px';sprite.style.height=bodyHeight+'px';sprite.style.left=240-bodyHeight*.4+'px';sprite.style.top=440-bodyHeight+'px';sprite.style.backgroundSize='contain';}
   wrapper.appendChild(sprite);
-  const layout=atlas?this.options.layouts?.[id]:null;
-  const atlasImage=this.atlases.get(id)?.image;
+  const layout=atlas?this.options.layouts?.[atlasId]:null;
+  const atlasImage=this.atlases.get(atlasId)?.image;
   const fighter={id,side,wrapper,sprite,original,atlas,layout,
    atlasWidth:atlasImage?.naturalWidth||layout?.atlasWidth||1536,atlasHeight:atlasImage?.naturalHeight||layout?.atlasHeight||1024,
    visibility:original.style.visibility,start:foot.x,x:foot.x,footY:foot.y,bodyHeight};
@@ -154,13 +157,15 @@ class LanternCombatFX {
   const style=this.attackStyle(e,clash),special=this.motion&&e.type==='Damage'&&style!=='clash',heavy=special&&style==='shield-blow';
   if(stage){stage.dataset.attackStyle=style;stage.dataset.skillNumber=String(e.skillNumber||0);}
   const valid=()=>epoch===this.epoch;
-  const attackFrame=clash&&e.actorId==='anger'&&e.targetId==='sera'?3:2;
-  const counterFrame=clash&&e.targetId==='anger'&&e.actorId==='sera'?3:2;
+  const angerPose=id=>this.units.get(id)?.isEnemy&&(this.units.get(id)?.portrait||id).toLowerCase()==='anger';
+  const attackFrame=clash&&angerPose(e.actorId)&&e.targetId==='sera'?3:2;
+  const counterFrame=clash&&angerPose(e.targetId)&&e.actorId==='sera'?3:2;
   const reach=this.weaponOffset(attacker,attackFrame),counterReach=this.weaponOffset(defender,counterFrame);
-  const contactX=962.5;
+  const allyFighter=pair.find(f=>f?.side==='ally-side'),enemyFighter=pair.find(f=>f?.side==='enemy-side');
+  const contactX=Math.max(850,Math.min(1283.3333333333335,((allyFighter?.start??750)+(enemyFighter?.start??1175))/2));
   const center=f=>f===attacker?contactX-reach.x:clash?contactX-counterReach.x:contactX+(f?.side==='enemy-side'?65:-65);
   // A small ally and a larger boss meet at one weapon contact height.
-  const contactY=475;
+  const contactY=583.3333333333334-Math.min(attacker?.bodyHeight??183.33333333333334,defender?.bodyHeight??183.33333333333334)*.5;
   if(attacker&&this.motion)attacker.wrapper.style.top=contactY-reach.y-440+'px';
   if(defender&&this.motion)defender.wrapper.style.top=clash?contactY-counterReach.y-440+'px':defender.footY-440+'px';
   const direction=f=>f?.side==='enemy-side'?-1:1;
@@ -231,7 +236,7 @@ class LanternCombatFX {
   ids.forEach(id=>this.target(id)?.classList.add('drop-ready'));this.target(focus)?.classList.add('drop-focus');
   const cursor=this.root.querySelector('.drag-cursor');if(!cursor)return;
   cursor.classList.add('visible');cursor.classList.toggle('matched',!!focus);cursor.style.left=p.x+'px';cursor.style.top=p.y+'px';cursor.style.setProperty('--fx-color',this.tint(actor));
-  cursor.querySelector('span').textContent=focus?(this.battle.intents.some(i=>i.id===focus)?'놓아서 맞불 연결':'놓아서 연결'):'빛실을 이으세요';
+  cursor.querySelector('span').textContent=focus?(this.options.targetHint?.(actor,focus)||(this.battle.intents.some(i=>i.id===focus)?'놓아서 맞불 연결':'놓아서 연결')):'빛실을 이으세요';
  }
  connected(actor,slot,target,kind){
   const a=this.options.slotPoint?.(actor,slot)||LanternBattleGeometry.slotPoint(this.battle.allies.findIndex(u=>u.id===actor),slot),b=this.point(target),c=this.tint(actor);
@@ -332,7 +337,8 @@ class LanternCombatFX {
     this.caption('맞불 · 2연속 우세',e.message);this.expire(this.node('fx-verdict',{x:1060,y:470},'#91dfd2','2연속 우세'),750);
    }else if(e.type==='Stalemate'){
     this.releaseMelee();this.caption('맞불 · 결착 없음',e.message);this.active=null;
-   }else if(e.type==='Sanity'){this.caption('정신력 변화',e.message);}
+   }else if(e.type==='Intercept'){this.caption('동료 대신 맞불',e.message,'③ 실행 · 가로막기');this.pulse(a,'#75c8c4',true);}
+   else if(e.type==='Sanity'){this.caption('정신력 변화',e.message);}
    else if(e.type==='Resonance'){this.shards(b,'#8dddd3',true);this.caption('속성 공명',e.message);this.options.impact?.('ignite',0,{...this.audioMetadata(e),level:.35});}
    else if(e.type==='Lantern'){this.pulse(a,'#ffcc7b',true);this.caption('등불 해방',e.message);this.options.impact?.('ignite',0,{...this.audioMetadata(e),level:.35});}
    else if(e.type==='Relink'){if(this.active){this.active.target=e.targetId;this.active.clash=false;}this.caption('빛실 재연결',e.message);this.beam(a,b,c);}

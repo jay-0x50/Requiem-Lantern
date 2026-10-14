@@ -1,0 +1,5 @@
+PASS: Unity 6000.6.0f1 Windows development build.
+All Unity C# sources compiled against installed Unity, UGUI and URP reference assemblies.
+ProjectSetup.BuildWindows validated story art, 24 PCM combat effects, five six-pose SD ally atlases, and all 25 campaign enemy groups/intent ownership.
+Build process exit: 0; Build Finished, Result: Success.
+Executable: Builds/Windows/RequiemLantern.exe

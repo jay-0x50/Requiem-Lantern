@@ -50,7 +50,7 @@ namespace RequiemLantern.Presentation
                 Label(button.transform,"Stage number",stageData.Number,22,10,205,38,28,color);
                 Label(button.transform,"Stage state",cleared?"완료":"진행 가능",213,14,102,27,16,color,TextAnchor.MiddleRight);
                 Label(button.transform,"Stage title",stageData.Title,22,55,290,45,24,Ivory);
-                Label(button.transform,"Stage type",stageData.KindLabel+(stageData.IsBoss?" · 보스":""),22,111,290,25,17,color);
+                Label(button.transform,"Stage type",stageData.KindLabel+(stageData.IsBoss?" · 보스":"")+(stageData.HasBattle?" · 적 "+stageData.EnemyCount+"명":""),22,111,290,25,17,color);
             }
             bool canEnter=CampaignRules.IsUnlocked(progress.Data,selected),wasCleared=CampaignRules.IsCleared(progress.Data,selected);
             bool hasStory=selected.Before.Count+selected.After.Count>0;
@@ -58,7 +58,7 @@ namespace RequiemLantern.Presentation
             Label(screen,"Selected stage",selected.Number+"  "+selected.Title,121,808,1150,40,30,Gold);
             Label(screen,"Stage summary",selected.Summary,122,857,1160,58,23,Muted);
             string names=string.Join(" · ",selected.Participants.Select(CampaignCharacterName));
-            Label(screen,"Participants","등장  "+names+"    /    "+selected.KindLabel,122,928,1160,38,18,Muted);
+            Label(screen,"Participants","등장  "+names+"    /    "+selected.KindLabel+(selected.HasBattle?" · 적 "+selected.EnemyCount+"명":""),122,928,1160,38,18,Muted);
             string action=archive?hasStory?"이야기 다시 읽기 →":"전투 기록":selected.Kind==StageKind.Story?wasCleared?"이야기 다시 읽기 →":"이야기 시작 →":wasCleared?"다시 출격 →":"스테이지 시작 →";
             var enter=Button(screen,"Enter stage",action,1350,833,438,68,()=>EnterCampaignStage(selected.Id,archive||selected.Kind==StageKind.Story&&wasCleared),true);
             enter.interactable=archive?wasCleared&&hasStory:canEnter;
