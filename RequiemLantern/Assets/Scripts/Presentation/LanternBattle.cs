@@ -64,7 +64,7 @@ namespace RequiemLantern.Presentation
                     var skillCaption=Label(b.transform,"Skill name",sk.Name,8,34,150,30,20,Ivory,TextAnchor.MiddleCenter);
                     skillCaption.resizeTextForBestFit=true;skillCaption.resizeTextMinSize=16;skillCaption.resizeTextMaxSize=20;
                     Label(b.transform,"Skill power",$"불 {BattleRules.Flames(sk)}개 · {BattleRules.Base(sk)}~{BattleRules.Base(sk)+BattleRules.Flame(sk)*BattleRules.Flames(sk)}",8,68,150,24,14,Gold,TextAnchor.MiddleCenter);
-                    string state=reserved!=null?(sk.Slots==2?"행동 1·2 예약 · 편집":"행동 "+(reserved.Slot+1)+" 예약 · 편집"):!available?"사용 불가":"비용 "+sk.Cost+" · "+(sk.Slots==2?"행동 두 칸":"행동 "+(cardSlot+1));
+                    string state=reserved!=null?(sk.Slots==2?"행동 1·2 예약 · 편집":"행동 "+(reserved.Slot+1)+" 예약 · 편집"):sk.Slots>u.SlotCount?"행동 두 칸이 필요합니다":!available?"사용 불가":"비용 "+sk.Cost+" · "+(sk.Slots==2?"행동 두 칸":"행동 "+(cardSlot+1));
                     Label(b.transform,"Card reservation",state,7,99,152,22,13,reserved!=null?Teal:Muted,TextAnchor.MiddleCenter);
                     var cardDrag=b.gameObject.AddComponent<LinkDrag>();
                     cardDrag.Begin=e=>{if(SelectOfferedCard(u.Id,card.Id,false))BeginLinkDrag(e,u.Id,selectedSlot,sk.Id,true);};
@@ -73,7 +73,7 @@ namespace RequiemLantern.Presentation
                 var portrait=Picture(screen,u.Id+" dock portrait",string.IsNullOrEmpty(u.Portrait)?ArtId(u.Id):u.Portrait,x,906,69,69,false);
                 portrait.uvRect=new Rect(.22f,.56f,.56f,.43f);
                 if(!u.Alive)portrait.color=new Color(.35f,.35f,.4f,.6f);
-                Label(screen,u.Id+" card name",u.Name,x+81,904,150,25,20,ElementColor(u.Element));
+                Label(screen,u.Id+" card name",(i+1)+" · "+u.Name,x+81,904,150,25,20,ElementColor(u.Element));
                 var health=Label(screen,u.Id+" card HP",$"{u.Hp} / {u.MaxHp}",x+81,928,150,21,14,Muted);
                 RegisterHealth(u.Id,Gauge(screen,u.Id+" card gauge",x+81,951,150,u.Hp,u.MaxHp,ElementColor(u.Element)),health);
                 Label(screen,"Sanity "+u.Id,$"정신력 {u.Sanity:+0;-0;0} · 점등 {BattleRules.FlameChance(u.Sanity):P0}",x+81,968,218,18,13,Gold);
@@ -86,13 +86,16 @@ namespace RequiemLantern.Presentation
                     var defenseDrag=defensive.gameObject.AddComponent<LinkDrag>();
                     defenseDrag.Begin=e=>{if(SelectDefense(u.Id,false))BeginLinkDrag(e,u.Id,selectedSlot,defense.Id,true);};defenseDrag.Drag=MoveLinkDrag;defenseDrag.End=EndLinkDrag;
                 }
-                for(int j=0;j<u.SlotCount;j++){
+                for(int j=0;j<2;j++){
+                    bool unlocked=j<u.SlotCount;
                     int slot=j;var link=s.Links.FirstOrDefault(l=>l.ActorId==u.Id&&(l.Slot==slot||battle.Skill(l.ActorId,l.SkillId).Slots==2));
                     string targetCaption=link==null?"미연결":TargetName(link.TargetId);if(targetCaption.Length>10)targetCaption=targetCaption.Substring(0,9)+"…";
-                    string caption=(j+1)+" · "+targetCaption;
+                    int unlockRound=BattleRules.ActionSlotUnlockRound(s,u);
+                    string caption=unlocked?(j+1)+" · "+targetCaption:"2 · "+(unlockRound>0?"R"+unlockRound+" 개방":s.IsBoss?"보스전 제한":"추가 행동 없음");
                     var btn=Button(screen,u.Id+" slot "+j,caption,x+j*174,987,166,31,()=>SelectSlot(u.Id,slot),selectedActor==u.Id&&selectedSlot==j);
                     btn.GetComponent<OrnateButton>().Caption.fontSize=12;
-                    btn.interactable=u.Alive;slotAnchors[u.Id+":"+j]=new Vector2(x+83+j*174,987);
+                    btn.interactable=u.Alive&&unlocked;slotAnchors[u.Id+":"+j]=new Vector2(x+83+j*174,987);
+                    if(!unlocked)continue;
                     var drag=btn.gameObject.AddComponent<LinkDrag>();
                     drag.Begin=e=>BeginLinkDrag(e,u.Id,slot,link?.SkillId);
                     drag.Drag=MoveLinkDrag;drag.End=EndLinkDrag;
@@ -117,7 +120,8 @@ namespace RequiemLantern.Presentation
             Button(screen,"Auto mode",autoMode?"오토 켜짐":"수동 연결",50,216,174,52,()=>{autoMode=!autoMode;if(autoMode)battle.RecommendLinks();DrawBattle();},autoMode);
             Button(screen,"Release lantern",s.LanternQueued?"해방 예약됨":"등불 해방",240,216,218,52,()=>{if(!battle.TryLantern(selectedActor,out var error))Notify(error);else DrawBattle();}).interactable=s.Lantern>=100&&!s.LanternQueued;
             Button(screen,"Battle log","전투 기록",479,216,140,52,ShowBattleLog);
-            Label(screen,"Dock plan count",$"연결 {s.Links.Count}/{s.Allies.Where(unit=>unit.Alive).Sum(unit=>unit.SlotCount)}",1570,906,85,29,17,Gold,TextAnchor.MiddleCenter);
+            Label(screen,"Action progression",ActionProgressionCaption(),50,283,770,64,19,Gold);
+            Label(screen,"Dock plan count",$"행동 {s.Links.Sum(link=>battle.Skill(link.ActorId,link.SkillId).Slots)}/{s.Allies.Where(unit=>unit.Alive).Sum(unit=>unit.SlotCount)}",1570,906,85,29,17,Gold,TextAnchor.MiddleCenter);
             Label(screen,"Dock ember reservation",$"불씨 {battle.PlannedCost}/{s.Ember}",1658,906,91,29,17,Muted,TextAnchor.MiddleCenter);
             Button(screen,"Remove selected","연결 해제",1752,906,132,31,()=>{battle.RemoveLink(selectedActor,selectedSlot);DrawBattle();}).GetComponent<OrnateButton>().Caption.fontSize=16;
             var resolve=Button(screen,"Resolve round","빛실 실행   →",1570,944,314,65,()=>{if(autoMode)battle.RecommendLinks();StartCoroutine(Resolve());},true);resolve.interactable=s.Links.Count>0;
@@ -202,6 +206,14 @@ namespace RequiemLantern.Presentation
         string TargetName(string id){var intent=battle.Intent(id);if(intent!=null)return "맞불 · "+EnemyNumber(battle.Unit(intent.ActorId))+intent.Name;var unit=battle.Unit(id);if(unit!=null)return unit.IsEnemy?EnemyNumber(unit)+unit.Name:unit.Name;var owner=battle.State.Enemies.FirstOrDefault(e=>e.Parts.Any(p=>p.Id==id));return owner==null?id:EnemyNumber(owner)+owner.Parts.First(p=>p.Id==id).Name;}
         LinkCommand ActionAt(UnitState actor,int slot)
         {return battle.State.Links.FirstOrDefault(link=>link.ActorId==actor.Id&&(link.Slot==slot||battle.Skill(actor.Id,link.SkillId).Slots==2));}
+        string ActionProgressionCaption()
+        {
+            var state=battle.State;
+            string rule=state.IsBoss?"보스전 · 1·2번만 행동 두 칸까지 개방":"일반전 · 1 → 2 → 3 → 4번 순으로 추가 행동 개방";
+            var next=state.Allies.FirstOrDefault(actor=>BattleRules.ActionSlotUnlockRound(state,actor)>state.Round);
+            string timing=next==null?"추가 행동 개방 완료":"R"+BattleRules.ActionSlotUnlockRound(state,next)+" · "+(state.Allies.IndexOf(next)+1)+"번 "+next.Name+"의 행동 +1";
+            return "카드 2장은 선택지 · 현재 총 행동 "+state.Allies.Where(actor=>actor.Alive).Sum(actor=>actor.SlotCount)+"칸\n"+rule+"\n"+timing;
+        }
         int OfferedCardSlot(UnitState actor,SkillCard card)
         {
             var reserved=battle.State.Links.FirstOrDefault(link=>link.ActorId==actor.Id&&link.CardId==card.Id);
@@ -212,7 +224,7 @@ namespace RequiemLantern.Presentation
             if(same&&explicitSlotFocus)return Mathf.Clamp(selectedSlot,0,actor.SlotCount-1);
             // Pick the intended action before checking cost. An unaffordable
             // second action must not silently refund and replace the first one.
-            if(same&&ActionAt(actor,selectedSlot)==null)return selectedSlot;
+            if(same&&selectedSlot>=0&&selectedSlot<actor.SlotCount&&ActionAt(actor,selectedSlot)==null)return selectedSlot;
             for(int slot=0;slot<actor.SlotCount;slot++)if(ActionAt(actor,slot)==null)return slot;
             return same?Mathf.Clamp(selectedSlot,0,actor.SlotCount-1):0;
         }
@@ -266,7 +278,7 @@ namespace RequiemLantern.Presentation
         {
             if(actor==null||card==null||!actor.Alive)return false;
             var skill=battle.Skill(actor.Id,card.SkillId);if(skill==null||!BattleRules.IsSkillUnlocked(actor,skill))return false;
-            if(skill.Slots==2&&slot!=0)return false;
+            if(slot<0||slot>=actor.SlotCount||skill.Slots>actor.SlotCount||skill.Slots==2&&slot!=0)return false;
             int replaced=battle.State.Links.Where(l=>l.ActorId==actor.Id&&(l.Slot==slot||skill.Slots==2||battle.Skill(l.ActorId,l.SkillId).Slots==2)).Sum(l=>battle.Skill(l.ActorId,l.SkillId).Cost);
             return skill.Cost<=battle.AvailableEmber+replaced&&battle.IsCardAvailable(actor,card.Id,slot);
         }
@@ -295,7 +307,7 @@ namespace RequiemLantern.Presentation
             selectedSkill=unit.Skills.FirstOrDefault(BattleRules.IsDefensive)?.Id;selectedCard=null;
         }
         void SelectSlot(string actor,int slot)
-        { ChooseSkillForSlot(actor,slot);explicitSlotFocus=true;DrawBattle(); }
+        { var unit=battle.Unit(actor);if(unit==null||!unit.Alive||slot<0||slot>=unit.SlotCount)return;ChooseSkillForSlot(actor,slot);explicitSlotFocus=true;DrawBattle(); }
         void Target(string id)
         {
             if(page!="battle"||overlay||resolving)return;
@@ -371,7 +383,9 @@ namespace RequiemLantern.Presentation
             SyncBattlePresentation();
             resolving=false;
             if(battle.State.Outcome!=BattleOutcome.Ongoing){ShowResult();yield break;}
-            battle.BeginNextRound();DrawBattle();
+            var slotsBefore=battle.State.Allies.ToDictionary(unit=>unit.Id,unit=>unit.SlotCount);battle.BeginNextRound();DrawBattle();
+            var expanded=battle.State.Allies.FirstOrDefault(unit=>unit.SlotCount>slotsBefore[unit.Id]);
+            if(expanded!=null)Notify((battle.State.Allies.IndexOf(expanded)+1)+"번 "+expanded.Name+"의 행동이 한 칸 늘었습니다.");
             if(autoMode){
                 battle.RecommendLinks();DrawBattle();int nextVersion=screenVersion;
                 yield return new WaitForSecondsRealtime(1.2f);

@@ -10,7 +10,7 @@ namespace RequiemLantern.Core
 
         public static BattleState CreateBattle(ProgressData progress = null, int? seed = null)
         {
-            var state = new BattleState { BattleId = Guid.NewGuid().ToString("N"), RandomSeed = seed ?? Guid.NewGuid().GetHashCode() };
+            var state = new BattleState { BattleId = Guid.NewGuid().ToString("N"), RandomSeed = seed ?? Guid.NewGuid().GetHashCode(), IsBoss = true };
             foreach (string id in new[] { "lian", "sera", "minato", "noa" })
             {
                 var growth = progress == null || progress.Characters == null ? null : progress.Characters.Find(x => x.Id == id);
@@ -20,6 +20,7 @@ namespace RequiemLantern.Core
             anger.Parts.Add(new PartState { Id = "anger_arm", Name = "팔", Hp = 40, MaxHp = 40 });
             anger.Parts.Add(new PartState { Id = "anger_core", Name = "핵", Hp = 72, MaxHp = 72 });
             state.Enemies.Add(anger);
+            BattleRules.ApplyActionProgression(state);
             return state;
         }
 
@@ -32,14 +33,14 @@ namespace RequiemLantern.Core
                     unit = Ally(id, "리안", "수호자", Element.Radiance, 150, 12);
                     unit.Skills.Add(Attack("lian_glimmer", "잔광", unit.Element, 1, 0, 1, 12, 6, 4, 2));
                     unit.Skills.Add(Attack("lian_breakthrough", "방벽 돌파", unit.Element, 2, 2, 1, 12, 9, 4, 3));
-                    unit.Skills.Add(Attack("lian_crescendo", "고조", unit.Element, 3, 3, 2, 12, 15, 5, 4));
+                    unit.Skills.Add(Attack("lian_crescendo", "고조", unit.Element, 3, 3, 1, 12, 15, 5, 4));
                     unit.Skills.Add(Defense("lian_guard", "빛의 호위", unit.Element, SkillKind.Guard, 18, 6, 4, 2));
                     break;
                 case "sera":
                     unit = Ally(id, "세라", "돌격수", Element.Flame, 110, 14); unit.Attack = 12;
                     unit.Skills.Add(Attack("sera_glimmer", "잔광", unit.Element, 1, 0, 1, 14, 5, 4, 2));
                     var slash = Attack("sera_slash", "화염 베기", unit.Element, 2, 1, 1, 14, 8, 5, 2); slash.PartDamage = 22; unit.Skills.Add(slash);
-                    unit.Skills.Add(Attack("sera_crescendo", "고조", unit.Element, 3, 3, 2, 14, 13, 6, 4));
+                    unit.Skills.Add(Attack("sera_crescendo", "고조", unit.Element, 3, 3, 1, 14, 13, 6, 4));
                     unit.Skills.Add(Defense("sera_evade", "불꽃 걸음", unit.Element, SkillKind.Evade, 18, 7, 4, 2));
                     break;
                 case "minato":
@@ -53,14 +54,14 @@ namespace RequiemLantern.Core
                     unit = Ally(id, "노아", "기록자", Element.Shadow, 120, 13);
                     unit.Skills.Add(Attack("noa_glimmer", "그림자 자국", unit.Element, 1, 0, 1, 13, 6, 3, 2));
                     unit.Skills.Add(Attack("noa_script", "지워진 기록", unit.Element, 2, 1, 1, 13, 8, 4, 3));
-                    unit.Skills.Add(Attack("noa_crescendo", "되찾은 이름", unit.Element, 3, 3, 2, 13, 14, 5, 4));
+                    unit.Skills.Add(Attack("noa_crescendo", "되찾은 이름", unit.Element, 3, 3, 1, 13, 14, 5, 4));
                     unit.Skills.Add(Defense("noa_evade", "그림자 접기", unit.Element, SkillKind.Evade, 18, 6, 5, 2));
                     break;
                 case "heidel":
                     unit = Ally(id, "하이델", "관측자", Element.Frost, 120, 11);
                     unit.Skills.Add(Attack("heidel_glimmer", "서리 측정", unit.Element, 1, 0, 1, 11, 6, 3, 2));
                     unit.Skills.Add(Attack("heidel_calibrate", "균열 조율", unit.Element, 2, 1, 1, 11, 9, 4, 2));
-                    unit.Skills.Add(Attack("heidel_crescendo", "관측의 끝", unit.Element, 3, 3, 2, 11, 15, 5, 4));
+                    unit.Skills.Add(Attack("heidel_crescendo", "관측의 끝", unit.Element, 3, 3, 1, 11, 15, 5, 4));
                     unit.Skills.Add(Defense("heidel_counter", "역상 보정", unit.Element, SkillKind.Counter, 18, 6, 4, 2));
                     break;
                 default: throw new ArgumentException("Unknown character: " + id, "id");

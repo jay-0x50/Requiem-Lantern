@@ -97,6 +97,8 @@ namespace RequiemLantern.Editor
                 var battle=RequiemLantern.Core.CampaignBattleFactory.Create(stage,new RequiemLantern.Core.ProgressData(),0);
                 if(battle.State.Enemies.Count!=stage.EnemyCount||battle.State.Enemies.Count<1||battle.State.Enemies.Count>3)
                     throw new System.Exception("Invalid enemy group for stage: "+stage.Id);
+                if(battle.State.IsBoss!=stage.IsBoss||battle.State.Allies.Any(actor=>actor.SlotCount!=1))
+                    throw new System.Exception("Battle action progression lost its stage boss flag or round-1 action limit: "+stage.Id);
                 foreach(var enemy in battle.State.Enemies)if(!Resources.Load<Texture2D>("Art/"+enemy.Portrait))
                     throw new System.Exception("Enemy group art is missing: "+stage.Id+" / "+enemy.Portrait);
                 if(battle.State.Intents.Any(intent=>!battle.State.Enemies.Any(enemy=>enemy.Id==intent.ActorId)))

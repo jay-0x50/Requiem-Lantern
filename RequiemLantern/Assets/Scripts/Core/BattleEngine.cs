@@ -29,6 +29,7 @@ namespace RequiemLantern.Core
             if (state == null) throw new ArgumentNullException("state");
             State = state; factory = restartFactory; ownsRandom = randomSource == null;
             random = randomSource ?? new SeededBattleRandom(state.RandomSeed);
+            BattleRules.ApplyActionProgression(state);
             foreach (var unit in state.Allies.Concat(state.Enemies)) unit.Sanity = BattleRules.ClampSanity(unit.Sanity);
             foreach (var unit in state.Allies) InitializeDeck(unit);
         }
@@ -57,7 +58,9 @@ namespace RequiemLantern.Core
             UnitState actor = Unit(actorId); SkillData skill = Skill(actorId, skillId);
             if (actor == null || actor.IsEnemy || !actor.Alive || skill == null) { error = "행동 가능한 잔영과 스킬을 선택해 주세요."; return false; }
             if (!BattleRules.IsSkillUnlocked(actor, skill)) { error = "동기화하여 3스킬을 개방해야 합니다."; return false; }
-            if (slot < 0 || slot >= actor.SlotCount || (skill.Slots == 2 && slot != 0) || skill.Slots > actor.SlotCount)
+            if (slot < 0 || slot >= actor.SlotCount)
+            { error = "아직 개방되지 않은 행동 슬롯입니다."; return false; }
+            if ((skill.Slots == 2 && slot != 0) || skill.Slots > actor.SlotCount)
             { error = "이 스킬은 빈 슬롯 두 칸이 필요합니다."; return false; }
             if (actor.IsSupport && kind != LinkKind.Guard && kind != LinkKind.Support) { error = "서포트는 호위·지원 연결만 가능합니다."; return false; }
             if ((skill.Kind == SkillKind.Attack && kind != LinkKind.Strike && kind != LinkKind.Clash) ||
@@ -105,7 +108,7 @@ namespace RequiemLantern.Core
             if (actor == null || !actor.Alive || actor.IsEnemy) return false;
             var card = actor.SkillHand.FirstOrDefault(x => x.Id == cardId);
             var skill = card == null ? null : actor.Skills.FirstOrDefault(x => x.Id == card.SkillId);
-            if (!BattleRules.IsSkillUnlocked(actor, skill)) return false;
+            if (!BattleRules.IsSkillUnlocked(actor, skill) || skill.Slots > actor.SlotCount) return false;
             if (replacingSlot.HasValue && (replacingSlot.Value < 0 || replacingSlot.Value >= actor.SlotCount || skill.Slots > actor.SlotCount || skill.Slots == 2 && replacingSlot.Value != 0)) return false;
             return !State.Links.Any(link => link.CardId == cardId && !(replacingSlot.HasValue && link.ActorId == actor.Id && (skill.Slots == 2 || Occupies(link, replacingSlot.Value))));
         }
@@ -386,6 +389,7 @@ namespace RequiemLantern.Core
 
         private void Observe()
         {
+            BattleRules.ApplyActionProgression(State);
             State.Intents.Clear(); State.Phase = BattlePhase.Observe;
             // Rotate over living allies so every enemy forecast names its actual recipient.
             // Health ordering keeps a wounded ally first while stable roster order breaks ties.

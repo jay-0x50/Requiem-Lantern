@@ -91,9 +91,12 @@ namespace RequiemLantern.Presentation
         }
         void BeginLinkDrag(PointerEventData e,string actor,int slot,string previousSkill,bool fromCard=false)
         {
-            if(page!="battle"||overlay||resolving||!battle.Unit(actor).Alive)return;
+            var unit=battle.Unit(actor);
+            if(page!="battle"||overlay||resolving||unit==null||!unit.Alive||slot<0||slot>=unit.SlotCount)return;
             CancelDragVisuals();
             if(!fromCard||selectedActor!=actor||selectedSlot!=slot)ChooseSkillForSlot(actor,slot);
+            var skill=battle.Skill(selectedActor,selectedSkill);
+            if(skill==null||skill.Slots>unit.SlotCount)return;
             if(!fromCard)explicitSlotFocus=true;
             RefreshDockFocus();
             dragVisuals=MakeRect(screen,"Live light thread",0,0,1920,1080);

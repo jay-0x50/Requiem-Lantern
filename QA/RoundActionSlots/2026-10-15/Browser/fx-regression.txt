@@ -1,0 +1,41 @@
+PASS unit, part and colon-containing intent IDs have correct anchors
+PASS damage and healing clamp presentation HP without mutating the source snapshot
+PASS summary counts, ignition percentages and rift gauge rewards never become HP damage
+PASS cancellation only removes the authoritative forecast and its line
+PASS drag feedback highlights eligible targets and clears on cancellation
+PASS equal-power equal-speed clash plays one weapon clash without inventing damage or a hit sound
+PASS playback preserves server event order and finishes at authoritative HP, part and rift values
+PASS clear settles pending playback and blocks stale damage or final-state synchronization
+PASS reduced motion still applies damage and cleans all pending effects
+PASS reattaching initializes a fresh presentation model and one effect layer
+PASS melee moves through weapon phases and applies authoritative damage exactly once at contact
+PASS pose atlas fighters replace standing art during the exchange and restore each original visibility
+PASS all six atlas cells address the correct row without shifting the actor anchor or altering idle art
+PASS measured atlas crops preserve one foot anchor across all six poses and use decoded dimensions before metadata
+PASS all five real SD allies and the larger boss meet at a shared weapon contact in ten directed clashes without travelling beams
+PASS pending ally sheets stay in SD poses and failed boss sheets retain their own compact portrait
+PASS defeated allies and enemies retain the hurt pose through recovery and return before dead idle restoration
+PASS cancelling windup, contact or recovery restores idle art and never applies a late second hit
+PASS late cleanup from a cancelled exchange cannot remove a new encounter or reveal its hidden originals
+PASS reduced motion preserves weapon pose sequence, contact damage and idle restoration
+PASS flame roll displays exact on/off states and both powers while sanity waits for final playback synchronization
+PASS alternating contests clang without damage until the two-win verdict then strike exactly once
+PASS human enemy retains its own portrait and never uses the Anger action atlas
+PASS Heidel uses his own compact combat action sheet
+PASS cancelling a pending weapon contest restores portraits and suppresses the future strike
+PASS both sides reveal one authoritative flame at a time and accumulate affinity-adjusted power without early damage
+PASS cancelling during unrevealed flame suspense removes focus and suppresses the later attack
+PASS reduced motion shows the complete real flame decision without flicker or camera emphasis
+PASS only two close decisions per round receive long suspense; the remaining rolls keep a brisk pace
+PASS Lian braces a heavy shield strike, Sera feints two slashes and Minato sends a staff ripple with one authoritative contact hit each
+PASS exceptionally long clash playback compresses its tail into the 28-second presentation budget without inventing damage
+PASS the status banner withholds final flame counts and power until every actual flame is revealed
+PASS a counterattack clears a previous enemy-only roll panel instead of showing the wrong attacker power
+PASS sample metadata arrives at the actual swing and single authoritative damage contact, never before impact
+PASS reduced motion preserves exact enemy contact audio and its heavy-hit metadata without procedural tones
+PASS defense preparation, healing and break cues have their own samples and never invent a weapon hit
+PASS presentation cancellation stops the sample bank and suppresses future swings and contact sounds
+PASS three enemy anchors and independent HP/parts remain scoped to each actual owner when a second enemy dies
+PASS the third ally duels the third enemy at their own shared contact using the enemy portrait atlas, then restores only its defeated body
+PASS both extra enemies use their Anger portrait contact pose in either direction against Sera, independent of logical unit ID
+TOTAL 40 combat FX regression cases passed

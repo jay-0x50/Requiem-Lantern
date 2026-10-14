@@ -106,7 +106,9 @@ namespace RequiemLantern.Core
                 throw new InvalidOperationException("Campaign encounters must have one to three enemies.");
             var state = PrototypeData.CreateBattle(progress, seed);
             state.StageId = stage.Id; state.StageName = stage.Number + "  " + stage.Title;
+            state.IsBoss = stage.IsBoss;
             state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
+            BattleRules.ApplyActionProgression(state);
             if(progress != null)new ProgressService(progress).ApplyToBattle(state);
             var enemy=state.Enemies[0];enemy.Name=stage.EnemyName;enemy.Portrait=stage.EnemyArt;enemy.IsHuman=stage.HumanEnemy;
             if(stage.Id=="chapter1_beacon_defense")return state; // Preserve the previously delivered fight and reward identity.

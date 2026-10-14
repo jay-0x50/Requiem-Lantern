@@ -174,14 +174,23 @@ const handFor=actor=>actor?.skillHand||[];
 const cardFor=(actor,id)=>handFor(actor).find(card=>card.id===id);
 function slotLink(actorId,slot){return data.battle.links.find(l=>l.actorId===actorId&&(l.slot===slot||skill(actorId,l.skillId)?.slots===2));}
 function cardReserved(actorId,cardId,slot){return data.battle.links.some(l=>l.actorId===actorId&&l.cardId===cardId&&l.slot!==slot&&!(skill(actorId,l.skillId)?.slots===2&&slot===1));}
+// Offered cards are choices; action capacity is the authoritative round limit.
+const actionCount=actor=>Math.max(1,Math.min(2,Number(actor?.slotCount)||1));
+const actionOpen=(actor,slot)=>!!actor&&Number.isInteger(slot)&&slot>=0&&slot<actionCount(actor);
+const actionFits=(actor,slot,k)=>actionOpen(actor,slot)&&!!k&&(k.slots!==2||slot===0&&actionCount(actor)>=2);
+function secondActionLabel(actor){
+ const index=data.battle.allies.findIndex(a=>a.id===actor.id);
+ const capped=Number(actor.maxActionSlots)===1||(actor.maxActionSlots==null&&data.battle.isBoss&&index>=2);
+ return capped?'보스전 · 1행동':`R${index+2}부터 개방`;
+}
 function selectionForSlot(actorId,slot,preserve=false){
  const actor=unit(actorId),linked=slotLink(actorId,slot),current=preserve&&cardFor(actor,selectedCardId);
- if(current&&!cardReserved(actorId,current.id,slot))return{skillId:current.skillId,cardId:current.id};
- if(preserve&&defenseSkill(skill(actorId,selectedSkill)))return{skillId:selectedSkill,cardId:''};
+ if(current&&actionFits(actor,slot,skill(actorId,current.skillId))&&!cardReserved(actorId,current.id,slot))return{skillId:current.skillId,cardId:current.id};
+ if(preserve&&actionOpen(actor,slot)&&defenseSkill(skill(actorId,selectedSkill)))return{skillId:selectedSkill,cardId:''};
  if(linked&&defenseSkill(skill(actorId,linked.skillId)))return{skillId:linked.skillId,cardId:''};
  const linkedCard=linked&&cardFor(actor,linked.cardId);
  if(linkedCard)return{skillId:linkedCard.skillId,cardId:linkedCard.id};
- const card=handFor(actor).find(c=>!cardReserved(actorId,c.id,slot)&&!skillLocked(actor,skill(actorId,c.skillId)||{})&&(skill(actorId,c.skillId)?.slots!==2||slot===0));
+ const card=handFor(actor).find(c=>!cardReserved(actorId,c.id,slot)&&!skillLocked(actor,skill(actorId,c.skillId)||{})&&actionFits(actor,slot,skill(actorId,c.skillId)));
  if(card)return{skillId:card.skillId,cardId:card.id};
  const defense=actor.skills.find(defenseSkill);return{skillId:defense?.id||actor.skills[0]?.id,cardId:''};
 }
@@ -197,10 +206,10 @@ function dockSlot(actorId,k,cardId=''){
  const actor=unit(actorId),own=cardId&&data.battle.links.find(l=>l.actorId===actorId&&l.cardId===cardId);
  if(own)return own.slot;
  if(k?.slots===2)return 0;
- const same=selectedActor===actorId,current=same&&selectedSlot<(actor?.slotCount||2)?selectedSlot:0;
+ const same=selectedActor===actorId,current=same&&selectedSlot<actionCount(actor)?selectedSlot:0;
  if(same&&manualSlotFocus)return current;
  if(same&&!slotLink(actorId,current))return current;
- const empty=Array.from({length:actor?.slotCount||2},(_,n)=>n).find(n=>!slotLink(actorId,n));
+ const empty=Array.from({length:actionCount(actor)},(_,n)=>n).find(n=>!slotLink(actorId,n));
  return empty??current;
 }
 function dockChoice(actorId,cardId,skillId=''){
@@ -208,7 +217,7 @@ function dockChoice(actorId,cardId,skillId=''){
  if(!actor||!k||(!card&& !defenseSkill(k)))return null;
  const slot=dockSlot(actorId,k,cardId),replaced=data.battle.links.filter(l=>l.actorId===actorId&&(l.slot===slot||k.slots===2||skill(actorId,l.skillId)?.slots===2));
  const available=data.availableEmber+replaced.reduce((sum,l)=>sum+(skill(actorId,l.skillId)?.cost||0),0);
- const reason=actor.hp<=0?'전투 불능':skillLocked(actor,k)?'동기화 필요':k.slots===2&&(actor.slotCount||2)<2?'행동 2칸 필요':cardId&&cardReserved(actorId,cardId,slot)?'다른 행동에 예약됨':k.cost>available?'불씨 부족':'';
+ const reason=actor.hp<=0?'전투 불능':skillLocked(actor,k)?'동기화 필요':k.slots===2&&actionCount(actor)<2?'행동 2칸 필요':cardId&&cardReserved(actorId,cardId,slot)?'다른 행동에 예약됨':k.cost>available?'불씨 부족':'';
  return{actor,k,card,slot,reason,disabled:!!reason};
 }
 function selectDockChoice(actorId,cardId,skillId=''){
@@ -257,13 +266,13 @@ function combatUnitHtml(actor,index){
  const foot=LanternBattleGeometry.allyFoot(index,data.battle.allies.length),stem=LanternCombatAtlasStem(actor.id),layout=battleFx.options.layouts?.[actor.id],crop=layout?.frames?.[0];
  let sprite='width:183px;height:183px;left:-91.5px;top:-183px;background-size:300% 200%;background-position:0% 0%';
  if(crop){const scale=LanternBattleGeometry.allyBodyHeight/layout.bodyHeight;sprite=`width:${crop.width*scale}px;height:${crop.height*scale}px;left:${-(crop.footX-crop.x)*scale}px;top:${-(crop.footY-crop.y)*scale}px;background-size:${layout.atlasWidth*scale}px ${layout.atlasHeight*scale}px;background-position:${-crop.x*scale}px ${-crop.y*scale}px`;}
- return `<div data-unit="${actor.id}" data-combat-src="/combat/${stem}.png" class="field-hero sd-unit ${settings.motion?'breathe':''} ${actor.hp<=0?'dead':''}" style="left:${foot.x}px;top:${foot.y}px;animation-delay:${-index}s" role="img" aria-label="${esc(actor.name)} 전투 캐릭터"><span class="combat-idle-sprite" style="${sprite};background-image:url('/combat/${stem}.png')"></span></div>${btn('','target:'+actor.id,'ally-target',`style="left:${foot.x-75}px;top:${foot.y-190}px" aria-label="${esc(actor.name)}에게 지원 연결"`)}<div class="field-name" style="left:${foot.x-75}px">${esc(actor.name)}<div class="bar"><span data-hp-bar="${actor.id}" style="background:${color(actor.element)};width:${actor.hp/actor.maxHp*100}%"></span></div></div>`;
+ return `<div data-unit="${actor.id}" data-combat-src="/combat/${stem}.png" class="field-hero sd-unit ${settings.motion?'breathe':''} ${actor.hp<=0?'dead':''}" style="left:${foot.x}px;top:${foot.y}px;animation-delay:${-index}s" role="img" aria-label="${esc(actor.name)} 전투 캐릭터"><span class="combat-idle-sprite" style="${sprite};background-image:url('/combat/${stem}.png')"></span></div>${btn('','target:'+actor.id,'ally-target',`style="left:${foot.x-75}px;top:${foot.y-190}px" aria-label="${esc(actor.name)}에게 지원 연결"`)}<div class="field-name" style="left:${foot.x-75}px"><i class="party-number">${index+1}</i>${esc(actor.name)}<div class="bar"><span data-hp-bar="${actor.id}" style="background:${color(actor.element)};width:${actor.hp/actor.maxHp*100}%"></span></div></div>`;
 }
 function refreshBattleThreads(){
  game.querySelectorAll('[data-link-actor]').forEach(n=>{const a=slotPoint(n.dataset.linkActor,+n.dataset.linkSlot),b=targetPoint(n.dataset.linkTarget);n.setAttribute('d',`M${a.x},${a.y} Q${(a.x+b.x)/2},${Math.min(a.y,b.y)-65} ${b.x},${b.y}`);});
 }
 function path(a,b,cls,c='',intentId=''){return `<path class="${cls}" ${intentId?`data-intent-line="${esc(intentId)}"`:''} d="M${a.x},${a.y} Q${(a.x+b.x)/2},${Math.min(a.y,b.y)-65} ${b.x},${b.y}" ${c?`style="stroke:${c}"`:''}/>`;}
-function fighterDock(actor){
+function fighterDock(actor,index){
  const active=actor.id===selectedActor,deck=`카드 구성 1×3 / 2×2${(actor.syncLevel||0)>0?' / 3×1':''}`;
  const cards=handFor(actor).map((card,index)=>{
   const choice=dockChoice(actor.id,card.id);if(!choice)return'';
@@ -272,21 +281,23 @@ function fighterDock(actor){
   return btn(`<span class="card-topline"><b>${k.number}스킬</b><span class="card-power">위력 ${min}–${max}</span></span><strong class="card-name">${esc(k.name)}</strong><span class="card-bottomline">${flameBadges(k.flameCount||1)}<small>불씨 ${k.cost}${k.slots===2?' · 2칸':''}</small></span><span class="card-state">${esc(status)}</span>`,`skill-card:${actor.id}:${card.id}`,`skill-card ${chosen?'primary selected':''} ${linked?'reserved':''}`,`data-actor="${actor.id}" data-card-id="${esc(card.id)}" data-card-index="${index+1}" title="${esc(actor.name)} · ${k.number}스킬 · ${esc(k.name)} · 기본 위력 ${min} · 켜진 불마다 +${k.flamePower||0} · ${esc(status)}" aria-label="${esc(actor.name)} ${k.number}스킬 ${esc(k.name)}, 위력 ${min}에서 ${max}, 불 ${k.flameCount||1}개, 불씨 ${k.cost}, ${esc(status)}" aria-pressed="${chosen}" ${choice.disabled?'disabled':''}`);
  }).join('');
  const defense=actor.skills.filter(defenseSkill).map(k=>{const choice=dockChoice(actor.id,'',k.id),chosen=active&&selectedSkill===k.id&&!selectedCardId;return btn(esc(k.name),`defense:${actor.id}:${k.id}`,`defense-button ${chosen?'primary':''}`,`aria-pressed="${chosen}" aria-label="${esc(actor.name)} ${esc(k.name)} 선택" ${choice?.disabled?'disabled':''}`);}).join('');
- return `<section class="fighter ${active?'focused':''} ${actor.hp<=0?'incapacitated':''}" style="--actor-color:${color(actor.element)}" aria-label="${esc(actor.name)} 스킬과 행동"><div class="fighter-cards">${cards||'<div class="empty-hand">사용할 카드가 없습니다</div>'}</div><div class="fighter-identity"><div class="dock-portrait"><img src="/art/${art(actor.portrait||actor.id)}.png" alt="" aria-hidden="true"></div><div class="fighter-vitals"><div class="fighter-title"><strong>${esc(actor.name)}</strong><small data-hp-text="${actor.id}">${actor.hp}/${actor.maxHp}</small></div><div class="bar"><span data-hp-bar="${actor.id}" style="background:${color(actor.element)};width:${actor.hp/actor.maxHp*100}%"></span></div><div class="fighter-sanity"><span data-sanity="${actor.id}">정신력 ${sanityText(actor.sanity)}</span><small>점등 ${flameChance(actor.sanity)}%</small></div></div><div class="fighter-defense">${defense}</div></div><div class="slots">${Array.from({length:actor.slotCount||2},(_,n)=>{const l=slotLink(actor.id,n),k=l&&skill(actor.id,l.skillId),shared=k?.slots===2;return `<div class="slot-wrap">${btn(`<b>${n+1}</b><span>${esc(k?k.name:'미연결')}</span>`,`slot:${actor.id}:${n}`,`slot ${active&&(selectedSlot===n||selectedSlot===0&&skill(actor.id,selectedSkill)?.slots===2)?'active':''}`,`data-actor="${actor.id}" data-slot="${n}" aria-pressed="${active&&selectedSlot===n}" aria-label="${esc(actor.name)} 행동 ${n+1}${shared?' 두 칸 스킬':''}, ${esc(k?k.name:'미연결')}" ${actor.hp<=0?'disabled':''}`)}<div class="slot-target" title="${esc(l?targetName(l.targetId):'미연결')}">${l?(l.kind==='Clash'?'맞불 · ':'')+esc(targetName(l.targetId)):'대상을 선택하세요'}</div></div>`;}).join('')}</div><span class="deck-status" title="${deck} · 남은 카드 ${actor.drawPile?.length||0} · 사용한 카드 ${actor.discardPile?.length||0}">${deck}</span></section>`;
+ return `<section class="fighter ${active?'focused':''} ${actor.hp<=0?'incapacitated':''}" style="--actor-color:${color(actor.element)}" aria-label="${esc(actor.name)} 스킬과 행동"><div class="fighter-cards">${cards||'<div class="empty-hand">사용할 카드가 없습니다</div>'}</div><div class="fighter-identity"><div class="dock-portrait"><img src="/art/${art(actor.portrait||actor.id)}.png" alt="" aria-hidden="true"></div><div class="fighter-vitals"><div class="fighter-title"><strong><i class="party-number">${index+1}</i>${esc(actor.name)}</strong><small data-hp-text="${actor.id}">${actor.hp}/${actor.maxHp}</small></div><div class="bar"><span data-hp-bar="${actor.id}" style="background:${color(actor.element)};width:${actor.hp/actor.maxHp*100}%"></span></div><div class="fighter-sanity"><span data-sanity="${actor.id}">정신력 ${sanityText(actor.sanity)}</span><small>점등 ${flameChance(actor.sanity)}%</small></div></div><div class="fighter-defense">${defense}</div></div><div class="slots">${Array.from({length:2},(_,n)=>{const locked=!actionOpen(actor,n),l=!locked&&slotLink(actor.id,n),k=l&&skill(actor.id,l.skillId),shared=k?.slots===2;return `<div class="slot-wrap ${locked?'locked':''}">${btn(`<b>${n+1}</b><span>${esc(locked?'잠김':k?k.name:'미연결')}</span>`,`slot:${actor.id}:${n}`,`slot ${!locked&&active&&(selectedSlot===n||selectedSlot===0&&skill(actor.id,selectedSkill)?.slots===2)?'active':''}`,`data-actor="${actor.id}" data-slot="${n}" aria-pressed="${!locked&&active&&selectedSlot===n}" aria-label="${esc(actor.name)} 행동 ${n+1}${locked?' 잠김, '+secondActionLabel(actor):''}${shared?' 두 칸 스킬':''}, ${esc(locked?'잠김':k?k.name:'미연결')}" ${actor.hp<=0||locked?'disabled':''}`)}<div class="slot-target" title="${esc(locked?secondActionLabel(actor):l?targetName(l.targetId):'미연결')}">${locked?esc(secondActionLabel(actor)):l?(l.kind==='Clash'?'맞불 · ':'')+esc(targetName(l.targetId)):'대상을 선택하세요'}</div></div>`;}).join('')}</div><span class="deck-status" title="${deck} · 남은 카드 ${actor.drawPile?.length||0} · 사용한 카드 ${actor.discardPile?.length||0}">${deck}</span></section>`;
 }
 function showBattle(){
- const s=data.battle;if(!unit(selectedActor)||unit(selectedActor).isEnemy)selectFirstFighter();
- const selected=unit(selectedActor),sk=skill(selectedActor,selectedSkill)||selected.skills.find(k=>!skillLocked(selected,k))||selected.skills[0];selectedSkill=sk.id;
- if(selectedSlot>=(selected.slotCount||2))selectedSlot=0;
+ const s=data.battle;if(!unit(selectedActor)||unit(selectedActor).isEnemy||unit(selectedActor).hp<=0)selectFirstFighter();
+ const selected=unit(selectedActor),selectedCard=cardFor(selected,selectedCardId);if(selectedCard)selectedSkill=selectedCard.skillId;
+ const sk=skill(selectedActor,selectedSkill)||selected.skills.find(k=>!skillLocked(selected,k))||selected.skills[0];selectedSkill=sk.id;
+ if(!actionOpen(selected,selectedSlot)){selectedSlot=0;manualSlotFocus=false;}
+ if(!actionFits(selected,selectedSlot,sk)){const available=selectionForSlot(selectedActor,selectedSlot);selectedSkill=available.skillId;selectedCardId=available.cardId;}
  let lines='';
  for(const i of s.intents){const p=targetPoint(i.id),owner=unit(i.actorId);if(!p||!owner||owner.hp<=0||i.cancelled||i.resolved)continue;lines+=path(targetPoint(owner.id),p,'thread-enemy enemy-origin','',i.id);const linked=interceptLink(i),interceptor=linked&&unit(linked.actorId),changed=interceptor&&i.kind!=='Area'&&interceptor.id!==i.targetId;for(const a of (i.kind==='Area'?s.allies:[unit(i.targetId)]).filter(a=>a&&a.hp>0))lines+=path(p,actorPoint(a.id),'thread-enemy'+(changed?' original-threat':''),'',i.id);if(changed)lines+=path(p,actorPoint(interceptor.id),'thread-intercept','#75c8c4',i.id);}
  for(const l of s.links){let c='#f2a541';if(l.kind==='Clash'){const v=data.previews?.find(p=>p.actorId===l.actorId&&p.slot===l.slot);c=v?.grade==='Advantage'?'#75c8c4':v?.grade==='Disadvantage'?'#e77a5d':'#f2a541';}lines+=path(LanternBattleGeometry.slotPoint(s.allies.findIndex(a=>a.id===l.actorId),l.slot),targetPoint(l.targetId),'thread-player flow',c).replace('<path ','<path data-link-actor="'+esc(l.actorId)+'" data-link-slot="'+l.slot+'" data-link-target="'+esc(l.targetId)+'" ');}
  const choice=selectionForSlot(selectedActor,selectedSlot,true);
- if(!defenseSkill(sk)&&(!cardFor(selected,selectedCardId)||cardReserved(selectedActor,selectedCardId,selectedSlot))){selectedSkill=choice.skillId;selectedCardId=choice.cardId;}
- const selectedSk=skill(selectedActor,selectedSkill),connected=s.links.reduce((sum,l)=>sum+(skill(l.actorId,l.skillId)?.slots||1),0),capacity=s.allies.filter(a=>a.hp>0).reduce((sum,a)=>sum+(a.slotCount||2),0);
+ if(!defenseSkill(skill(selectedActor,selectedSkill))&&(!cardFor(selected,selectedCardId)||cardReserved(selectedActor,selectedCardId,selectedSlot))){selectedSkill=choice.skillId;selectedCardId=choice.cardId;}
+ const selectedSk=skill(selectedActor,selectedSkill),connected=s.links.reduce((sum,l)=>sum+(skill(l.actorId,l.skillId)?.slots||1),0),capacity=s.allies.filter(a=>a.hp>0).reduce((sum,a)=>sum+actionCount(a),0);
  setScreen('battle',`<header>${btn('〈','retreat','back','aria-label="퇴각"')}<div class="titles"><div class="heading">${esc(s.stageName||'요새 앞의 그림자')}</div><div class="phase">ROUND ${String(s.round).padStart(2,'0')} &nbsp; / &nbsp; ② 연결</div></div><div class="resources"><span class="gold">불씨 ${s.ember} / 6 <small class="muted">예약 ${data.plannedCost}</small></span><span>등불 ${s.lantern} / 100</span><span class="muted">어둠도 ${s.gloom}</span></div></header>
  <div class="battle-controls">${btn('AI 제안','recommend')}${btn('이전 연결','reuse')}${btn('초기화','clear')}${btn(autoBattle?'오토 켜짐':'수동 연결','automode',autoBattle?'primary':'')}${btn(s.lanternQueued?'해방 예약':'등불 해방','lantern','',s.lantern<100||s.lanternQueued?'disabled':'')}${btn('기록','battlelog')}</div>
- <div class="battle-help">적의 예고 카드에서 공격 대상을 확인하세요.<br>다른 동료의 스킬을 예고 카드에 연결하면 대신 맞불을 겨룹니다.</div><svg class="threads" viewBox="0 0 1600 900" aria-hidden="true">${lines}<path id="drag-thread" class="thread-player"/></svg>
+ <div class="battle-help">매 턴, 파티 순서대로 두 번째 행동이 열립니다.${s.isBoss?'<br>보스전은 1·2번 동료만 최대 2행동입니다.':'<br>일반전은 R5부터 4명 모두 최대 2행동입니다.'}</div><svg class="threads" viewBox="0 0 1600 900" aria-hidden="true">${lines}<path id="drag-thread" class="thread-player"/></svg>
  ${s.allies.map(combatUnitHtml).join('')}
  ${s.enemies.map(enemyUnitHtml).join('')}
  <div class="battle-prediction">${(data.previews||[]).filter(p=>s.links.some(l=>l.actorId===p.actorId&&l.slot===p.slot&&l.kind==='Clash')).map(p=>esc(p.summary)).join('<br>')}</div>
@@ -295,6 +306,7 @@ function showBattle(){
 async function linkTarget(id){
  if(game.querySelector('.modal'))return;
  const sk=skill(selectedActor,selectedSkill);if(!sk)return;
+ if(!actionFits(unit(selectedActor),selectedSlot,sk)){toast('아직 열리지 않은 행동입니다. 사용할 수 있는 행동을 선택해 주세요.');return;}
  if(!defenseSkill(sk)&&!cardFor(unit(selectedActor),selectedCardId)){toast('제시된 스킬 카드 두 장 중에서 선택해 주세요.');return;}
  const kind=sk.kind==='Heal'?'Support':defenseSkill(sk)?'Guard':intent(id)?'Clash':'Strike';
  const actor=selectedActor,slot=selectedSlot;
@@ -315,7 +327,10 @@ async function resolveRound(){
   // Keep the pre-round DOM and health until the matching authoritative event lands.
   if(!await battleFx.play(data.battle.events,data.battle,{fast:autoBattle})||token!==viewToken){busy=false;return;}
   if(data.battle.outcome!=='Ongoing'){if(data.battle.outcome==='Victory')await command('reward');busy=false;showResult();return;}
+  const previousSlots=new Map(data.battle.allies.map(a=>[a.id,actionCount(a)]));
   if(!await command('next')){busy=false;showBattle();return;}
+  const gains=data.battle.allies.filter(a=>a.hp>0&&actionCount(a)>(previousSlots.get(a.id)||1)).map(a=>a.name);
+  if(gains.length)toast(gains.join(' · ')+'의 두 번째 행동이 열렸습니다.');
   if(autoBattle&&!await command('recommend')){busy=false;showBattle();return;}
   busy=false;autoBattleWaiting=autoBattle;showBattle();
  }catch(e){busy=false;autoBattleWaiting=false;toast(e.message);showBattle();}
@@ -325,7 +340,7 @@ function showResult(){
  const action=win?(follow?'campaign-story':campaign?'go:stages':'story:epilogue'):'deploy',label=win?(follow?'후속 이야기 →':campaign?'다음 스테이지 →':'남겨진 기억 읽기 →'):'다시 도전하기 →';
  setScreen('result',`${hero(data.battle.allies[0]?.portrait||data.battle.allies[0]?.id||'Lian','result-hero')}<div class="result-info"><div class="eyebrow">${win?'THE LIGHT REMAINS':'A MOMENT IN THE DARK'}</div><h1>${win?'지켜낸 불씨':'아직, 끝이 아니야'}</h1><p>${win?(follow?'남겨진 대화를 마치면 다음 스테이지가 열립니다.':'우리가 지나온 길에 또 하나의 기록이 남았다.'):'빛실을 다시 잇고, 다른 길을 찾아보자.\n정신력과 속성 우세를 살펴 맞불을 연결하세요.'}</p>${win&&lastReward?`<div class="rewards"><div class="reward"><b>+${lastReward.coins}</b>코인</div><div class="reward"><b>+${lastReward.lanternFragments}</b>등불 조각</div><div class="reward"><b>+${lastReward.memoryFragments}</b>기억의 파편</div></div>`:''}${btn(label,action,'primary')}${btn('등대로','go:hub')}</div>${footer('진행 상황 자동 저장 · 기록실에서 완료한 이야기를 다시 볼 수 있습니다')}`);
 }
-game.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;if(campaignBusy)return;if(dragInfo?.moved||performance.now()<suppressClickUntil)return;tone();try{if(action.startsWith('go:'))return go(action.slice(3));if(action.startsWith('chapter:'))return showStages(+action.slice(8),'');if(action.startsWith('stage-select:'))return showStages(selectedChapter,action.slice(13));if(action.startsWith('stage-enter:'))return enterCampaign(action.slice(12));if(action.startsWith('stage-replay:'))return enterCampaign(action.slice(13),true);if(action.startsWith('synchronize:')){if(await command('synchronize',{actorId:action.slice(12)})){showRoster(rosterIndex);toast('동기화가 완료되어 3스킬이 열렸습니다.');}return;}if(action.startsWith('focus-chapter:'))return focusMainChapter(action.slice(14));if(action.startsWith('character:'))return showRoster(+action.split(':')[1]);if(action.startsWith('story:'))return startStory(action.slice(6));if(action.startsWith('replay:'))return startStory(action.slice(7),'archive');if(action.startsWith('setting:')){const id=action.slice(8);settings[id]=!settings[id];if(id==='sound'){if(settings.sound)unlockCombatAudio();else combatAudio?.stop();}try{localStorage.setItem('rl-settings',JSON.stringify(settings));}catch{}return showSettings();}if(action.startsWith('slot:')){const [,actor,n]=action.split(':');if(!unit(actor)||unit(actor).hp<=0)return;selectedActor=actor;selectedSlot=skill(actor,slotLink(actor,+n)?.skillId)?.slots===2?0:+n;manualSlotFocus=true;const choice=selectionForSlot(actor,selectedSlot);selectedSkill=choice.skillId;selectedCardId=choice.cardId;return showBattle();}if(action.startsWith('skill-card:')){const [,actor,...cardParts]=action.split(':'),cardId=cardParts.join(':');if(selectDockChoice(actor,cardId))return showBattle();return;}if(action.startsWith('defense:')){const [,actor,skillId]=action.split(':');if(selectDockChoice(actor,'',skillId))return showBattle();return;}if(action.startsWith('target:'))return await linkTarget(action.slice(7));
+game.addEventListener('click',async e=>{const button=e.target.closest('[data-action]');if(!button||button.disabled)return;const action=button.dataset.action;if(campaignBusy)return;if(dragInfo?.moved||performance.now()<suppressClickUntil)return;tone();try{if(action.startsWith('go:'))return go(action.slice(3));if(action.startsWith('chapter:'))return showStages(+action.slice(8),'');if(action.startsWith('stage-select:'))return showStages(selectedChapter,action.slice(13));if(action.startsWith('stage-enter:'))return enterCampaign(action.slice(12));if(action.startsWith('stage-replay:'))return enterCampaign(action.slice(13),true);if(action.startsWith('synchronize:')){if(await command('synchronize',{actorId:action.slice(12)})){showRoster(rosterIndex);toast('동기화가 완료되어 3스킬이 열렸습니다.');}return;}if(action.startsWith('focus-chapter:'))return focusMainChapter(action.slice(14));if(action.startsWith('character:'))return showRoster(+action.split(':')[1]);if(action.startsWith('story:'))return startStory(action.slice(6));if(action.startsWith('replay:'))return startStory(action.slice(7),'archive');if(action.startsWith('setting:')){const id=action.slice(8);settings[id]=!settings[id];if(id==='sound'){if(settings.sound)unlockCombatAudio();else combatAudio?.stop();}try{localStorage.setItem('rl-settings',JSON.stringify(settings));}catch{}return showSettings();}if(action.startsWith('slot:')){const [,actor,n]=action.split(':');if(!unit(actor)||unit(actor).hp<=0||!actionOpen(unit(actor),+n))return;selectedActor=actor;selectedSlot=skill(actor,slotLink(actor,+n)?.skillId)?.slots===2?0:+n;manualSlotFocus=true;const choice=selectionForSlot(actor,selectedSlot);selectedSkill=choice.skillId;selectedCardId=choice.cardId;return showBattle();}if(action.startsWith('skill-card:')){const [,actor,...cardParts]=action.split(':'),cardId=cardParts.join(':');if(selectDockChoice(actor,cardId))return showBattle();return;}if(action.startsWith('defense:')){const [,actor,skillId]=action.split(':');if(selectDockChoice(actor,'',skillId))return showBattle();return;}if(action.startsWith('target:'))return await linkTarget(action.slice(7));
 switch(action){case'begin':return data.progress.prologueCompleted?go('hub'):data.campaign?enterCampaign(campaignStages()[0].id):startStory('prologue');case'storynext':return nextStory();case'storyauto':storyAuto=!storyAuto;button.textContent=storyAuto?'자동 켜짐':'자동';scheduleStoryAuto();return;case'storyskip':return finishStory();case'storylog':clearTimeout(autoTimer);return modal('지나온 대화',`<div class="log">${esc(storyLog.join('\n\n'))}</div>`);case'close':return closeModal();case'campaign-story':return routeCampaign();case'deploy':if(!await command('restart'))return;selectFirstFighter();autoBattle=false;lastReward=null;return showBattle();case'recommend':await command('recommend');showBattle();toast('광역 맞불 → 부위 파괴 → 부상 회복 순서로 제안했습니다.');return;case'clear':case'reuse':await command(action);return showBattle();case'remove':await command('remove',{actorId:selectedActor,slot:selectedSlot});return showBattle();case'lantern':await command('lantern',{actorId:selectedActor});return showBattle();case'automode':autoBattle=!autoBattle;if(!autoBattle)autoBattleWaiting=false;if(autoBattle)await command('recommend');return showBattle();case'resolve':return resolveRound();case'battlelog':return modal('라운드 기록',`<div class="log">${esc(data.battle.events.length?data.battle.events.map(e=>e.message).join('\n'):data.battle.links.map(l=>unit(l.actorId).name+' → '+targetName(l.targetId)+' : '+l.reason).join('\n'))}</div>`);case'retreat':return modal('등대로 돌아갈까요?','<p>진행 중인 전투의 보상은 받을 수 없습니다.</p>',btn('전투 계속','close','primary')+btn('등대로','go:hub'));case'repair':if(await command('repair')){showHub();toast('등대의 불빛이 조금 더 따뜻해졌습니다.');}return;}}
 catch(err){toast(err.message);}});
 function cleanupDrag(){game.querySelector('#drag-thread')?.setAttribute('d','');battleFx.drag(null,[],null,null);dragInfo=null;}
@@ -340,8 +355,8 @@ game.addEventListener('pointerdown',e=>{
  const source=e.target.closest('.skill-card,.slot');if(!source||source.disabled||busy||campaignBusy||page!=='battle'||dragInfo||game.querySelector('.modal'))return;
  const actor=source.dataset.actor;let slotIndex,choice;
  if(source.dataset.cardId){const candidate=dockChoice(actor,source.dataset.cardId);if(!candidate||candidate.disabled)return;slotIndex=candidate.slot;choice={skillId:candidate.k.id,cardId:candidate.card.id};}
- else{slotIndex=skill(actor,slotLink(actor,+source.dataset.slot)?.skillId)?.slots===2?0:+source.dataset.slot;const sameSlot=selectedActor===actor&&selectedSlot===slotIndex;choice=selectionForSlot(actor,slotIndex,sameSlot);}
- if(!choice.skillId)return;
+ else{if(!actionOpen(unit(actor),+source.dataset.slot))return;slotIndex=skill(actor,slotLink(actor,+source.dataset.slot)?.skillId)?.slots===2?0:+source.dataset.slot;const sameSlot=selectedActor===actor&&selectedSlot===slotIndex;choice=selectionForSlot(actor,slotIndex,sameSlot);}
+ if(!choice.skillId||!actionFits(unit(actor),slotIndex,skill(actor,choice.skillId)))return;
  dragInfo={x:e.clientX,y:e.clientY,pointerId:e.pointerId,actor,slot:slotIndex,skillId:choice.skillId,cardId:choice.cardId,origin:source.dataset.cardId?{x:e.clientX,y:e.clientY}:null,moved:false};
 });
 addEventListener('pointermove',e=>{

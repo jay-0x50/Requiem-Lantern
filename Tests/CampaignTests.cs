@@ -85,6 +85,9 @@ internal static class CampaignTests
                 if(stage.IsBoss||stage.Number=="1-2")Equal(1,stage.EnemyCount,stage.Number);
                 else True(stage.EnemyCount>=2&&stage.EnemyCount<=3,stage.Number);
                 var battle=CampaignBattleFactory.Create(stage,seed:0);Equal(stage.EnemyCount,battle.State.Enemies.Count,stage.Number);
+                Equal(stage.IsBoss,battle.State.IsBoss,stage.Number);True(battle.State.Allies.All(a=>a.SlotCount==1),stage.Number);
+                battle.State.Round=5;BattleRules.ApplyActionProgression(battle.State);
+                for(int index=0;index<battle.State.Allies.Count;index++)Equal(stage.IsBoss&&index>=2?1:2,battle.State.Allies[index].SlotCount,stage.Number);
                 Equal(stage.EnemyCount,battle.State.Enemies.Select(e=>e.Id).Distinct().Count());
                 Equal(stage.EnemyCount*2,battle.State.Enemies.SelectMany(e=>e.Parts).Select(p=>p.Id).Distinct().Count());
                 Equal(battle.State.Intents.Count,battle.State.Intents.Select(i=>i.Id).Distinct().Count());
@@ -95,6 +98,8 @@ internal static class CampaignTests
                 if(stage.HumanEnemy&&stage.EnemyCount>1)True(battle.State.Enemies.Skip(1).All(e=>e.Portrait=="HumanGuard"&&e.IsHuman));
             }
             var group=Stages.Single(s=>s.Number=="2-4");Equal(3,group.EnemyCount);
+            var tutorial=CampaignBattleFactory.Create(Stages.Single(s=>s.Number=="1-2"),seed:0);
+            False(tutorial.State.IsBoss);Equal(1,tutorial.State.Enemies.Count);tutorial.State.Round=2;BattleRules.ApplyActionProgression(tutorial.State);Equal(2,tutorial.State.Allies.Single().SlotCount);
         });
         Test("group restarts rebuild every enemy, target, part and cost without changing rewards",()=>{
             var stage=Stages.Single(s=>s.Number=="2-4");var battle=CampaignBattleFactory.Create(stage,seed:42);
@@ -105,6 +110,7 @@ internal static class CampaignTests
             True(battle.State.Enemies.All(e=>e.Alive&&e.Hp==e.MaxHp&&e.Parts.All(p=>p.Hp==p.MaxHp)));
             Equal(coin,battle.State.CoinReward);Equal(lantern,battle.State.FirstLanternReward);Equal(memory,battle.State.MemoryReward);
             Equal(0,battle.PlannedCost);Equal(0,battle.State.Links.Count);Equal(8,battle.State.Allies.Sum(a=>a.SkillHand.Count));
+            False(battle.State.IsBoss);True(battle.State.Allies.All(a=>a.SlotCount==1));
         });
         Test("invalid encounter sizes are rejected before player growth changes",()=>{
             foreach(int count in new[]{0,4,-1}){
@@ -238,6 +244,8 @@ internal static class CampaignTests
                 var battle=CampaignBattleFactory.Create(stage,new ProgressData(),seed);int stalemates=0;
                 Equal(string.Join(",",stage.Party),string.Join(",",battle.State.Allies.Select(u=>u.Id)));True(battle.State.Allies.All(u=>u.SyncLevel==0&&u.Sanity==0));
                 while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=40){
+                    for(int index=0;index<battle.State.Allies.Count;index++)
+                        Equal(battle.State.Round>=index+2&&(!stage.IsBoss||index<2)?2:1,battle.State.Allies[index].SlotCount,"Action capacity drifted in "+stage.Number+" round "+battle.State.Round);
                     foreach(var unit in battle.State.Allies.Where(u=>u.Alive)){
                         Equal(2,unit.SkillHand.Count,"Expected two offered cards for "+stage.Number+" / "+unit.Name);
                         var bag=unit.SkillHand.Select(c=>c.SkillId).Concat(unit.DrawPile).Concat(unit.DiscardPile).Select(id=>battle.Skill(unit.Id,id).Number).ToList();
@@ -245,6 +253,7 @@ internal static class CampaignTests
                     }
                     battle.RecommendLinks();True(battle.State.Links.Count>0,"AI produced no action in "+stage.Number);
                     True(battle.State.Links.All(l=>BattleRules.IsSkillUnlocked(battle.Unit(l.ActorId),battle.Skill(l.ActorId,l.SkillId))));
+                    True(battle.State.Links.All(l=>l.Slot>=0&&l.Slot<battle.Unit(l.ActorId).SlotCount),"AI used a locked action in "+stage.Number);
                     var numbered=battle.State.Links.Where(l=>battle.Skill(l.ActorId,l.SkillId).Number>0).ToList();
                     Equal(numbered.Count,numbered.Select(l=>l.CardId).Distinct().Count(),"One offered card was reserved for multiple actions in "+stage.Number);
                     True(numbered.All(l=>battle.Unit(l.ActorId).SkillHand.Any(c=>c.Id==l.CardId&&c.SkillId==l.SkillId)),"AI selected an unavailable card in "+stage.Number);

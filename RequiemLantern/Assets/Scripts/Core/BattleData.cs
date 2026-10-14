@@ -59,9 +59,10 @@ namespace RequiemLantern.Core
         public List<SkillCard> SkillHand = new List<SkillCard>();
         public List<string> DrawPile = new List<string>(), DiscardPile = new List<string>();
         public int NextCardNumber;
+        public int UnlockedActionSlots = 1, MaxActionSlots = 2;
         public bool DeckInitialized;
         public bool Alive { get { return Hp > 0; } }
-        public int SlotCount { get { return IsSupport ? 1 : 2; } }
+        public int SlotCount { get { return IsSupport ? 1 : Math.Max(1, Math.Min(MaxActionSlots, UnlockedActionSlots)); } }
     }
 
     [Serializable]
@@ -117,7 +118,7 @@ namespace RequiemLantern.Core
         public int Round = 1, Ember = 3, Lantern, Gloom = 1, IgniteChain;
         public int RandomSeed;
         public int CoinReward = 120, FirstLanternReward = 10, RepeatLanternReward = 2, MemoryReward = 1;
-        public bool LanternQueued;
+        public bool LanternQueued, IsBoss;
         public string LanternActorId;
         public BattlePhase Phase = BattlePhase.Link;
         public BattleOutcome Outcome = BattleOutcome.Ongoing;
@@ -132,6 +133,24 @@ namespace RequiemLantern.Core
     {
         public const int MaxEmber = 6;
         public const int MinSanity = -20, MaxSanity = 20, MaxClashContests = 64;
+        // Roster positions stay fixed when an ally falls. A death never transfers
+        // that ally's future action to another character.
+        public static int ActionSlotUnlockRound(BattleState state, UnitState actor)
+        {
+            if (state == null || actor == null || actor.IsEnemy || actor.IsSupport) return 0;
+            int index = state.Allies.IndexOf(actor);
+            return index < 0 || (state.IsBoss && index >= 2) ? 0 : index + 2;
+        }
+        public static void ApplyActionProgression(BattleState state)
+        {
+            if (state == null) return;
+            foreach (var actor in state.Allies)
+            {
+                int unlockRound = ActionSlotUnlockRound(state, actor);
+                actor.MaxActionSlots = unlockRound == 0 ? 1 : 2;
+                actor.UnlockedActionSlots = unlockRound > 0 && state.Round >= unlockRound ? 2 : 1;
+            }
+        }
         public static int ClampSanity(int sanity) { return Math.Max(MinSanity, Math.Min(MaxSanity, sanity)); }
         public static double FlameChance(int sanity) { return (50 + 2 * ClampSanity(sanity)) / 100.0; }
         public static bool IsDefensive(SkillData skill)

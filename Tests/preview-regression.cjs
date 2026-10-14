@@ -29,9 +29,9 @@ const state = {
   battle: {
     outcome: 'Ongoing', phase: 'Link',
     allies: [
-      { id: 'lian', name: '리안', hp: 100, maxHp: 100, element: 'Radiance',
+      { id: 'lian', name: '리안', hp: 100, maxHp: 100, element: 'Radiance',slotCount:1,maxActionSlots:2,
         skills: [skill('lian_glimmer'), skill('lian_breakthrough'), skill('lian_guard', 'Guard')],parts:[],skillHand:[{id:'lian-card-1',skillId:'lian_glimmer'},{id:'lian-card-2',skillId:'lian_breakthrough'}],drawPile:['s1','s1','s2'],discardPile:[] },
-      { id: 'minato', name: '미나토', hp: 90, maxHp: 100, element: 'Tide',
+      { id: 'minato', name: '미나토', hp: 90, maxHp: 100, element: 'Tide',slotCount:1,maxActionSlots:2,
         skills: [skill('minato_glimmer'), skill('minato_heal', 'Heal')],parts:[],skillHand:[{id:'minato-card-1',skillId:'minato_glimmer'},{id:'minato-card-2',skillId:'minato_heal'}],drawPile:['s1','s1','s2'],discardPile:[] }
     ],
     enemies: [{ id: 'anger', name: '분노', hp: 100, maxHp: 100, rift: 40, maxRift: 60,
@@ -101,6 +101,7 @@ function fourParty(env){env.run(`
  data.battle.allies=[seed,companion('sera','세라','Flame'),data.battle.allies[1],companion('noa','노아','Shadow')];
  showBattle();
  `);}
+function lateRound(env,round=5,boss=false){env.run(`data.battle.round=${round};data.battle.isBoss=${boss};data.battle.allies.forEach((a,n)=>{a.maxActionSlots=data.battle.isBoss&&n>=2?1:2;a.slotCount=a.maxActionSlots===2&&data.battle.round>=n+2?2:1;});showBattle();`);}
 function threeEnemies(env){fourParty(env);env.run(`
  const original=data.battle.enemies[0];original.isEnemy=true;original.portrait='Anger';
  for(let n=2;n<=3;n++){const id='enemy_'+n;data.battle.enemies.push({...JSON.parse(JSON.stringify(original)),id,name:'그림자 군체 '+(n-1),parts:original.parts.map(p=>({...p,id:id+'_'+p.id,maxHp:p.hp}))});data.battle.intents.push({...JSON.parse(JSON.stringify(data.battle.intents[0])),id:'1:'+id+'_arm',actorId:id,targetId:'lian'});}
@@ -373,7 +374,7 @@ async function main() {
   env.run(`data.battle.allies[0].syncLevel=0;data.battle.allies[0].slotCount=1;data.battle.allies[0].sanity=-20;data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:1,slots:1,kind:'Attack'});showBattle();`);
   assert.ok(env.game.innerHTML.includes('정신력 -20'));assert.ok(env.game.innerHTML.includes('점등 10%'));
   assert.ok(!env.game.innerHTML.includes('세 번째 불'));assert.equal((env.game.innerHTML.match(/data-action="skill-card:lian:/g)||[]).length,2);
-  assert.equal((env.game.innerHTML.match(/data-action="slot:lian:/g)||[]).length,1);
+  assert.equal((env.game.innerHTML.match(/data-action="slot:lian:/g)||[]).length,2);assert.match(env.game.innerHTML,/data-action="slot:lian:1"[^>]*disabled/);
   assert.ok(env.game.innerHTML.includes('카드 구성 1×3 / 2×2'));
   env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].sanity=20;data.battle.allies[0].skillHand[1]={id:'lian-card-3',skillId:'lian_third'};showBattle();`);
   assert.ok(env.game.innerHTML.includes('3스킬</b>')&&env.game.innerHTML.includes('세 번째 불'));assert.ok(env.game.innerHTML.includes('/ 3×1'));assert.ok(env.game.innerHTML.includes('점등 90%'));
@@ -418,6 +419,7 @@ async function main() {
 
 
   env=environment();
+  lateRound(env);
   env.run(`data.battle.allies[0].skillHand=[{id:'duplicate-one',skillId:'lian_glimmer'},{id:'duplicate-two',skillId:'lian_glimmer'}];selectFirstFighter();showBattle();tone=()=>{};globalThis.cardCalls=[];command=async(action,args)=>{cardCalls.push({action,...args});return true;};`);
   assert.equal((env.game.innerHTML.match(/data-action="skill-card:lian:/g)||[]).length,2);
   await env.click('skill-card:lian:duplicate-two');await env.context.linkTarget('intent1');
@@ -445,6 +447,7 @@ async function main() {
   pass('defense remains available outside the card bag and sends no attack card identity');
 
   env=environment();
+  lateRound(env);
   env.run(`showBattle();tone=()=>{};globalThis.directCalls=[];command=async(action,args)=>{directCalls.push({action,...args});if(action==='link'){data.battle.links=data.battle.links.filter(l=>l.actorId!==args.actorId||l.slot!==args.slot);data.battle.links.push(args);}return true;};`);
   assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,4);
   assert.ok(env.game.innerHTML.includes('class="dock-portrait"'));assert.ok(env.game.innerHTML.includes('class="command-rail"'));assert.ok(!env.game.innerHTML.includes('class="skill-panel"'));
@@ -494,13 +497,14 @@ async function main() {
   pass('a modal cancels card drag and blocks underlying target links without dismissing the modal');
 
   env=environment();
-  env.run(`data.battle.allies[0].skills.push({id:'lian_third',name:'세 번째 불',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:2,slots:2,kind:'Attack'});data.battle.allies[0].skillHand[1]={id:'lian-third-card',skillId:'lian_third'};selectedSlot=1;manualSlotFocus=true;showBattle();`);
+  lateRound(env);
+  env.run(`data.battle.allies[0].skills.push({id:'lian_third',name:'시험용 두 행동 공격',number:2,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:2,slots:2,kind:'Attack'});data.battle.allies[0].skillHand[1]={id:'lian-third-card',skillId:'lian_third'};selectedSlot=1;manualSlotFocus=true;showBattle();`);
   assert.equal(env.run("dockChoice('lian','lian-third-card').disabled"),true);
   assert.equal(env.run("selectDockChoice('lian','lian-third-card')"),false);
   env.run('data.battle.allies[0].syncLevel=1');assert.equal(env.run("selectDockChoice('lian','lian-third-card')"),true);assert.equal(env.run('selectedSlot'),0);
   env.run(`data.battle.allies[1].skills.push({id:'minato_care',name:'포기하지 않는 손',number:3,requiredSyncLevel:1,flameCount:3,basePower:5,flamePower:2,cost:2,slots:1,kind:'Heal'});data.battle.allies[1].syncLevel=1;data.battle.allies[1].skillHand[1]={id:'minato-care-card',skillId:'minato_care'};data.battle.links=[{actorId:'minato',slot:0,cardId:'minato-card-1',skillId:'minato_glimmer',targetId:'arm',kind:'Strike'}];`);
   assert.equal(env.run("selectDockChoice('minato','minato-care-card')"),true);assert.equal(env.run('selectedSlot'),1);assert.equal(env.run('selectedCardId'),'minato-care-card');
-  pass('synchronization gates third cards, two-action attacks use action zero, and the one-action third heal uses an empty action');
+  pass('synchronization gates cards, a custom two-action attack uses action zero, and the one-action third heal uses an empty action');
 
   env=environment();
   env.run(`data.battle.allies[0].skills[0].cost=2;data.battle.allies[0].skills[1].cost=3;data.availableEmber=0;data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'lian-card-1',targetId:'arm',kind:'Strike'}];selectedSlot=0;manualSlotFocus=true;`);
@@ -549,6 +553,7 @@ async function main() {
   assert.ok(env.game.innerHTML.includes('/art/Noa.png'));
   pass('four allies show eight direct skill cards, four SD bodies and original portrait thumbnails');
 
+  lateRound(env);
   env.run(`tone=()=>{};command=async(action,args)=>{if(action==='link')data.battle.links.push(args);return true;};`);
   await env.click('skill-card:noa:noa-card-1');await env.click('target:intent1');
   await env.click('skill-card:noa:noa-card-2');await env.click('target:arm');
@@ -596,7 +601,7 @@ async function main() {
   env=environment();env.run('data.battle.allies.splice(1);showBattle()');
   assert.equal((env.game.innerHTML.match(/class="field-hero sd-unit/g)||[]).length,1);
   assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
-  assert.ok(env.game.innerHTML.includes('/ 2</small>'));
+  assert.ok(env.game.innerHTML.includes('/ 1</small>'));
   pass('early story encounters with fewer recruited companions keep only their real offered cards and action capacity');
 
   env=environment();threeEnemies(env);
@@ -661,6 +666,78 @@ async function main() {
   env.events.pointermove({clientX:1475,clientY:256,pointerId:5});env.events.pointercancel({pointerId:5});
   await env.events.pointerup({clientX:1475,clientY:256,pointerId:5});assert.equal(env.context.thirdDrop,null);
   pass('direct-card dragging preserves the fourth actor and third-enemy intent IDs, and cancelling sends no action');
+
+  env=environment();fourParty(env);
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
+  assert.equal((env.game.innerHTML.match(/class="slot-wrap locked"/g)||[]).length,4);
+  assert.ok(env.game.innerHTML.includes('/ 4</small>'));
+  for(const round of [2,3,4,5])assert.ok(env.game.innerHTML.includes('R'+round+'부터 개방'));
+  pass('round one retains eight offered choices but exposes only four actions with the future unlock rounds');
+
+  env.run(`tone=()=>{};globalThis.firstRoundCalls=[];command=async(action,args)=>{firstRoundCalls.push({action,...args});if(action==='link'){data.battle.links=data.battle.links.filter(l=>l.actorId!==args.actorId||l.slot!==args.slot);data.battle.links.push(args);}return true;};`);
+  await env.click('skill-card:lian:lian-card-2');await env.click('target:enemy_2');
+  await env.click('skill-card:lian:lian-card-1');await env.click('target:intent1');
+  assert.deepEqual(Array.from(env.context.firstRoundCalls).map(c=>[c.slot,c.cardId]),[[0,'lian-card-2'],[0,'lian-card-1']]);
+  assert.equal(env.run('data.battle.links.length'),1);assert.equal(env.run("slotLink('lian',0).cardId"),'lian-card-1');
+  assert.equal(env.run('manualSlotFocus'),false);
+  pass('either first-round card can be chosen and a full one-action bank replaces its current reservation without creating a second action');
+
+  env.run(`globalThis.firstRoundCalls=[];selectedActor='lian';selectedSlot=0;selectedCardId='lian-card-1';`);
+  await env.click('slot:noa:1');assert.equal(env.run('selectedActor'),'lian');assert.equal(env.run('selectedSlot'),0);
+  env.gameEvents.pointerdown({clientX:1100,clientY:810,pointerId:99,target:{closest:()=>({dataset:{actor:'noa',slot:'1'},disabled:false})}});
+  assert.equal(env.run('dragInfo'),null);
+  env.run(`selectedActor='noa';selectedSlot=1;selectedSkill='noa_glimmer';selectedCardId='noa-card-1';`);
+  await env.context.linkTarget('intent1');assert.equal(env.context.firstRoundCalls.length,0);
+  env.run('showBattle()');assert.equal(env.run('selectedSlot'),0);assert.equal(env.run('manualSlotFocus'),false);
+  pass('locked action click, forged drag source and stale selected action send no commands and redraw clamps to the first usable action');
+
+  env=environment();fourParty(env);
+  env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].skills.push({id:'lian_wide',name:'시험용 두 행동 공격',number:2,requiredSyncLevel:1,slots:2,kind:'Attack',cost:0});data.battle.allies[0].skillHand[1]={id:'lian-s3-card',skillId:'lian_wide'};data.battle.allies[2].syncLevel=1;data.battle.allies[2].skills.push({id:'minato_s3',name:'한 행동 치유',number:3,requiredSyncLevel:1,slots:1,kind:'Heal',cost:0});data.battle.allies[2].skillHand[1]={id:'minato-s3-card',skillId:'minato_s3'};showBattle();`);
+  assert.equal(env.run("dockChoice('lian','lian-s3-card').reason"),'행동 2칸 필요');assert.equal(env.run("selectDockChoice('lian','lian-s3-card')"),false);
+  assert.equal(env.run("selectDockChoice('minato','minato-s3-card')"),true);assert.equal(env.run('selectedSlot'),0);
+  lateRound(env,2);assert.equal(env.run("selectDockChoice('lian','lian-s3-card')"),true);assert.equal(env.run('selectedSlot'),0);
+  pass('a custom two-action attack waits for capacity while Minato’s one-action S3 heal is usable in round one');
+
+  env=environment();fourParty(env);
+  for(const [round,capacity] of [[1,4],[2,5],[3,6],[4,7],[5,8],[9,8]]){
+    lateRound(env,round,false);assert.ok(env.game.innerHTML.includes('/ '+capacity+'</small>'));
+    assert.equal((env.game.innerHTML.match(/class="slot-wrap locked"/g)||[]).length,8-capacity);
+  }
+  pass('normal encounters reveal one additional action per round in fixed party order and stop at eight');
+  for(const [round,capacity] of [[1,4],[2,5],[3,6],[4,6],[9,6]]){
+    lateRound(env,round,true);assert.ok(env.game.innerHTML.includes('/ '+capacity+'</small>'));
+    assert.equal((env.game.innerHTML.match(/보스전 · 1행동<\/div>/g)||[]).length,2);
+    assert.equal(env.run("actionCount(unit('minato'))"),1);assert.equal(env.run("actionCount(unit('noa'))"),1);
+  }
+  pass('boss encounters stop at six actions and label the third and fourth fighters’ permanent one-action limit');
+
+  env.run(`selectedActor='lian';selectedSlot=1;manualSlotFocus=true;data.battle.round=1;data.battle.allies.forEach(a=>a.slotCount=1);showBattle();`);
+  assert.equal(env.run('selectedSlot'),0);assert.equal(env.run('manualSlotFocus'),false);assert.ok(env.game.innerHTML.includes('/ 4</small>'));
+  pass('restarting an encounter resets a previously focused second action to the real first-round capacity');
+
+  env=environment();fourParty(env);
+  env.run(`globalThis.gainNotices=[];toast=message=>gainNotices.push(message);battleFx.play=async()=>true;command=async action=>{if(action==='next'){data.battle.round=2;data.battle.allies[0].slotCount=2;}return true;};`);
+  await env.context.resolveRound();assert.equal(env.context.gainNotices.length,1);assert.equal(env.context.gainNotices[0],'리안의 두 번째 행동이 열렸습니다.');
+  assert.ok(env.game.innerHTML.includes('/ 5</small>'));
+  pass('the actual next-round presentation announces the newly unlocked fighter and updates the action counter');
+
+  env=environment();fourParty(env);lateRound(env,1,true);
+  env.run(`data.battle.allies.forEach(a=>{a.syncLevel=1;const id=a.id+'_single_s3';a.skills.push({id,name:'고조',number:3,requiredSyncLevel:1,slots:1,kind:'Attack',cost:3});a.skillHand[1]={id:a.id+'-s3-card',skillId:id};});showBattle();`);
+  for(const id of ['lian','sera','minato','noa']){assert.equal(env.run(`selectDockChoice('${id}','${id}-s3-card')`),true);assert.equal(env.run('selectedSlot'),0);}
+  assert.equal(env.run("actionCount(unit('noa'))"),1);assert.equal(env.run("skill('noa','noa_single_s3').slots"),1);
+  pass('all synchronized third skills use one action from round one, including the boss-limited third and fourth fighters');
+
+  env=environment();fourParty(env);lateRound(env,3);
+  env.run(`selectedActor='lian';selectedSlot=1;manualSlotFocus=true;data.battle.allies[0].hp=0;showBattle();`);
+  assert.equal(env.run('selectedActor'),'sera');assert.equal(env.run('selectedSlot'),0);assert.equal(env.run('manualSlotFocus'),false);
+  assert.ok(env.game.innerHTML.includes('/ 4</small>'));
+  pass('a defeated selected fighter gives focus to the next living ally and removes its unlocked actions from the capacity');
+
+  env=environment();fourParty(env);
+  env.run(`data.battle.allies[0].syncLevel=1;data.battle.allies[0].skills.push({id:'lian_new_s3',name:'고조',number:3,requiredSyncLevel:1,slots:1,kind:'Attack',cost:3});data.battle.allies[0].skillHand[0].skillId='lian_new_s3';selectedActor='lian';selectedCardId='lian-card-1';selectedSkill='lian_glimmer';showBattle();`);
+  assert.equal(env.run('selectedSkill'),'lian_new_s3');assert.ok(env.game.innerHTML.includes('class="party-number">4</i>노아'));
+  assert.equal((env.game.innerHTML.match(/class="party-number"/g)||[]).length,8);
+  pass('the selected action follows a refreshed card identity and both battlefield and dock show fixed party order numbers');
 
   console.log('TOTAL ' + passed + ' regression cases passed');
 }

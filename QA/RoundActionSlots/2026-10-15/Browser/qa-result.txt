@@ -1,0 +1,61 @@
+Progressive action slots browser verification — 2026-10-15 (Asia/Seoul)
+
+Runtime: round-action-slots-v8. Isolated host: 8128,
+PreviewHost/bin/qa-round-action/PreviewHost.dll. Release build: zero warnings/errors.
+Save: this folder's ignored progress.xml, copied from the previous disposable
+MultiEnemyIntercept fixture (Chapters 1–3 cleared). All player save files stayed unchanged.
+
+Automated: Preview regression 74 passed; combat FX regression 40 passed.
+The tests cover eight choices versus four first-round actions, either offered
+card replacing a full one-action reservation, click/drag/stale-slot rejection,
+normal 4/5/6/7/8 capacity, boss 4/5/6/6 capacity, reset and dead-actor selection,
+S3 as one action including boss-limited third/fourth allies, refreshed card
+identity, fixed party numbers, existing card costs/IDs/consumption, interception,
+multiple enemy ownership, modal cancellation, SD poses and original illustrations.
+A custom two-slot skill fixture retains generic capacity protection; actual S3
+skills all use one action.
+
+Actual Chrome checks:
+- Entered chapter 2-4 through the UI and skipped its opening story.
+- R1: eight actual offered cards, four enabled action chips, four visibly locked
+  second chips labelled R2/R3/R4/R5, and capacity 0/4.
+- Selected Sera's first card to intercept the main enemy's Lian-targeted intent.
+  Selected her second card and linked the third enemy's Minato-targeted intent.
+  Only her action 0 was replaced: capacity stayed 1/4, the earlier interception
+  returned to unassigned, and the third intent showed Sera as interceptor.
+- AI suggestion reserved exactly 4/4 actions. Executed the actual UI round with
+  normal animation playback. R2 returned [2,1,1,1], capacity 0/5, all allies alive.
+- Later rounds used the real API with one defense per ally to preserve enemies;
+  then the UI's Clear button fetched and rendered authoritative state.
+  normal-api-rounds.json and normal-final-api-rounds.json record every capacity
+  and living HP. R5 visibly showed all eight actions with no locked chips.
+- Entered chapter 2-8 through the UI. R1 showed four actions and permanent
+  boss-limit labels on the third/fourth characters. Real guarded API rounds
+  advanced R2 [2,1,1,1], R3 [2,2,1,1], R4 [2,2,1,1]. UI Clear rendered 0/6
+  in R4, with only Minato/Heidel second actions disabled. A direct locked
+  fourth-actor API request was rejected atomically.
+- Restarted only the isolated host after preparing all five characters Sync1
+  in the disposable save. Prepared a real prototype boss hand containing Noa's
+  third skill. In R1, clicked Noa's actual third card and the Lian-targeted boss
+  intent: Noa reserved action 0, interception showed Noa, capacity was 1/4,
+  cost 3/3, and her second action stayed permanently locked. No fake UI state
+  or production test endpoint was added.
+- Fresh final UI loaded party order numbers 1–4 in both field and dock. Final
+  screenshots waited for transition opacity to reach 1. Normal R1/R5 and boss
+  R4 capacities remained correct with the final code.
+- Chrome warning/error log: empty after final reload and checks.
+
+Screenshots (ignored local artifacts):
+01-normal-round1-four-actions.png: first initial R1 check.
+02-normal-round2-five-actions.png: actual UI resolution unlocked only Lian.
+03-normal-round5-eight-actions.png: initial R5 check.
+04-boss-round4-six-actions.png: initial boss cap check.
+05-boss-round1-noa-third-skill.png: actual Noa S3 uses one R1 action.
+06-final-normal-round1-numbered.png: final numbered R1 view.
+07-final-normal-round5-numbered.png: final numbered R5 view.
+08-final-boss-round4-numbered.png: final numbered boss R4 view.
+
+The backend preparation sequences are recorded separately from actual UI
+interactions above. BGM/audio/main art/player progression were unchanged.
+
+Cleanup: verified DLL/save/port identity before stopping only QA PID 29552. Chrome QA tab 1516715409 now shows live 8127 title (GET only) and is marked as the deliverable.

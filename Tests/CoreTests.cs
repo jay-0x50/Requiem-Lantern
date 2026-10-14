@@ -12,12 +12,12 @@ internal static class CoreTests
         Test("fresh battle deterministic intents", () => {
             var b = BattleEngine.CreatePrototype(); Equal(3, b.State.Ember); Equal(2, b.State.Intents.Count);
             Equal("난타", b.State.Intents[0].Name); Equal(2, b.State.Intents[0].HitPowers.Length); Equal(3, b.State.Intents[1].HitPowers.Length);
-            Equal(2, b.State.Allies[0].SlotCount);
+            Equal(1, b.State.Allies[0].SlotCount); True(b.State.IsBoss);
         });
         Test("four-person default party offers eight distinct cards and keeps the ember budget", () => {
             var b=BattleEngine.CreatePrototype(seed:31415);Equal(4,PrototypeData.PartyCapacity);
             Equal("lian,sera,minato,noa",string.Join(",",b.State.Allies.Select(u=>u.Id)));
-            Equal(8,b.State.Allies.Sum(u=>u.SlotCount));Equal(3,b.State.Ember);
+            Equal(4,b.State.Allies.Sum(u=>u.SlotCount));Equal(3,b.State.Ember);
             var cards=b.State.Allies.SelectMany(u=>u.SkillHand).ToList();Equal(8,cards.Count);Equal(8,cards.Select(c=>c.Id).Distinct().Count());
             b.State.Intents.Clear();var enemy=b.Unit("anger");enemy.Hp=enemy.MaxHp=10000;enemy.Rift=enemy.MaxRift=10000;
             foreach(var part in enemy.Parts)part.Hp=part.MaxHp=10000;
@@ -31,6 +31,77 @@ internal static class CoreTests
             }
             b.BeginNextRound();Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
             b.Restart();Equal(4,b.State.Allies.Count);Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
+        });
+        Test("normal encounters unlock one extra action per round in fixed roster order", () => {
+            var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);False(b.State.IsBoss);
+            var expected=new[]{"1,1,1,1","2,1,1,1","2,2,1,1","2,2,2,1","2,2,2,2","2,2,2,2"};
+            var unlockRounds=b.State.Allies.Select(a=>BattleRules.ActionSlotUnlockRound(b.State,a)).ToArray();Equal("2,3,4,5",string.Join(",",unlockRounds));
+            for(int round=1;round<=expected.Length;round++){
+                Equal(round,b.State.Round);Equal(expected[round-1],string.Join(",",b.State.Allies.Select(a=>a.SlotCount)));
+                Equal("2,2,2,2",string.Join(",",b.State.Allies.Select(a=>a.MaxActionSlots)));
+                True(b.State.Allies.All(a=>a.SkillHand.Count==2));
+                b.State.Intents.Clear();b.ResolveRound();b.BeginNextRound();
+            }
+        });
+        Test("boss progression caps later allies even after a teammate falls", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);Equal("2,3,0,0",string.Join(",",b.State.Allies.Select(a=>BattleRules.ActionSlotUnlockRound(b.State,a))));
+            Equal("2,2,1,1",string.Join(",",b.State.Allies.Select(a=>a.MaxActionSlots)));b.Unit("lian").Hp=0;
+            for(int round=1;round<=6;round++){
+                Equal(round<2?1:2,b.Unit("lian").SlotCount);Equal(round<3?1:2,b.Unit("sera").SlotCount);
+                Equal(1,b.Unit("minato").SlotCount);Equal(1,b.Unit("noa").SlotCount);
+                b.State.Intents.Clear();b.ResolveRound();b.BeginNextRound();
+            }
+            b.Restart();Equal(1,b.State.Round);True(b.State.Allies.All(a=>a.SlotCount==1&&a.SkillHand.Count==2));
+        });
+        Test("one-to-three-person parties preserve positions and supports never gain a second action", () => {
+            foreach(int count in new[]{1,2,3}){
+                var state=PrototypeData.CreateBattle(seed:0);state.IsBoss=false;state.Allies=state.Allies.Take(count).ToList();
+                for(int round=1;round<=5;round++){
+                    state.Round=round;BattleRules.ApplyActionProgression(state);
+                    for(int index=0;index<count;index++)Equal(round>=index+2?2:1,state.Allies[index].SlotCount);
+                }
+                var support=state.Allies[count-1];support.IsSupport=true;BattleRules.ApplyActionProgression(state);
+                Equal(1,support.SlotCount);Equal(1,support.MaxActionSlots);Equal(0,BattleRules.ActionSlotUnlockRound(state,support));
+                state.Round=1;BattleRules.ApplyActionProgression(state);True(state.Allies.All(a=>a.SlotCount==1));
+            }
+        });
+        Test("locked action rejects attacks, defenses and custom two-slot skills atomically while keeping both choices", () => {
+            var data=new ProgressData();data.Characters.Add(new CharacterProgress{Id="lian",SyncLevel=1});
+            var b=BattleEngine.CreatePrototype(data,0);var actor=b.Unit("lian");ForceHand(actor,"lian_glimmer","lian_crescendo");
+            actor.Skills.Single(s=>s.Number==3).Slots=2; // A custom two-action skill exercises generic occupancy rules.
+            string error;True(b.TryLink(actor.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error,actor.SkillHand[0].Id));
+            string before=BagTrace(actor);var original=b.State.Links.Single();int cost=b.PlannedCost,ember=b.State.Ember;
+            False(b.TryLink(actor.Id,1,"lian_guard",LinkKind.Guard,actor.Id,out error));
+            False(b.TryLink(actor.Id,1,"lian_glimmer",LinkKind.Strike,"anger",out error,actor.SkillHand[0].Id));
+            False(b.TryLink(actor.Id,0,"lian_crescendo",LinkKind.Strike,"anger",out error,actor.SkillHand[1].Id));
+            Equal(original,b.State.Links.Single());Equal(cost,b.PlannedCost);Equal(ember,b.State.Ember);Equal(before,BagTrace(actor));
+            False(b.IsCardAvailable(actor,actor.SkillHand[1].Id));False(b.OfferedSkills(actor).Any(s=>s.Number==3));
+            b.State.Intents.Clear();b.ResolveRound();Equal(1,actor.DiscardPile.Count);Equal("lian_crescendo",actor.SkillHand.Single().SkillId);
+            b.BeginNextRound();Equal(2,actor.SlotCount);True(b.IsCardAvailable(actor,actor.SkillHand.Single(c=>c.SkillId=="lian_crescendo").Id));
+        });
+        Test("every synchronized skill three costs one action even in the boss party's third and fourth positions", () => {
+            foreach(string id in new[]{"lian","sera","minato","noa","heidel"})foreach(int index in new[]{2,3}){
+                var state=PrototypeData.CreateBattle(seed:0);state.IsBoss=true;
+                state.Allies=new[]{"lian","sera","minato","noa","heidel"}.Where(other=>other!=id).Take(3).Select(other=>PrototypeData.CreateCharacter(other)).ToList();
+                var actor=PrototypeData.CreateCharacter(id,1);state.Allies.Insert(index,actor);actor.Hp=actor.MaxHp-50;
+                var b=new BattleEngine(state);var skill=actor.Skills.Single(s=>s.Number==3);Equal(1,skill.Slots);Equal(1,actor.SlotCount);Equal(1,actor.MaxActionSlots);
+                ForceHand(actor,skill.Id,actor.Skills.Single(s=>s.Number==1).Id);string error;int cost=skill.Cost;
+                string target=skill.Kind==SkillKind.Heal?actor.Id:"anger";var kind=skill.Kind==SkillKind.Heal?LinkKind.Support:LinkKind.Strike;
+                True(b.TryLink(actor.Id,0,skill.Id,kind,target,out error,actor.SkillHand[0].Id));Equal(cost,b.PlannedCost);
+                False(b.TryLink(actor.Id,1,actor.Skills.Single(BattleRules.IsDefensive).Id,LinkKind.Guard,actor.Id,out error));Equal(1,b.State.Links.Count);
+                b.ResolveRound();Equal(1,actor.DiscardPile.Count);Equal(1,actor.SkillHand.Count);
+                True(b.State.Events.Any(e=>e.Type=="FlameRoll"&&e.SkillId==skill.Id&&e.SkillNumber==3));
+                if(skill.Kind==SkillKind.Heal)True(actor.Hp>actor.MaxHp-50);
+            }
+        });
+        Test("recommendation and reuse respect the newly available capacity without reserving extra cards", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);b.RecommendLinks();
+            foreach(var actor in b.State.Allies){True(b.State.Links.Count(l=>l.ActorId==actor.Id)<=1);True(actor.SkillHand.Count==2);}
+            b.State.Intents.Clear();b.ClearLinks();ForceHand(b.Unit("lian"),"lian_glimmer","lian_glimmer");string error;
+            True(b.TryLink("lian",0,"lian_glimmer",LinkKind.Strike,"anger",out error));b.ResolveRound();b.BeginNextRound();
+            string hand=BagTrace(b.Unit("lian"));b.ReusePreviousLinks();Equal(1,b.State.Links.Count);Equal(0,b.State.Links.Single().Slot);Equal(hand,BagTrace(b.Unit("lian")));
+            True(b.TryLink("lian",1,"lian_guard",LinkKind.Guard,"lian",out error));Equal(2,b.State.Links.Count);
+            b.Restart();Equal(0,b.State.Links.Count);True(b.State.Allies.All(a=>a.SlotCount==1));b.ReusePreviousLinks();Equal(0,b.State.Links.Count);
         });
         Test("fourth party member can be forecast and healing target", () => {
             var state=PrototypeData.CreateBattle(seed:31415);state.Allies.Single(u=>u.Id=="noa").Hp=50;
@@ -138,6 +209,7 @@ internal static class CoreTests
                 var unit = PrototypeData.CreateCharacter(id); Equal(0, unit.Sanity); Equal(0, unit.SyncLevel);
                 Equal("1,2,3", string.Join(",", unit.Skills.Where(x=>x.Number>0).Select(x=>x.Number)));
                 Equal(1, unit.Skills.Count(BattleRules.IsDefensive)); True(unit.Skills.All(x=>BattleRules.Flames(x)>=1));
+                True(unit.Skills.All(x=>x.Slots==1));
                 False(BattleRules.IsSkillUnlocked(unit,unit.Skills.Single(x=>x.Number==3)));
                 True(BattleRules.IsSkillUnlocked(PrototypeData.CreateCharacter(id,1),unit.Skills.Single(x=>x.Number==3)));
             }
@@ -148,6 +220,8 @@ internal static class CoreTests
         Test("slot occupancy, synchronization lock and budget are atomic", () => {
             var b = BattleEngine.CreatePrototype(seed:1); string error;
             False(b.TryLink("lian",0,"lian_crescendo",LinkKind.Strike,"anger",out error)); Equal(0,b.State.Links.Count);
+            b.State.Round=2;BattleRules.ApplyActionProgression(b.State);
+            b.Skill("lian","lian_crescendo").Slots=2; // Custom two-action fixture; production skill three uses one action.
             b.Unit("lian").SyncLevel=1; ForceHand(b.Unit("lian"),"lian_crescendo","lian_glimmer"); ForceHand(b.Unit("sera"),"sera_slash","sera_glimmer");
             True(b.TryLink("lian", 0, "lian_crescendo", LinkKind.Strike, "anger", out error)); Equal(3, b.PlannedCost);
             False(b.TryLink("sera", 0, "sera_slash", LinkKind.Strike, "anger", out error)); Equal(1, b.State.Links.Count);
@@ -206,6 +280,7 @@ internal static class CoreTests
         });
         Test("per-slot ignition grades remain independent of light rolls", () => {
             var b=Fixture(8,9,1,new ScriptedRandom());b.State.Intents.Clear();string error;
+            b.State.Round=2;BattleRules.ApplyActionProgression(b.State);
             True(b.TryLink("hero",0,"hit",LinkKind.Strike,"enemy",out error));True(b.TryLink("hero",1,"hit",LinkKind.Strike,"enemy",out error));
             b.ResolveRound(new Dictionary<string,IgniteGrade>{{"hero:0",IgniteGrade.Perfect},{"hero:1",IgniteGrade.Miss}});
             Equal(284,b.Unit("enemy").Hp);Equal(0,b.State.IgniteChain);Equal(3,b.State.Lantern);
@@ -378,8 +453,9 @@ internal static class CoreTests
             True(b.IsCardAvailable(unit,first.Id));True(b.TryLink(unit.Id,1,first.SkillId,LinkKind.Strike,"anger",out error,first.Id));
             Equal(0,b.PlannedCost);b.ClearLinks();Equal(snapshot,BagTrace(unit));Equal(0,unit.DiscardPile.Count);
         });
-        Test("a two-slot skill replaces both reservations but consumes one card", () => {
+        Test("a custom two-slot skill replaces both reservations but consumes one card", () => {
             var b=DeckBattle(true);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_crescendo");string error;
+            unit.Skills.Single(s=>s.Number==3).Slots=2;
             string third=unit.SkillHand[1].Id;True(b.TryLink(unit.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error,unit.SkillHand[0].Id));
             True(b.TryLink(unit.Id,1,"lian_guard",LinkKind.Guard,unit.Id,out error));
             True(b.IsCardAvailable(unit,third,0));False(b.IsCardAvailable(unit,third,1));
@@ -483,7 +559,7 @@ internal static class CoreTests
     private static BattleEngine DeckBattle(bool synchronized)
     {
         var data=new ProgressData();if(synchronized)data.Characters.Add(new CharacterProgress{Id="lian",SyncLevel=1});
-        var b=BattleEngine.CreatePrototype(data,1234);b.State.Intents.Clear();var enemy=b.Unit("anger");enemy.Hp=enemy.MaxHp=100000;enemy.Rift=enemy.MaxRift=10000;
+        var b=BattleEngine.CreatePrototype(data,1234);b.State.Round=2;BattleRules.ApplyActionProgression(b.State);b.State.Intents.Clear();var enemy=b.Unit("anger");enemy.Hp=enemy.MaxHp=100000;enemy.Rift=enemy.MaxRift=10000;
         foreach(var part in enemy.Parts)part.Hp=part.MaxHp=10000;return b;
     }
     private static void Link(BattleEngine b) { string error; True(b.TryLink("hero", 0, "hit", LinkKind.Clash, "forecast", out error)); }

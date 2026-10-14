@@ -188,10 +188,11 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Main chapter previews unexpectedly changed the ongoing player's rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
             int coinsBeforeLegacy=progress.Data.Coins;
+            yield return SmokeActionProgression(directory);
             // Isolated UI fixture: choosing an expensive new card should use
             // the empty action and report insufficient ember, not refund an
             // existing action unless the player explicitly selects it.
-            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,1448);battle.State.Ember=2;
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,1448);battle.State.IsBoss=false;battle.State.Round=5;BattleRules.ApplyActionProgression(battle.State);battle.State.Ember=2;
             var budgetActor=battle.Unit("minato");budgetActor.SyncLevel=1;budgetActor.SkillHand.Clear();
             var budgetHeal=new SkillCard{Id="smoke-minato-heal",SkillId="minato_heal"};
             var budgetCare=new SkillCard{Id="smoke-minato-care",SkillId="minato_care"};
@@ -217,7 +218,7 @@ namespace RequiemLantern.Presentation
                 var candidate=BattleEngine.CreatePrototype(progress.Data,seed);var actor=candidate.Unit("lian");
                 return actor.SkillHand.Count==2&&actor.SkillHand.All(card=>candidate.Skill(actor.Id,card.SkillId).Number==1);
             });
-            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,duplicateSeed);PrepareBattlePresentation();
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,duplicateSeed);battle.State.Round=2;BattleRules.ApplyActionProgression(battle.State);PrepareBattlePresentation();
             if(battle.State.Allies.Count!=4)throw new Exception("Standard battle did not field four allies.");
             AssertSmallBattleAvatars();
             var duplicateCards=battle.Unit("lian").SkillHand.ToArray();
@@ -252,7 +253,7 @@ namespace RequiemLantern.Presentation
             SelectSlot("lian",1);if(selectedCard!=duplicateCards[1].Id)throw new Exception("Selecting the second existing action did not restore its card.");
             yield return Capture(directory,"17-skill-bag");
             battle.RecommendLinks();DrawBattle();yield return Capture(directory,"06-battle");
-            smokePhase="first round battlefield effects (60 second deadline)";
+            smokePhase="round 2 battlefield effects (60 second deadline)";
             smokeDeadline=Time.realtimeSinceStartup+60;
             var initialHealth=battle.State.Allies.Concat(battle.State.Enemies).ToDictionary(unit=>unit.Id,unit=>unit.Hp);
             bool requiresClash=battle.State.Links.Any(link=>link.Kind==LinkKind.Clash);
@@ -324,8 +325,8 @@ namespace RequiemLantern.Presentation
             }
             if(!capturedWindup||!capturedImpact||!capturedRecoil||!sawHealthChange||(requiresClash&&!sawClash))throw new Exception("Smoke missed atlas windup/contact/recoil, weapon clash or sequential health change.");
             if(!capturedFlameSuspense||!completedFlameReveal)throw new Exception("Smoke missed the unrevealed flame phase or its sequential completion before damage.");
-            if(page!="battle"||resolving||overlay||battle.State.Round!=2||battle.State.Outcome!=BattleOutcome.Ongoing)
-                throw new Exception("First visual round did not return cleanly to round 2 planning.");
+            if(page!="battle"||resolving||overlay||battle.State.Round!=3||battle.State.Outcome!=BattleOutcome.Ongoing)
+                throw new Exception("Visual round did not return cleanly to round 3 planning.");
             AssertSmallBattleAvatars();
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies)){
                 if(!visibleHealth.TryGetValue(unit.Id,out var shown)||shown!=unit.Hp)throw new Exception("Visible HP differs from core HP for "+unit.Id);
@@ -348,16 +349,91 @@ namespace RequiemLantern.Presentation
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
                 "08-main-archive","09-chapter1-lian-map","09-chapter2-sera-map","09-chapter3-noa-map","09-chapter4-heidel-map","09-chapter5-minato-map",
                 "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble",
-                "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock","20-three-enemies-intercept","21-third-enemy-target","22-enemy-2-impact","23-enemy-3-impact","24-single-boss"};
+                "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock","20-three-enemies-intercept","21-third-enemy-target","22-enemy-2-impact","23-enemy-3-impact","24-single-boss",
+                "25-normal-round1","26-normal-round2","27-normal-round3","28-normal-round5","29-boss-round3","30-boss-round5"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
-                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all thirty-two fresh screenshots.");yield return null;
+                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all thirty-eight fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 32 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 38 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 2 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 3 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
             File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Four-person standard party, eight visible skill cards at least 160 canvas pixels wide; selection details in the right rail. All five battle SD atlases retained their six poses and planted-foot geometry. Fielded allies stayed at 220/1080 body height through planning and action; original hub, dialogue, roster and dock face portraits remained separate.\n");
-            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Multiple-enemy acceptance: 32 fresh screenshots total. Campaign 2-4 fielded three uniquely selectable enemies and four SD allies; every intent displayed its owning enemy number and original named recipient. Sera's real offered card intercepted the second enemy's attack aimed at Lian; only that intent's route changed to Sera, with Lian retained as original target. Direct card drag selected the third enemy's body. Actual core damage events from enemies 2 and 3 animated their own art and applied damage only at contact to the exact target; losing the intercepted clash hit Sera rather than Lian. A main chapter boss still rendered as one larger enemy.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Multiple-enemy acceptance: 38 fresh screenshots total. Campaign 2-4 fielded three uniquely selectable enemies and four SD allies; every intent displayed its owning enemy number and original named recipient. Sera's real offered card intercepted the second enemy's attack aimed at Lian; only that intent's route changed to Sera, with Lian retained as original target. Direct card drag selected the third enemy's body. Actual core damage events from enemies 2 and 3 animated their own art and applied damage only at contact to the exact target; losing the intercepted clash hit Sera rather than Lian. A main chapter boss still rendered as one larger enemy.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Progressive action acceptance: 38 fresh screenshots total. Both battle types started with one usable action per ally while retaining two offered choices. Normal battles progressed [1,1,1,1] → [2,1,1,1] → [2,2,1,1] → [2,2,2,1] → [2,2,2,2]; bosses remained [2,2,1,1] from round 3 through round 5. Locked second chips showed their unlock round or boss limit and rejected clicks, direct calls and drags without reservations or hand consumption. Selecting another candidate replaced the existing first action. Guard actions used the same limit; the dock count matched usable actions and consumed slots. Restart selection clamped to action 1. Synchronized S3 used one action on round 1 for every standard party member, including boss positions 3 and 4; its card identity and the two-choice hand were preserved. The older two-action drag and budget fixtures ran at an explicitly later round.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
+        }
+        IEnumerator SmokeActionProgression(string directory)
+        {
+            smokePhase="progressive action slots";smokeDeadline=Time.realtimeSinceStartup+60;
+            foreach(bool boss in new[]{false,true}){
+                campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,17);battle.State.IsBoss=boss;BattleRules.ApplyActionProgression(battle.State);
+                foreach(var actor in battle.State.Allies)actor.Hp=actor.MaxHp=5000;
+                selectedActor="lian";selectedSlot=1;selectionRound=battle.State.Round;explicitSlotFocus=true;PrepareBattlePresentation();
+                if(selectedSlot!=0)throw new Exception("A new round-1 battle retained the previous second-action selection.");
+                for(int round=1;round<=5;round++){
+                    var expected=battle.State.Allies.Select((actor,index)=>round>=index+2&&(!boss||index<2)?2:1).ToArray();
+                    if(battle.State.Round!=round||!battle.State.Allies.Select(actor=>actor.SlotCount).SequenceEqual(expected))
+                        throw new Exception("Action progression did not match its round and battle type.");
+                    DrawBattle();
+                    if(screen.GetComponentsInChildren<Button>().Count(button=>button.name.StartsWith("Skill card ",StringComparison.Ordinal))!=8||battle.State.Allies.Any(actor=>actor.SkillHand.Count!=2))
+                        throw new Exception("Usable action limits changed the two offered card choices.");
+                    if(!screen.Find("Dock plan count").GetComponent<Text>().text.EndsWith("/"+expected.Sum(),StringComparison.Ordinal))
+                        throw new Exception("Dock denominator did not match the actual usable actions.");
+                    foreach(var actor in battle.State.Allies){
+                        var second=screen.Find(actor.Id+" slot 1").GetComponent<Button>();
+                        if(second.interactable!=(actor.SlotCount==2))throw new Exception("Second action chip did not follow its lock state.");
+                        if(actor.SlotCount==2)continue;
+                        string lockLabel=second.GetComponent<OrnateButton>().Caption.text;
+                        int unlockRound=BattleRules.ActionSlotUnlockRound(battle.State,actor);
+                        if(!lockLabel.Contains(unlockRound==0?"보스전 제한":"R"+unlockRound+" 개방"))throw new Exception("Locked second action did not explain when it unlocks.");
+                        int handCount=actor.SkillHand.Count,linksBefore=battle.State.Links.Count;string actorBefore=selectedActor;int slotBefore=selectedSlot;
+                        second.onClick.Invoke();BeginLinkDrag(new PointerEventData(EventSystem.current),actor.Id,1,null);
+                        var card=actor.SkillHand.First(value=>battle.Skill(actor.Id,value.SkillId).Kind==SkillKind.Attack);
+                        if(battle.TryLink(actor.Id,1,card.SkillId,LinkKind.Strike,battle.State.Enemies[0].Id,out _,card.Id)||dragVisuals
+                            ||selectedActor!=actorBefore||selectedSlot!=slotBefore||battle.State.Links.Count!=linksBefore||actor.SkillHand.Count!=handCount)
+                            throw new Exception("Locked second action accepted a click, drag or reservation.");
+                    }
+                    if(round==1){
+                        var actor=battle.Unit("lian");var cards=actor.SkillHand.ToArray();
+                        SelectOfferedCard(actor.Id,cards[0].Id);Target(battle.State.Enemies[0].Id);
+                        SelectOfferedCard(actor.Id,cards[1].Id);Target(battle.State.Enemies[0].Id);
+                        if(battle.State.Links.Count!=1||battle.State.Links[0].Slot!=0||battle.State.Links[0].CardId!=cards[1].Id||actor.SkillHand.Count!=2)
+                            throw new Exception("The second offered choice did not replace its owner's only action.");
+                        battle.ClearLinks();
+                        foreach(var owner in battle.State.Allies){
+                            owner.SyncLevel=1;var original=owner.SkillHand[0];var third=owner.Skills.First(skill=>skill.Number==3);
+                            string cardId="smoke-one-action-s3-"+owner.Id;
+                            owner.SkillHand[0]=new SkillCard{Id=cardId,SkillId=third.Id};DrawBattle();
+                            if(third.Slots!=1||!screen.Find("Skill card "+cardId).GetComponent<Button>().interactable)
+                                throw new Exception("Synchronized S3 was not available as a single action on round 1.");
+                            SelectOfferedCard(owner.Id,cardId);Target(third.Kind==SkillKind.Heal?"lian":battle.State.Enemies[0].Id);
+                            if(battle.State.Links.Count!=1||battle.State.Links[0].ActorId!=owner.Id||battle.State.Links[0].Slot!=0||battle.State.Links[0].CardId!=cardId||owner.SlotCount!=1)
+                                throw new Exception("Round-1 single-action S3 lost its owner, cost, or card identity.");
+                            battle.ClearLinks();owner.SkillHand[0]=original;
+                        }
+                        DrawBattle();
+                    }
+                    if(!boss&&round==1)yield return Capture(directory,"25-normal-round1");
+                    if(!boss&&round==2)yield return Capture(directory,"26-normal-round2");
+                    if(!boss&&round==3)yield return Capture(directory,"27-normal-round3");
+                    if(!boss&&round==5)yield return Capture(directory,"28-normal-round5");
+                    if(boss&&round==3)yield return Capture(directory,"29-boss-round3");
+                    if(boss&&round==5)yield return Capture(directory,"30-boss-round5");
+                    if(round==5)break;
+                    if(!boss&&round==2){
+                        var fallen=battle.Unit("lian");selectedActor=fallen.Id;selectedSlot=1;fallen.Hp=0;DrawBattle();
+                        if(selectedActor==fallen.Id||selectedSlot!=0||battle.Unit(selectedActor).SlotCount!=1)
+                            throw new Exception("A fallen first ally leaked its unlocked second-action selection to the next ally.");
+                        fallen.Hp=fallen.MaxHp;DrawBattle();
+                    }
+                    foreach(var actor in battle.State.Allies){SelectDefense(actor.Id);Target(actor.Id);}
+                    battle.ResolveRound(IgniteGrade.Good);battle.BeginNextRound();
+                }
+                battle.Restart();selectedSlot=1;DrawBattle();
+                if(battle.State.Round!=1||selectedSlot!=0||battle.State.Allies.Any(actor=>actor.SlotCount!=1))
+                    throw new Exception("Restart did not reset progressive action limits and selection.");
+            }
+            toastText="";toastUntil=0;
         }
         IEnumerator SmokeMultipleEnemies(string directory)
         {

@@ -20,15 +20,22 @@ def call(action=None,expect=200,**fields):
     assert status==expect,(action,status,data.get('error'))
     return data
 def stage(data,key):return next(s for c in data['campaign']['chapters'] for s in c['stages'] if s['id']==key)
+def action_slots(data):
+    battle=data['battle'];round_number=battle['round']
+    expected=[1+int(round_number>=index+2 and (not battle['isBoss'] or index<2)) for index,_ in enumerate(battle['allies'])]
+    assert [actor['slotCount'] for actor in battle['allies']]==expected
+    assert [actor['unlockedActionSlots'] for actor in battle['allies']]==expected
+    assert [actor['maxActionSlots'] for actor in battle['allies']]==[1 if battle['isBoss'] and index>=2 else 2 for index,_ in enumerate(battle['allies'])]
 def four_party(data,ids=('lian','sera','minato','noa')):
     allies=data['battle']['allies']
     assert [actor['id'] for actor in allies]==list(ids)
-    assert sum(actor['slotCount'] for actor in allies)==8
+    action_slots(data)
     cards=[card for actor in allies for card in actor['skillHand']]
     assert len(cards)==len({card['id'] for card in cards})==8
     for actor in allies:
         assert len(actor['skillHand'])==2
         skills={skill['id']:skill for skill in actor['skills']}
+        assert all(skill['slots']==1 for skill in skills.values())
         bag=[card['skillId'] for card in actor['skillHand']]+actor['drawPile']+actor['discardPile']
         assert len(bag)==5
         numbers=[skills[skill_id]['number'] for skill_id in bag]
@@ -68,9 +75,10 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='multi-enemy-intercept-v7'
+    assert data and data['runtimeRevision']=='round-action-slots-v8'
     four_party(data)
-    assert data['battle']['ember']==3
+    assert data['battle']['ember']==3 and data['battle']['isBoss']
+    assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
     original_hands={actor['id']:actor['skillHand'] for actor in data['battle']['allies']}
     # Every dock actor submits its own offered card without changing another hand.
     for actor in data['battle']['allies']:
@@ -83,6 +91,15 @@ try:
         assert data['battle']['links'][0]['actorId']==actor['id'] and data['battle']['links'][0]['cardId']==card['id']
         data=call('clear')
         assert {unit['id']:unit['skillHand'] for unit in data['battle']['allies']}==original_hands
+    # A locked second action must preserve the first reservation and both cards.
+    lian=next(actor for actor in data['battle']['allies'] if actor['id']=='lian');first,second=lian['skillHand']
+    data=call('link',actorId='lian',slot=0,skillId=first['skillId'],cardId=first['id'],kind='Strike',targetId='anger')
+    before_link=data['battle']['links'];before_cost=data['plannedCost'];before_ember=data['battle']['ember']
+    data=call('link',400,actorId='lian',slot=1,skillId=second['skillId'],cardId=second['id'],kind='Strike',targetId='anger')
+    assert data['battle']['links']==before_link and data['plannedCost']==before_cost and data['battle']['ember']==before_ember
+    data=call('link',400,actorId='lian',slot=1,skillId='lian_guard',kind='Guard',targetId='lian')
+    assert data['battle']['links']==before_link and next(a for a in data['battle']['allies'] if a['id']=='lian')['skillHand']==original_hands['lian']
+    data=call('clear')
     noa=next(actor for actor in data['battle']['allies'] if actor['id']=='noa')
     card=noa['skillHand'][0];intent=data['battle']['intents'][0]['id']
     foreign_card=next(actor for actor in data['battle']['allies'] if actor['id']=='lian')['skillHand'][0]
@@ -94,6 +111,13 @@ try:
     assert len(next(actor for actor in data['battle']['allies'] if actor['id']=='noa')['discardPile'])==1
     assert len(next(actor for actor in data['battle']['allies'] if actor['id']=='noa')['skillHand'])==1
     data=call('next');four_party(data)
+    assert [actor['slotCount'] for actor in data['battle']['allies']]==[2,1,1,1]
+    data=call('link',actorId='lian',slot=1,skillId='lian_guard',kind='Guard',targetId='lian')
+    assert data['battle']['links'][0]['slot']==1
+    data=call('link',400,actorId='noa',slot=1,skillId='noa_evade',kind='Guard',targetId='noa')
+    assert len(data['battle']['links'])==1 and data['battle']['links'][0]['actorId']=='lian'
+    call('recommend');call('resolve');data=call('next');four_party(data)
+    assert [actor['slotCount'] for actor in data['battle']['allies']]==[2,2,1,1]
     data=call('restart');four_party(data)
     assert data['progress']['coins']==data['progress']['lanternFragments']==0
     assert 'characterStories' not in data
@@ -133,6 +157,8 @@ try:
     data=call('stage-enter',stageId='c1s02');assert data['campaign']['phase']=='BeforeStory'
     data=call('stage-story',stageId='c1s02',expectedPhase='BeforeStory');assert data['campaign']['phase']=='Battle'
     actor=next(a for a in data['battle']['allies'] if a['id']=='lian')
+    assert not data['battle']['isBoss'] and len(data['battle']['enemies'])==1
+    action_slots(data)
     hand=actor['skillHand'];assert len(hand)==2 and len(actor['drawPile'])==3
     assert not any(s['skillId']=='lian_crescendo' for s in hand)
     card=hand[0];intent=data['battle']['intents'][0]['id']
@@ -184,6 +210,7 @@ try:
         call('stage-exit')
     data=call('stage-enter',stageId='c2s04');assert data['campaign']['phase']=='BeforeStory'
     data=call('stage-story',stageId='c2s04',expectedPhase='BeforeStory');four_party(data,('lian','sera','minato','heidel'))
+    assert not data['battle']['isBoss'] and [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
     enemies=data['battle']['enemies'];intents=data['battle']['intents']
     assert [enemy['id'] for enemy in enemies]==['anger','enemy_2','enemy_3']
     assert len({part['id'] for enemy in enemies for part in enemy['parts']})==6
@@ -215,9 +242,23 @@ try:
     assert len(data['battle']['enemies'])==3 and len({i['id'] for i in data['battle']['intents']})==4
     assert all(enemy['hp']==enemy['maxHp'] for enemy in data['battle']['enemies'])
     assert not stage(data,'c2s04')['cleared'] and not data['battle']['links']
-    print('PASS: actual HTTP four-person cards, staged progression to three-enemy 2-4, exact-owner interception/events and complete encounter restart.')
+    # A full normal encounter gains exactly one roster member's second action per turn.
+    for round_number in range(1,6):
+        assert data['battle']['round']==round_number
+        action_slots(data)
+        assert all(actor['alive'] for actor in data['battle']['allies'])
+        assert all(len(actor['skillHand'])==2 for actor in data['battle']['allies'])
+        if round_number==5:break
+        for actor in data['battle']['allies']:
+            defense=next(skill for skill in actor['skills'] if skill['number']==0)
+            data=call('link',actorId=actor['id'],slot=0,skillId=defense['id'],kind='Guard',targetId=actor['id'])
+        data=call('resolve');assert data['battle']['outcome']=='Ongoing'
+        data=call('next')
+    data=call('restart');four_party(data,('lian','sera','minato','heidel'))
+    assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
+    print('PASS: HTTP normal R1-R5 roster progression, boss R1-R3 caps, locked-second-action atomic rejection, unchanged two-card choices and full restart.')
     combat_art_routes()
-    print('PASS: v7 HTTP revision; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth actor intercepts second enemy without changing original target; clash winner and actual damage agree; duplicate interception stays atomic; four allies/eight distinct cards and slots; all four actor card bindings and fourth-actor clash/consumption/refill; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins, all nineteen four-person parties and actual 2-4 factory/restart; stage locks, story completion, card reservation/clear, S3 lock, victory/after-story rewards, stale requests, replay and synchronization funds.')
+    print('PASS: v8 HTTP revision; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth-actor interception and damage events; atomic card/slot/budget checks; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)
