@@ -1,5 +1,7 @@
 # 전투 포즈 아틀라스
 
+아군 5명의 새 전투용 SD 시트는 [SD 자산 설명](SD/README.md)을 따른다. 아래 기존 비율의 시트도 보존하며 분노의 시트는 계속 사용한다.
+
 ## 파일
 실제 게임 리소스는 `RequiemLantern/Assets/Resources/Combat/`에 있습니다.
 

@@ -43,18 +43,18 @@ const state = {
 
 function environment(storage = 'null') {
   const events = {}, gameEvents = {}, timers = new Map(), intervals = new Map();
-  let id = 0, hasModal = false, hit = null;
+  let id = 0, hasModal = false, hit = null, elementSlots=[], linkPaths=[], gameBox={ left: 0, top: 0, width: 1600, height: 900 };
   const words = { textContent: '' };
   const thread = { d: '', setAttribute(key, value) { this[key] = value; } };
   const game = {
     style: {}, classList: { toggle() {} }, innerHTML: '',
     addEventListener: (name, handler) => { gameEvents[name] = handler; },
-    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1600, height: 900 }),
+    getBoundingClientRect: () => gameBox,
     querySelector: selector => selector === '.modal'
       ? (hasModal ? { remove() { hasModal = false; } } : null)
       : selector === '.words' ? words : selector === '#drag-thread' ? thread : null,
     insertAdjacentHTML() { hasModal = true; },
-    querySelectorAll: () => []
+    querySelectorAll: selector => selector==='.slot'?elementSlots:selector==='[data-link-actor]'?linkPaths:[]
   };
   const context = {
     document: {
@@ -81,6 +81,7 @@ function environment(storage = 'null') {
   return {
     context, events, gameEvents, game, words, thread, timers, intervals,
     run: code => vm.runInContext(code, context),
+    setGeometry(box,slots=[],paths=[]) { gameBox=box;elementSlots=slots;linkPaths=paths; },
     setHit(targetId, disabled = false) {
       hit = targetId ? { disabled, dataset: { action: 'target:' + targetId } } : null;
     },
@@ -94,6 +95,12 @@ function environment(storage = 'null') {
 }
 
 function pass(name) { passed++; console.log('PASS ' + name); }
+function fourParty(env){env.run(`
+ const seed=data.battle.allies[0];
+ const companion=(id,name,element)=>({...JSON.parse(JSON.stringify(seed)),id,name,portrait:id[0].toUpperCase()+id.slice(1),element,skills:seed.skills.map(k=>({...k,id:k.id.replace('lian',id)})),skillHand:seed.skillHand.map(c=>({...c,id:c.id.replace('lian',id),skillId:c.skillId.replace('lian',id)}))});
+ data.battle.allies=[seed,companion('sera','세라','Flame'),data.battle.allies[1],companion('noa','노아','Shadow')];
+ showBattle();
+ `);}
 
 async function main() {
   let env = environment('{broken');
@@ -137,12 +144,12 @@ async function main() {
 
   env.context.record = null;
   env.run('suppressClickUntil=0');
-  pointerDown(); pointerMove(172, 446); env.setHit(null); await pointerUp(172, 446);
+  pointerDown(); pointerMove(333.33333333333337, 495.83333333333337); env.setHit(null); await pointerUp(333.33333333333337, 495.83333333333337);
   assert.equal(env.context.record, null);
   pass('attack snapping excludes allied units');
 
   env.run("suppressClickUntil=0;selectedActor='minato';selectedSlot=0;selectedSkill='minato_heal';selectedCardId='minato-card-2';");
-  pointerDown('minato'); pointerMove(172, 446); env.setHit(null); await pointerUp(172, 446);
+  pointerDown('minato'); pointerMove(333.33333333333337, 495.83333333333337); env.setHit(null); await pointerUp(333.33333333333337, 495.83333333333337);
   assert.equal(env.context.record.targetId, 'lian');
   assert.equal(env.context.record.kind, 'Support');
   assert.equal(env.context.record.skillId, 'minato_heal');
@@ -459,7 +466,7 @@ async function main() {
   env.run(`page='battle';tone=()=>{};command=async(action,args)=>{globalThis.directDragCall={action,...args};return true;};`);
   env.gameEvents.pointerdown({clientX:646,clientY:704,pointerId:8,target:{closest:()=>({dataset:{actor:'minato',cardId:'minato-card-2'},disabled:false})}});
   assert.equal(env.run('dragInfo.actor'),'minato');assert.equal(env.run('dragInfo.cardId'),'minato-card-2');
-  env.events.pointermove({clientX:172,clientY:446,pointerId:8});env.setHit('lian');await env.events.pointerup({clientX:172,clientY:446,pointerId:8});
+  env.events.pointermove({clientX:333.33333333333337,clientY:495.83333333333337,pointerId:8});env.setHit('lian');await env.events.pointerup({clientX:333.33333333333337,clientY:495.83333333333337,pointerId:8});
   assert.equal(env.context.directDragCall.actorId,'minato');assert.equal(env.context.directDragCall.slot,0);assert.equal(env.context.directDragCall.cardId,'minato-card-2');assert.equal(env.context.directDragCall.kind,'Support');
   const directDragCall=env.context.directDragCall;await env.click('skill-card:lian:lian-card-1');assert.equal(env.context.directDragCall,directDragCall);assert.equal(env.run('selectedActor'),'minato');
   pass('direct card drag selects its owner, validates ally healing, and suppresses the release click');
@@ -528,6 +535,64 @@ async function main() {
   env.context.showStages(2,'');
   assert.ok(env.game.innerHTML.includes('세라의 장'));assert.ok(!env.game.innerHTML.includes('<strong>세라 · '));
   pass('the keep follows the current main-story frontier and chapter titles avoid repeating their focus character');
+
+  env=environment();fourParty(env);
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
+  assert.equal((env.game.innerHTML.match(/class="field-hero sd-unit/g)||[]).length,4);
+  assert.equal((env.game.innerHTML.match(/class="dock-portrait"/g)||[]).length,4);
+  assert.ok(env.game.innerHTML.includes('/combat/NoaSDActions.png'));
+  assert.ok(env.game.innerHTML.includes('/art/Noa.png'));
+  pass('four allies show eight direct skill cards, four SD bodies and original portrait thumbnails');
+
+  env.run(`tone=()=>{};command=async(action,args)=>{if(action==='link')data.battle.links.push(args);return true;};`);
+  await env.click('skill-card:noa:noa-card-1');await env.click('target:intent1');
+  await env.click('skill-card:noa:noa-card-2');await env.click('target:arm');
+  assert.equal(env.run('selectedActor'),'noa');assert.equal(env.run('data.battle.links.length'),2);
+  assert.equal(env.run('data.battle.links[0].slot'),0);assert.equal(env.run('data.battle.links[1].slot'),1);
+  pass('the fourth fighter fills both free actions using distinct offered cards');
+
+  env=environment();fourParty(env);env.run(`tone=()=>{};command=async(action,args)=>{globalThis.fourDefense={action,...args};return true;};`);
+  await env.click('defense:noa:noa_guard');await env.click('target:sera');
+  assert.equal(env.context.fourDefense.actorId,'noa');assert.equal(env.context.fourDefense.targetId,'sera');assert.equal(env.context.fourDefense.cardId,'');
+  pass('fourth-fighter defense selects its owner and supports another living ally without spending an attack card');
+
+  env=environment();fourParty(env);
+  env.setGeometry({left:50,top:20,width:800,height:450},[{dataset:{actor:'noa',slot:'1'},getBoundingClientRect:()=>({left:620,top:411,width:73,height:12})}]);
+  assert.deepEqual(JSON.parse(JSON.stringify(env.run("slotPoint('noa',1)"))),{x:1213,y:794});
+  assert.deepEqual(JSON.parse(JSON.stringify(env.run('logicalElementCenter(null)'))),null);
+  pass('slot anchors use measured DOM centers converted through the actual viewport scale');
+
+  let renderedLine='';const measuredLink={dataset:{linkActor:'noa',linkSlot:'1',linkTarget:'arm'},setAttribute:(_key,value)=>{renderedLine=value;}};
+  env.setGeometry({left:50,top:20,width:800,height:450},[{dataset:{actor:'noa',slot:'1'},getBoundingClientRect:()=>({left:620,top:411,width:73,height:12})}],[measuredLink]);
+  env.run('refreshBattleThreads()');assert.ok(renderedLine.startsWith('M1213,794 '));assert.ok(renderedLine.endsWith('1190,550'));
+  pass('reserved connection threads use the same measured slot anchor as dragging and contact feedback');
+
+  env=environment();fourParty(env);
+  env.run(`battleFx.options.layouts={lian:{atlasWidth:1800,atlasHeight:1200,bodyHeight:300,frames:[{x:11,y:20,width:460,height:510,footX:201,footY:488}]}};showBattle();`);
+  assert.ok(env.game.innerHTML.includes('background-size:1100px 733.3333333333334px'));
+  assert.ok(env.game.innerHTML.includes('data-combat-src="/combat/LianSDActions.png"'));
+  assert.ok(!env.game.innerHTML.includes('src="/art/Lian.png" data-unit='));
+  assert.equal(env.run('LanternBattleGeometry.allyBodyHeight'),183.33333333333334);
+  assert.equal(env.run("actorPoint('noa').x"),725);
+  pass('planning draws the measured first SD pose at the shared compact foot anchor without a full illustration body');
+
+  env=environment();fourParty(env);env.run('showHub()');
+  assert.ok(env.game.innerHTML.includes('/art/Lian.png'));assert.ok(!env.game.innerHTML.includes('SDActions'));
+  env.context.showRoster(4);assert.ok(env.game.innerHTML.includes('/art/Noa.png'));assert.ok(!env.game.innerHTML.includes('SDActions'));
+  env.run("storyKey='prologue';story=data.story.prologue;storyIndex=0;drawStory()");
+  assert.ok(env.game.innerHTML.includes('/art/Lian.png'));assert.ok(!env.game.innerHTML.includes('SDActions'));
+  pass('the keep, roster and story continue to show the original large illustrations');
+
+  env=environment();fourParty(env);env.run(`data.battle.allies[3].id='heidel';data.battle.allies[3].name='하이델';data.battle.allies[3].portrait='Heidel';showBattle();`);
+  assert.ok(env.game.innerHTML.includes('/combat/HeidelSDActions.png'));assert.ok(env.game.innerHTML.includes('/art/Heidel.png'));
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
+  pass('a story party containing Heidel uses his own SD body and original portrait');
+
+  env=environment();env.run('data.battle.allies.splice(1);showBattle()');
+  assert.equal((env.game.innerHTML.match(/class="field-hero sd-unit/g)||[]).length,1);
+  assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,2);
+  assert.ok(env.game.innerHTML.includes('/ 2</small>'));
+  pass('early story encounters with fewer recruited companions keep only their real offered cards and action capacity');
 
   console.log('TOTAL ' + passed + ' regression cases passed');
 }

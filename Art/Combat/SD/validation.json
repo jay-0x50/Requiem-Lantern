@@ -1,0 +1,227 @@
+[
+  {
+    "id": "Lian",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\LianSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.522098,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 106778
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 3,
+        "visiblePixels": 122734
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 3,
+        "visiblePixels": 99609
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 120577
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 3,
+        "visiblePixels": 105294
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 116849
+      }
+    ]
+  },
+  {
+    "id": "Sera",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\SeraSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.673813,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 70330
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 69239
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 74978
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 81878
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 70959
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 78482
+      }
+    ]
+  },
+  {
+    "id": "Minato",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\MinatoSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.453407,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 119938
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 3,
+        "visiblePixels": 131212
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 6,
+        "visiblePixels": 136245
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 132225
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 123657
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 115123
+      }
+    ]
+  },
+  {
+    "id": "Noa",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\NoaSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.503477,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 108248
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 117846
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 2,
+        "visiblePixels": 121448
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 118548
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 111439
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 112155
+      }
+    ]
+  },
+  {
+    "id": "Heidel",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\HeidelSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.726941,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 56702
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 61626
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 62555
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 66918
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 63383
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 63266
+      }
+    ]
+  }
+]

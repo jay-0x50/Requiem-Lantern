@@ -440,3 +440,27 @@
 #game .command-actions>button:not(.resolve-button){height:40px;width:87px;flex-shrink:0;font-size:12px;padding:0 10px}
 #game .command-actions .resolve-button{height:80px;flex:1;min-width:0;padding:12px 19px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:7px;--button-cut:12px}
 .resolve-button strong{display:flex;align-items:center;justify-content:space-between;font-size:25px;font-weight:500}.resolve-button strong span{font-size:28px}.resolve-button small{font-size:10px;font-weight:400;color:#d6c59e;letter-spacing:0;white-space:nowrap}
+
+/* Four readable command columns; the large illustrations remain in other screens. */
+.battle .action-dock{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 302px;gap:14px}
+.battle .fighter{width:auto;flex:initial}
+.battle .command-rail{grid-column:5}
+#game .fighter-cards .skill-card{padding:8px 9px 6px}
+.card-name{font-size:14px}.fighter-cards{gap:6px}
+.fighter-identity{gap:7px}.fighter-vitals .fighter-title{font-size:13px}
+.fighter-vitals .fighter-sanity{font-size:10px;gap:3px}.fighter-sanity small{font-size:9px}
+.fighter-defense{max-width:59px}
+#game .fighter-defense .defense-button{padding:5px 7px}
+.battle .fighter .slots{gap:6px}.battle .fighter .slot-wrap{width:calc(50% - 3px)}
+.command-rail .planned-actions{gap:9px}.command-rail .planned-actions>span{font-size:10px}
+.command-rail .selected-action{height:56px}.command-rail .selected-action>span{white-space:normal;line-height:1.5}
+.command-rail .selected-action small{display:block}
+.command-actions{gap:7px}.command-rail .resolve-button strong{font-size:22px}
+#game .command-actions .resolve-button{padding:10px 13px}
+.battle .sd-unit{width:0;height:0;z-index:3;pointer-events:none;filter:drop-shadow(0 7px 5px #0008)}
+.combat-idle-sprite{position:absolute;display:block;background-repeat:no-repeat;pointer-events:none}
+.battle .ally-target{width:150px;height:200px;background:transparent!important;border:0!important;z-index:5}
+.battle .field-name{width:150px;top:604px;text-align:center;font-size:14px}
+.battle .enemy{left:1189.1666667px;top:326.6666667px;width:280px;height:258.3333333px;object-fit:contain;object-position:center bottom}
+.battle .enemy.human-enemy{top:326.6666667px;height:258.3333333px}
+.battle .sd-unit.dead{opacity:.25;filter:grayscale(1)}

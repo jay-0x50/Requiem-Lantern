@@ -81,6 +81,24 @@ namespace RequiemLantern.Presentation
             // Deterministic visual capture; the user's PlayerPrefs are never written.
             assisted=true;autoMode=false;reducedMotion=false;sound=true;
             if(combatAudio==null||combatAudio.MissingCount!=0)throw new Exception("Combat PCM assets are missing.");
+            foreach(var id in BattleAvatar.AllyArtIds){
+                var texture=BattleAvatar.LoadAtlas(id,true,out var key,out var layout);
+                if(!texture||layout==null||texture==Resources.Load<Texture2D>("Art/"+id))
+                    throw new Exception("Battle SD atlas or original portrait separation is missing: "+id);
+                var fixture=MakeRect(stage,"SD pose fixture "+id,0,0,1920,1080);
+                var avatar=BattleAvatar.Create(fixture,id,Resources.Load<Texture2D>("Art/"+id),false,new Vector2(500,700),BattleAvatar.AllyBodyHeight);
+                using(var performer=new CombatPosePlayer(fixture,avatar,id,true,BattleAvatar.AllyBodyHeight,"SD continuity "+id)){
+                    if(!performer.HasSDAtlas||!performer.HasFrameLayout||performer.OriginalFoot!=new Vector2(500,700))
+                        throw new Exception("SD planning avatar lost its planted foot or atlas when entering animation: "+id);
+                    for(int pose=0;pose<6;pose++){
+                        performer.SetPose(pose);performer.PlaceFoot(new Vector2(500,700));
+                        if(performer.Image.texture!=texture||performer.Image.uvRect.width>=.5f||performer.Image.rectTransform.anchoredPosition!=new Vector2(500,-700))
+                            throw new Exception("SD pose continuity failed: "+id+" / "+pose);
+                    }
+                }
+                if(!avatar.enabled)throw new Exception("SD planning avatar was not restored after its action: "+id);
+                fixture.gameObject.SetActive(false);Destroy(fixture.gameObject);
+            }
             int beforeMuted=combatAudio.PlayedCount;
             if(combatAudio.Play("clash",false,true)||combatAudio.PlayedCount!=beforeMuted||combatAudio.ActiveCount!=0)
                 throw new Exception("Muted combat audio created an active voice.");
@@ -96,8 +114,9 @@ namespace RequiemLantern.Presentation
             yield return Capture(directory,"12-campaign-map");
             if(!screen.Find("Stage "+firstChapter.Stages[0].Id)||!screen.Find("Stage "+firstChapter.Stages[1].Id)||screen.Find("Stage "+firstChapter.Stages[2].Id)||screen.Find("Chapter 2"))
                 throw new Exception("Campaign map displayed future stages or hid completed/current stages.");
-            EnterCampaignStage(firstChapter.Stages[1].Id);FinishCurrentStory();
+            EnterCampaignStage(firstChapter.Stages[1].Id);AssertOriginalPortraits("main story");FinishCurrentStory();
             if(page!="battle"||battle.State.Allies.Count!=1||campaign.Phase!=CampaignPhase.Battle)throw new Exception("Mixed stage 1-2 did not enter its solo Lian battle.");
+            AssertSmallBattleAvatars();
             yield return Capture(directory,"13-campaign-solo-battle");
             while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=12){
                 battle.RecommendLinks();battle.ResolveRound(IgniteGrade.Good);
@@ -121,8 +140,8 @@ namespace RequiemLantern.Presentation
             int coinsBeforeReplay=progress.Data.Coins;
             EnterCampaignStage(meal.Id,true);storyIndex=1;DrawStory();revealed=999;yield return Capture(directory,"15-campaign-ensemble");FinishCurrentStory();
             if(progress.Data.Coins!=coinsBeforeReplay||page!="stages")throw new Exception("Campaign replay changed rewards or did not return to the map.");
-            ShowHub();yield return Capture(directory,"03-hub");
-            ShowRoster(0);yield return Capture(directory,"04-roster");
+            ShowHub();AssertOriginalPortraits("main hub");yield return Capture(directory,"03-hub");
+            ShowRoster(0);AssertOriginalPortraits("roster");yield return Capture(directory,"04-roster");
             // Later-chapter captures use explicit completed-history fixtures and
             // their own save paths. The ongoing player's tour/save is restored below.
             var tourProgress=progress;var tourSave=save;
@@ -199,9 +218,16 @@ namespace RequiemLantern.Presentation
                 return actor.SkillHand.Count==2&&actor.SkillHand.All(card=>candidate.Skill(actor.Id,card.SkillId).Number==1);
             });
             campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,duplicateSeed);PrepareBattlePresentation();
+            if(battle.State.Allies.Count!=4)throw new Exception("Standard battle did not field four allies.");
+            AssertSmallBattleAvatars();
             var duplicateCards=battle.Unit("lian").SkillHand.ToArray();
-            if(screen.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal))!=battle.State.Allies.Sum(actor=>actor.SkillHand.Count))
+            if(screen.GetComponentsInChildren<Button>().Count(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal))!=8)
                 throw new Exception("Battle dock did not display every ally's two offered skill cards.");
+            var dockCards=screen.GetComponentsInChildren<Button>().Where(b=>b.name.StartsWith("Skill card ",StringComparison.Ordinal)).Select(b=>b.GetComponent<RectTransform>()).ToArray();
+            if(dockCards.Any(rect=>rect.anchoredPosition.x<20||rect.anchoredPosition.x+rect.sizeDelta.x>1540||rect.sizeDelta.x<160))
+                throw new Exception("Four-party skill cards escaped their dock or became too narrow.");
+            if(screen.Find("Skill selection").GetComponent<RectTransform>().anchoredPosition.x<1540)
+                throw new Exception("Focused skill details still occupied the card area.");
             var otherActor=battle.State.Allies.First(actor=>actor.Id!="lian");var otherCard=otherActor.SkillHand.First();
             screen.Find("Skill card "+otherCard.Id).GetComponent<Button>().onClick.Invoke();
             if(selectedActor!=otherActor.Id||selectedCard!=otherCard.Id||selectedSlot!=0)throw new Exception("An ally's direct skill card did not focus its owner and first action.");
@@ -255,6 +281,18 @@ namespace RequiemLantern.Presentation
                 var number=feedback?feedback.GetComponent<Text>():null;
                 var marker=damage?damage.GetComponent<CombatPhaseMarker>():null;
                 var contact=damage?damage.Find("Weapon contact"):null;
+                foreach(var active in overlay?overlay.GetComponentsInChildren<CombatPhaseMarker>():new CombatPhaseMarker[0]){
+                    if(active.Attacker&&active.Attacker.texture&&active.Attacker.texture.name.EndsWith("SDActions",StringComparison.Ordinal)){
+                        if(!active.SDActive||!active.FrameLayoutActive||active.BodyHeight>1080*.21f)
+                            throw new Exception("SD attack grew beyond battle scale or lost its frame metadata.");
+                    }
+                    foreach(var performer in new[]{active.Attacker,active.Defender}){
+                        if(!performer||!performer.texture)continue;
+                        var textureName=performer.texture.name;
+                        if(BattleAvatar.AllyArtIds.Contains(textureName)||BattleAvatar.AllyArtIds.Any(id=>textureName==id+"Actions"))
+                            throw new Exception("A battle performer switched back to a full-size ally illustration.");
+                    }
+                }
                 if(!capturedWindup&&marker&&marker.Phase=="windup"){
                     if(marker.ContactSoundCount!=0)throw new Exception("A contact sound played before weapon contact.");
                     if(!marker.AtlasActive||!marker.Attacker||marker.Attacker.uvRect.width>=.5f)throw new Exception("Melee is missing its attack pose atlas.");
@@ -288,6 +326,7 @@ namespace RequiemLantern.Presentation
             if(!capturedFlameSuspense||!completedFlameReveal)throw new Exception("Smoke missed the unrevealed flame phase or its sequential completion before damage.");
             if(page!="battle"||resolving||overlay||battle.State.Round!=2||battle.State.Outcome!=BattleOutcome.Ongoing)
                 throw new Exception("First visual round did not return cleanly to round 2 planning.");
+            AssertSmallBattleAvatars();
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies)){
                 if(!visibleHealth.TryGetValue(unit.Id,out var shown)||shown!=unit.Hp)throw new Exception("Visible HP differs from core HP for "+unit.Id);
                 if(healthFills.TryGetValue(unit.Id,out var fills))foreach(var fill in fills){
@@ -315,7 +354,35 @@ namespace RequiemLantern.Presentation
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
             File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 27 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 1 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 2 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Four-person standard party, eight visible skill cards at least 160 canvas pixels wide; selection details in the right rail. All five battle SD atlases retained their six poses and planted-foot geometry. Fielded allies stayed at 220/1080 body height through planning and action; original hub, dialogue, roster and dock face portraits remained separate.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
+        }
+        void AssertOriginalPortraits(string context)
+        {
+            var images=screen.GetComponentsInChildren<RawImage>().Where(image=>image.name.EndsWith(" portrait",StringComparison.Ordinal)
+                &&BattleAvatar.AllyArtIds.Any(id=>image.name==id+" portrait")).ToArray();
+            if(images.Length==0)throw new Exception("No original ally portrait was displayed in "+context+".");
+            foreach(var image in images){
+                string id=image.name.Substring(0,image.name.Length-" portrait".Length);
+                if(image.texture!=Resources.Load<Texture2D>("Art/"+id)||image.GetComponent<BattleAvatarMarker>())
+                    throw new Exception("Battle SD art replaced an original portrait in "+context+" / "+id);
+            }
+        }
+        void AssertSmallBattleAvatars()
+        {
+            var markers=screen.GetComponentsInChildren<BattleAvatarMarker>().Where(marker=>marker.IsSD).ToArray();
+            if(markers.Length!=battle.State.Allies.Count)throw new Exception("Every fielded ally must use a battle SD avatar.");
+            foreach(var unit in battle.State.Allies){
+                var image=fighters[unit.Id];var marker=image.GetComponent<BattleAvatarMarker>();
+                if(!marker||!marker.IsSD||marker.Layout==null||marker.BodyHeight!=BattleAvatar.AllyBodyHeight
+                    ||marker.BodyHeight>1080*.21f||!image.texture.name.EndsWith("SDActions",StringComparison.Ordinal))
+                    throw new Exception("Incorrect small battle-only avatar for "+unit.Id);
+                if(Mathf.Abs(image.rectTransform.anchoredPosition.y+BattleAvatar.GroundY)>.1f)
+                    throw new Exception("SD avatar did not stand on its planted battle foot: "+unit.Id);
+                var dock=screen.Find(unit.Id+" dock portrait").GetComponent<RawImage>();
+                if(dock.texture!=Resources.Load<Texture2D>("Art/"+ArtId(unit.Portrait)))
+                    throw new Exception("Battle dock did not retain the original face portrait: "+unit.Id);
+            }
         }
         void UseSmokeChapterFixture(ChapterData chapter,StageData current)
         {

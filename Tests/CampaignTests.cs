@@ -22,7 +22,7 @@ internal static class CampaignTests
             Equal(25,Stages.Count(s=>s.Kind==StageKind.Story));Equal(7,Stages.Count(s=>s.Kind==StageKind.Battle));Equal(18,Stages.Count(s=>s.Kind==StageKind.StoryBattle));
             foreach(var stage in Stages){
                 if(stage.Kind==StageKind.Story){True(stage.Before.Count>0);Equal(0,stage.After.Count);Equal(0,stage.Party.Length);}
-                else{True(stage.Party.Length>=1&&stage.Party.Length<=3);True(!string.IsNullOrEmpty(stage.EnemyName));True(!string.IsNullOrEmpty(stage.EnemyArt));}
+                else{True(stage.Party.Length>=1&&stage.Party.Length<=PrototypeData.PartyCapacity);True(!string.IsNullOrEmpty(stage.EnemyName));True(!string.IsNullOrEmpty(stage.EnemyArt));}
                 if(stage.Kind==StageKind.Battle){Equal(0,stage.Before.Count);Equal(0,stage.After.Count);}
                 if(stage.Kind==StageKind.StoryBattle){True(stage.Before.Count>0);True(stage.After.Count>0);}
             }
@@ -38,6 +38,8 @@ internal static class CampaignTests
                     foreach(var sourceStage in chapter.GetProperty("stages").EnumerateArray()){
                         var stage=CampaignCatalog.Get(sourceStage.GetProperty("id").GetString());True(stage!=null);
                         Equal(sourceStage.GetProperty("number").GetString(),stage.Number);Equal(sourceStage.GetProperty("kind").GetString(),stage.Kind.ToString());
+                        Equal(string.Join(",",sourceStage.GetProperty("party").EnumerateArray().Select(x=>x.GetString())),string.Join(",",stage.Party));
+                        Equal(string.Join(",",sourceStage.GetProperty("participants").EnumerateArray().Select(x=>x.GetString())),string.Join(",",stage.Participants));
                         foreach(string part in new[]{"before","after"}){
                             var lines=sourceStage.GetProperty(part).EnumerateArray().ToList();var compiled=part=="before"?stage.Before:stage.After;
                             Equal(lines.Count,compiled.Count);authoredLines+=lines.Count;compiledLines+=compiled.Count;
@@ -52,6 +54,29 @@ internal static class CampaignTests
                 True(chapter.Stages.SelectMany(s=>Speakers(s)).Distinct().Count()>=4);
             }
             True(Stages.SelectMany(s=>s.Before.Concat(s.After)).Any(line=>!string.IsNullOrEmpty(line.ListenerPortrait)));
+        });
+        Test("four-person campaign parties preserve staged joins and focal character roles",()=>{
+            Equal(4,PrototypeData.PartyCapacity);var established=Stages.Where(s=>s.HasBattle&&(s.Chapter>2||(s.Chapter==2&&int.Parse(s.Number.Split('-')[1])>=4))).ToList();
+            Equal(19,established.Count);
+            foreach(var stage in established){
+                Equal(4,stage.Party.Length,stage.Number);Equal(4,stage.Party.Distinct().Count(),stage.Number);
+                True(stage.Party.All(id=>stage.Participants.Contains(id)),"Battle actor is missing from story participants: "+stage.Number);
+                True(stage.Party.Contains("minato"),"Four-person party lost healing coverage: "+stage.Number);
+                string focus=CampaignCatalog.Chapters.Single(c=>c.Number==stage.Chapter).FocusCharacterId;
+                if(stage.Number!="3-2"&&stage.Number!="3-3")True(stage.Party.Contains(focus),"Focal character is missing from battle: "+stage.Number);
+            }
+            foreach(var pair in new[]{new[]{"1-2","lian"},new[]{"1-4","lian,sera"},new[]{"1-5","lian,sera"},new[]{"1-8","lian,sera,minato"},new[]{"1-9","lian,sera,minato"},new[]{"2-2","lian,sera,minato"}})
+                Equal(pair[1],string.Join(",",Stages.Single(s=>s.Number==pair[0]).Party));
+            True(Stages.Where(s=>s.Chapter<3||(s.Chapter==3&&int.Parse(s.Number.Split('-')[1])<6)).All(s=>!s.Party.Contains("noa")));
+            True(Stages.Where(s=>s.Chapter==1).All(s=>!s.Party.Contains("heidel")));
+            True(Stages.Single(s=>s.Number=="3-6").Party.Contains("noa"));
+        });
+        Test("campaign rejects oversized and repeated parties before mutating player growth",()=>{
+            foreach(var party in new[]{new[]{"lian","sera","minato","noa","heidel"},new[]{"lian","sera","minato","lian"},new string[0]}){
+                var stage=new StageData{Kind=StageKind.Battle,Party=party};var data=new ProgressData();bool rejected=false;
+                try{CampaignBattleFactory.Create(stage,data,0);}catch(InvalidOperationException){rejected=true;}
+                True(rejected);Equal(0,data.Characters.Count);
+            }
         });
         Test("the five main chapters carry character arcs and human friend encounters",()=>{
             Equal("lian,sera,noa,heidel,minato",string.Join(",",CampaignCatalog.Chapters.Select(c=>c.FocusCharacterId)));

@@ -1,0 +1,67 @@
+{
+  "atlasWidth": 1536,
+  "atlasHeight": 1024,
+  "bodyHeight": 368,
+  "frames": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "footX": 252,
+      "footY": 458,
+      "contactX": 482,
+      "contactY": 458
+    },
+    {
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "footX": 756,
+      "footY": 458,
+      "contactX": 575,
+      "contactY": 275
+    },
+    {
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512,
+      "footX": 1260,
+      "footY": 458,
+      "contactX": 1477,
+      "contactY": 232
+    },
+    {
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512,
+      "footX": 260,
+      "footY": 932,
+      "contactX": 495,
+      "contactY": 930
+    },
+    {
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512,
+      "footX": 760,
+      "footY": 935,
+      "contactX": 996,
+      "contactY": 934
+    },
+    {
+      "x": 1024,
+      "y": 512,
+      "width": 512,
+      "height": 512,
+      "footX": 1320,
+      "footY": 935,
+      "contactX": 1450,
+      "contactY": 565
+    }
+  ]
+}

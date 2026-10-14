@@ -416,7 +416,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
-                        Party=new string[] {"lian","sera","heidel"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("세라", "이거 살아 있어! 얼음을 녹이면 꺼낼 수 있겠지?", "ruins", "Sera", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="", MusicCue="" },
                             new StoryLine("하이델", "불부터 쓰면 뿌리가 익어. 천천히 온도를 올려야 해.", "ruins", "Heidel", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Sera", MusicCue="" },
@@ -425,7 +425,8 @@ namespace RequiemLantern.Core
                             new StoryLine("카이", "세라, 하이델의 방호 장치 쪽에 이어도 괜찮아?", "ruins", "Lian", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Minato", MusicCue="" },
                             new StoryLine("세라", "남의 장비 태우는 건 특기 아니라고 말해 두고 싶네.", "ruins", "Sera", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Lian", MusicCue="" },
                             new StoryLine("하이델", "그 말은 장비가 살아 돌아오면 믿어 줄게.", "ruins", "Heidel", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Sera", MusicCue="" },
-                            new StoryLine("", "세라가 웃고 검을 낮춘다. 미나토는 얼음 아래의 뿌리에 천을 댄다.", "ruins", "Heidel", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Sera", MusicCue="" },
+                            new StoryLine("미나토", "카이, 제 치유 등불도 이어 주세요. 꽃을 옮기는 동안 다친 사람은 제가 볼게요.", "ruins", "Minato", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Heidel", MusicCue="" },
+                            new StoryLine("", "세라가 웃고 검을 낮춘다. 미나토는 얼음 아래의 뿌리에 천을 댄다.", "ruins", "Minato", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="Heidel", MusicCue="" },
                         },
                         After=new List<StoryLine> {
                             new StoryLine("", "꽃 한 송이가 작은 상자에 담긴다. 하이델은 상자에 온도와 물의 양을 적는다.", "ruins", "", true) { Location="유리 정원 · 온실", Caption="제2장 · 세라 · 2-4 · 한 송이 남은 온기", ListenerPortrait="", MusicCue="" },
@@ -476,7 +477,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=2, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "유리 사이의 군체가 아이들이 쓰던 놀이의 박자를 되풀이한다. 세라가 검을 내린다.", "ruins", "", true) { Location="유리 정원 · 폐쇄 전시실", Caption="제2장 · 세라 · 2-6 · 유리 속의 문패", ListenerPortrait="", MusicCue="" },
                             new StoryLine("세라", "그 소리 알아. 밥 먹기 전에… 애들이 저렇게 두드렸어.", "ruins", "Sera", true) { Location="유리 정원 · 폐쇄 전시실", Caption="제2장 · 세라 · 2-6 · 유리 속의 문패", ListenerPortrait="", MusicCue="" },
@@ -541,7 +542,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=2, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("끝나지 않는 술래", "다 찾으면 돌아가도 돼. 못 찾으면 다시 처음부터.", "ruins", "", true) { Location="폐허 · 옛 고아원", Caption="제2장 · 세라 · 2-8 · 끝나지 않는 술래", ListenerPortrait="", MusicCue="" },
                             new StoryLine("세라", "이 애는 숨바꼭질을 싫어했어. 늘 밥부터 먹자고 했거든.", "ruins", "Sera", true) { Location="폐허 · 옛 고아원", Caption="제2장 · 세라 · 2-8 · 끝나지 않는 술래", ListenerPortrait="", MusicCue="" },
@@ -573,7 +574,7 @@ namespace RequiemLantern.Core
                         MusicId="bgm_sera_sealed_route",
                         Chapter=2, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","ellen"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("엘렌", "너라면 돌아올 줄 알았어. 아이들 것도 아직 모아 뒀어.", "ruins", "Ellen", true) { Location="해안 · 연합 보급창", Caption="제2장 · 세라 · 2-9 · 남겨 둔 한 자리", ListenerPortrait="", MusicCue="bgm_sera_sealed_route_phase1" },
                             new StoryLine("세라", "모아 둔 약을, 왜 그때 보내지 않았어?", "ruins", "Sera", true) { Location="해안 · 연합 보급창", Caption="제2장 · 세라 · 2-9 · 남겨 둔 한 자리", ListenerPortrait="Ellen", MusicCue="" },
@@ -673,8 +674,8 @@ namespace RequiemLantern.Core
                         BattleProfile="command",
                         MusicId="",
                         Chapter=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
-                        Participants=new string[] {"kai","lian","sera","minato","noa"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Participants=new string[] {"kai","lian","sera","minato","noa","heidel"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("노아", "돌아가. 교단은 도와준 사람 이름까지 적거든.", "ruins", "Noa", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="", MusicCue="" },
                             new StoryLine("세라", "도와 달라는 말에 그렇게 긴 설명 붙이는 사람은 처음 봐.", "ruins", "Sera", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Noa", MusicCue="" },
@@ -683,7 +684,8 @@ namespace RequiemLantern.Core
                             new StoryLine("노아", "그림자한테서 무슨 소리가 들리는지 알아도?", "ruins", "Noa", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Minato", MusicCue="" },
                             new StoryLine("카이", "지금 들리는 건 추격대의 인계 명령이야. 네 대답은 따로 들을게.", "ruins", "Noa", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Minato", MusicCue="" },
                             new StoryLine("", "교단 추격병들이 노아의 거부를 듣지 않고 접근한다. 리안이 길을 막는다.", "ruins", "Noa", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Minato", MusicCue="" },
-                            new StoryLine("리안", "이 문 앞에서는 말부터 끝내.", "ruins", "Lian", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Noa", MusicCue="" },
+                            new StoryLine("하이델", "문 경첩은 내가 붙잡을게. 넷이 이어도 들것이 지날 틈은 남겨 둬.", "ruins", "Heidel", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Noa", MusicCue="" },
+                            new StoryLine("리안", "이 문 앞에서는 말부터 끝내.", "ruins", "Lian", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="Heidel", MusicCue="" },
                         },
                         After=new List<StoryLine> {
                             new StoryLine("", "추격대가 물러난다. 노아는 치료 천을 받고도 짐을 내려놓지 않는다.", "ruins", "", true) { Location="해안 · 종소리 아래", Caption="제3장 · 노아 · 3-2 · 그림자의 탈주자", ListenerPortrait="", MusicCue="" },
@@ -708,8 +710,8 @@ namespace RequiemLantern.Core
                         BattleProfile="area",
                         MusicId="",
                         Chapter=3, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
-                        Participants=new string[] {"kai","lian","sera","minato"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                         },
                         After=new List<StoryLine> {
@@ -790,7 +792,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=3, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","minato","noa"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "숙소 복도에서 군체가 태어난다. 노아가 문을 닫으려다 안쪽의 구조 신호를 듣는다.", "keep", "", true) { Location="등대 요새 · 숙소 복도", Caption="제3장 · 노아 · 3-6 · 요새 안의 그림자", ListenerPortrait="", MusicCue="" },
                             new StoryLine("노아", "왼쪽은 흉내야. 오른쪽은 살아 있는 사람. 아래쪽은 아직 모르겠어.", "keep", "Noa", true) { Location="등대 요새 · 숙소 복도", Caption="제3장 · 노아 · 3-6 · 요새 안의 그림자", ListenerPortrait="", MusicCue="" },
@@ -851,7 +853,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=3, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","eve"},
-                        Party=new string[] {"lian","sera","noa"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("이름 없는 철종", "너만 잊으면 끝이다. 남긴 이름을 주어라.", "ruins", "", true) { Location="교단 외곽 · 종루 지하", Caption="제3장 · 노아 · 3-8 · 이름 없는 철종", ListenerPortrait="", MusicCue="" },
                             new StoryLine("노아", "그 이름을 지운 손은 내 손이었어. 네가 대신 책임지는 척하지 마.", "ruins", "Noa", true) { Location="교단 외곽 · 종루 지하", Caption="제3장 · 노아 · 3-8 · 이름 없는 철종", ListenerPortrait="", MusicCue="" },
@@ -881,7 +883,7 @@ namespace RequiemLantern.Core
                         MusicId="bgm_noa_answering_eve",
                         Chapter=3, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","eve"},
-                        Party=new string[] {"lian","sera","noa"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("이브", "너를 위해 처벌도 대신 받았어. 내가 어떤 사람인지 제일 잘 아는 건 너잖아.", "ruins", "Eve", true) { Location="교단 외곽 · 피난민 수용소", Caption="제3장 · 노아 · 3-9 · 침묵의 기록관", ListenerPortrait="", MusicCue="bgm_noa_answering_eve_phase1" },
                             new StoryLine("노아", "내가 아는 사람이 오늘 무슨 명령을 내렸는지도 보고 있어.", "ruins", "Noa", true) { Location="교단 외곽 · 피난민 수용소", Caption="제3장 · 노아 · 3-9 · 침묵의 기록관", ListenerPortrait="Eve", MusicCue="" },
@@ -986,7 +988,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=4, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","minato","heidel","noa","sera"},
-                        Party=new string[] {"lian","minato","heidel"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                         },
                         After=new List<StoryLine> {
@@ -1035,7 +1037,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=4, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","minato","heidel"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "보관동에는 ‘인간의 기억을 연료로 재점화’라는 기록이 남아 있다. 잔영의 파편과 닮은 도면이 뒤따른다.", "ruins", "", true) { Location="관측소 폐허 · 기억 보관동", Caption="제4장 · 하이델 · 4-4 · 관측소의 잔향", ListenerPortrait="", MusicCue="" },
                             new StoryLine("카이", "별의 조각이 아니라… 기억이 남은 것이라면.", "ruins", "", true) { Location="관측소 폐허 · 기억 보관동", Caption="제4장 · 하이델 · 4-4 · 관측소의 잔향", ListenerPortrait="", MusicCue="" },
@@ -1097,7 +1099,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=4, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","minato","noa"},
+                        Party=new string[] {"lian","minato","heidel","noa"},
                         Before=new List<StoryLine> {
                         },
                         After=new List<StoryLine> {
@@ -1147,7 +1149,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=4, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "연합의 접수병들이 기록 상자에 인장을 찍는다. 엘렌이 구금된 뒤에도 조직의 거래는 멈추지 않았다.", "ruins", "", true) { Location="잿빛 시가지 · 접수 창고", Caption="제4장 · 하이델 · 4-8 · 기록을 사는 사람들", ListenerPortrait="", MusicCue="" },
                             new StoryLine("접수병", "운송 허가가 있다. 상자를 놓고 비켜라.", "ruins", "", true) { Location="잿빛 시가지 · 접수 창고", Caption="제4장 · 하이델 · 4-8 · 기록을 사는 사람들", ListenerPortrait="", MusicCue="" },
@@ -1177,7 +1179,7 @@ namespace RequiemLantern.Core
                         MusicId="bgm_chapter4_records",
                         Chapter=4, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","minato","heidel"},
+                        Party=new string[] {"lian","minato","heidel","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "군체가 모든 번호를 한 개의 이름처럼 부른다. 시계의 바늘이 같은 순간으로 되감긴다.", "ruins", "", true) { Location="시계탑 · 중심 계측장", Caption="제4장 · 하이델 · 4-9 · 기억의 집계자", ListenerPortrait="", MusicCue="" },
                             new StoryLine("기억의 집계자", "남은 것은 한 번의 실패. 한 사람의 몫으로 기록하라.", "ruins", "", true) { Location="시계탑 · 중심 계측장", Caption="제4장 · 하이델 · 4-9 · 기억의 집계자", ListenerPortrait="", MusicCue="" },
@@ -1283,7 +1285,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=5, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                         },
                         After=new List<StoryLine> {
@@ -1335,7 +1337,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=5, Kind=StageKind.StoryBattle, IsBoss=false, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","sera","heidel"},
+                        Party=new string[] {"lian","sera","minato","heidel"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "봉쇄국은 탑으로 가는 길에도 통행 인원을 제한한다. 로웬의 명령서가 다른 병사의 손에 있다.", "ruins", "", true) { Location="여명의 길 · 봉쇄 지대", Caption="제5장 · 미나토 · 5-4 · 돌아가는 통행표", ListenerPortrait="", MusicCue="" },
                             new StoryLine("리안", "그 사람을 막았다고 모든 문이 열리는 건 아니었네.", "ruins", "Lian", true) { Location="여명의 길 · 봉쇄 지대", Caption="제5장 · 미나토 · 5-4 · 돌아가는 통행표", ListenerPortrait="", MusicCue="" },
@@ -1399,7 +1401,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=5, Kind=StageKind.Battle, IsBoss=false, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","minato","noa"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                         },
                         After=new List<StoryLine> {
@@ -1417,7 +1419,7 @@ namespace RequiemLantern.Core
                         MusicId="",
                         Chapter=5, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=true,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa","orphe"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("오르페", "그 끝에서 무엇을 바칠지 아십니까? 모르는 대가를 향해 걷는 것도 명령 아닐까요.", "ruins", "Orphe", true) { Location="여명의 탑 · 진입로", Caption="제5장 · 미나토 · 5-7 · 종지기의 선택", ListenerPortrait="", MusicCue="" },
                             new StoryLine("카이", "그래서 함께 묻고 있어. 내 대답이 모두의 대답은 아니야.", "ruins", "Orphe", true) { Location="여명의 탑 · 진입로", Caption="제5장 · 미나토 · 5-7 · 종지기의 선택", ListenerPortrait="", MusicCue="" },
@@ -1486,7 +1488,7 @@ namespace RequiemLantern.Core
                         MusicId="bgm_chapter5_threshold",
                         Chapter=5, Kind=StageKind.StoryBattle, IsBoss=true, HumanEnemy=false,
                         Participants=new string[] {"kai","lian","sera","minato","heidel","noa"},
-                        Party=new string[] {"lian","sera","minato"},
+                        Party=new string[] {"lian","sera","minato","noa"},
                         Before=new List<StoryLine> {
                             new StoryLine("", "봉인문이 서로 다른 기억의 잔향으로 막힌다. 군체는 가장 먼저 손을 내민 사람의 빛을 삼키려 한다.", "ruins", "", true) { Location="여명의 탑 · 봉인문", Caption="제5장 · 미나토 · 5-9 · 여명의 문지기", ListenerPortrait="", MusicCue="" },
                             new StoryLine("", "문지기의 잔향이 오래된 침상 곁의 호흡을 흉내 낸다. 미나토의 손이 등불을 향해 먼저 뻗는다.", "ruins", "", true) { Location="여명의 탑 · 봉인문", Caption="제5장 · 미나토 · 5-9 · 여명의 문지기", ListenerPortrait="", MusicCue="" },

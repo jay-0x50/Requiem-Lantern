@@ -50,7 +50,7 @@ namespace RequiemLantern.Editor
         [MenuItem("Requiem Lantern/Build Windows Preview")]
         public static void BuildWindows()
         {
-            Prepare();ValidateStoryArt();ValidateCombatAudio();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
+            Prepare();ValidateStoryArt();ValidateCombatAudio();ValidateBattleAvatars();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName=Path.Combine(folder,"RequiemLantern.exe"),
                 target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
@@ -82,15 +82,25 @@ namespace RequiemLantern.Editor
                 if(!clip||clip.samples<1||clip.channels!=2)throw new System.Exception("Combat audio cannot be loaded: "+path);
             }
         }
+        static void ValidateBattleAvatars()
+        {
+            foreach(string id in RequiemLantern.Presentation.BattleAvatar.AllyArtIds){
+                var texture=RequiemLantern.Presentation.BattleAvatar.LoadAtlas(id,true,out var key,out var layout);
+                if(!texture||layout==null)throw new System.Exception("Battle SD art or six-pose metadata cannot be loaded: "+key);
+                var original=Resources.Load<Texture2D>("Art/"+id);
+                if(!original||original==texture)throw new System.Exception("Original menu/dialogue portrait must remain separate: "+id);
+            }
+        }
     }
     public sealed class ArtImporter : AssetPostprocessor
     {
         void OnPreprocessTexture()
         {
-            if(!assetPath.StartsWith("Assets/Resources/Art/"))return;
+            bool battleSD=assetPath.StartsWith("Assets/Resources/Combat/")&&assetPath.EndsWith("SDActions.png");
+            if(!assetPath.StartsWith("Assets/Resources/Art/")&&!battleSD)return;
             var importer=(TextureImporter)assetImporter;importer.textureType=TextureImporterType.Default;
             importer.textureShape=TextureImporterShape.Texture2D;
-            importer.alphaIsTransparency=true;importer.mipmapEnabled=false;importer.maxTextureSize=2048;
+            importer.alphaIsTransparency=true;importer.mipmapEnabled=false;importer.maxTextureSize=battleSD?4096:2048;
             importer.textureCompression=TextureImporterCompression.Uncompressed;
         }
     }

@@ -985,6 +985,7 @@
           "party": [
             "lian",
             "sera",
+            "minato",
             "heidel"
           ],
           "before": [
@@ -1015,6 +1016,10 @@
             [
               "하이델",
               "그 말은 장비가 살아 돌아오면 믿어 줄게."
+            ],
+            [
+              "미나토",
+              "카이, 제 치유 등불도 이어 주세요. 꽃을 옮기는 동안 다친 사람은 제가 볼게요."
             ],
             [
               "",
@@ -1138,7 +1143,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [
             [
@@ -1311,7 +1317,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [
             [
@@ -1399,7 +1406,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [
             [
@@ -1653,12 +1661,14 @@
             "lian",
             "sera",
             "minato",
-            "noa"
+            "noa",
+            "heidel"
           ],
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [
             [
@@ -1688,6 +1698,10 @@
             [
               "",
               "교단 추격병들이 노아의 거부를 듣지 않고 접근한다. 리안이 길을 막는다."
+            ],
+            [
+              "하이델",
+              "문 경첩은 내가 붙잡을게. 넷이 이어도 들것이 지날 틈은 남겨 둬."
             ],
             [
               "리안",
@@ -1751,12 +1765,15 @@
             "kai",
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel",
+            "noa"
           ],
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [],
           "after": [],
@@ -1948,6 +1965,7 @@
           ],
           "party": [
             "lian",
+            "sera",
             "minato",
             "noa"
           ],
@@ -2110,6 +2128,7 @@
           "party": [
             "lian",
             "sera",
+            "minato",
             "noa"
           ],
           "before": [
@@ -2191,6 +2210,7 @@
           "party": [
             "lian",
             "sera",
+            "minato",
             "noa"
           ],
           "before": [
@@ -2468,6 +2488,7 @@
           ],
           "party": [
             "lian",
+            "sera",
             "minato",
             "heidel"
           ],
@@ -2577,6 +2598,7 @@
           ],
           "party": [
             "lian",
+            "sera",
             "minato",
             "heidel"
           ],
@@ -2741,6 +2763,7 @@
           "party": [
             "lian",
             "minato",
+            "heidel",
             "noa"
           ],
           "before": [],
@@ -2854,7 +2877,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "heidel"
           ],
           "before": [
             [
@@ -2934,7 +2958,8 @@
           "party": [
             "lian",
             "minato",
-            "heidel"
+            "heidel",
+            "noa"
           ],
           "before": [
             [
@@ -3213,7 +3238,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "noa"
           ],
           "before": [],
           "after": [],
@@ -3334,6 +3360,7 @@
           "party": [
             "lian",
             "sera",
+            "minato",
             "heidel"
           ],
           "before": [
@@ -3504,6 +3531,7 @@
           ],
           "party": [
             "lian",
+            "sera",
             "minato",
             "noa"
           ],
@@ -3536,7 +3564,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "noa"
           ],
           "before": [
             [
@@ -3727,7 +3756,8 @@
           "party": [
             "lian",
             "sera",
-            "minato"
+            "minato",
+            "noa"
           ],
           "before": [
             [

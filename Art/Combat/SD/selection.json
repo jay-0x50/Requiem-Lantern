@@ -1,0 +1,20 @@
+{
+  "tool": "built-in image_gen",
+  "sources": {
+    "Lian": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-3de2837a-7142-45ea-9bb6-92b18b27afa6.png",
+    "Sera": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-b1e3b431-f774-4a11-bfe5-dab7cc265dd2.png",
+    "Minato": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-c5bb4515-076f-44c7-990a-900a2ed9bcff.png",
+    "Noa": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-94e79d00-4ee9-46b3-8795-3086a758569e.png",
+    "Heidel": "C:\\Users\\Mirim\\.codex\\generated_images\\01a0f4dd-c4c6-7872-921f-704bbc5942d4\\exec-de90c803-7d4e-4e39-a27a-1b596846e083.png"
+  },
+  "corrections": [
+    {
+      "id": "Sera",
+      "prompt": "Use case: precise-object-edit. Edit this transparent six-pose SD Sera sprite sheet. The ONLY change is the size and spacing of the six drawings within the atlas. Preserve each exact character design, face, costume, greatsword and action pose. The existing characters fill the sheet too much and weapons cross the invisible cell boundaries. Make EACH entire drawing, INCLUDING THE SWORD, only 70 percent of its current size, leaving broad transparent bands between drawings. Canvas stays 1536x1024. Invisible 3x2 grid of512squarecells. Drawings centered in their own cell, each silhouette maximum width360 and maximum height360 pixels, with at least64transparentpixels on every cell edge. The tips of the greatswords must ALL remain within the SAME cell as their wielder. Same standing-body scale across all six poses; feet baseline local y420 for each cell. All face right. Exactly six complete poses in reading order: guarded idle, overhead windup, descending committed attack, low followthrough, recovered guard, recoiling hit. This edit must keep the original SD proportions and art style. Genuine transparent alpha, no background, text, grid, floor shadows, effects, lasers or extra objects. It is critical to see WIDE CLEAR TRANSPARENT GAPS separating ALL six entire drawings horizontally and vertically."
+    },
+    {
+      "id": "Heidel",
+      "prompt": "Use case: precise-object-edit. Edit this transparent six-pose SD Heidel sprite sheet. ONLY change the size and spacing of the six drawings. Preserve each exact character design, brown hair, goggles, fur coat, mechanical blue crystal crossbow and action pose. Make EACH entire drawing INCLUDING ALL WEAPONS 70 percent of its current size. Canvas stays1536x1024, invisible3x2grid of512squarecells, one complete drawing centered inside eachcell. Maximum silhouette width360 and height360. Keep64transparent pixels on EVERY cell edge with WIDE clear transparent bands separating all drawings horizontally AND vertically. Same body scale acrosssix, feet local y420. All faceright. Exactlysixposes inreadingorder: guarded idle, braced windup, forward crossbow-butt/forearm lunge, low followthrough, recovery, hit recoil. Preserve SD proportions and rendering. Genuine transparent alpha, no background, text, grids, shadows, effects, fired bolts, lasers or extra objects. Every hair strand, foot, coat and crossbow tip must remain comfortably within its own cell."
+    }
+  ]
+}

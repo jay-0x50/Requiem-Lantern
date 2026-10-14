@@ -1,0 +1,9 @@
+PASS gesture unlock preloads and decodes each shared sample exactly once across repeated clicks
+PASS cached variants cycle without immediate repeats and start at the current contact time
+PASS weapon clashes, cut attacks, blunt attacks and strong shield/enemy hits select distinct sample families
+PASS unfinished decoding skips the contact sound and never replays it late when loading finishes
+PASS missing samples remain silent or reuse only available variants from the same family without tonal fallback
+PASS mute rejects new combat sounds and cancellation immediately stops active tails; a suspended context never plays
+PASS eight-voice cap and per-active-voice balancing bound the worst peak at .464 and rebalance surviving tails when a sample ends
+PASS optional level keeps flame clicks quiet and clamps metadata so it cannot amplify combat above the family limit
+TOTAL 8 combat audio regression cases passed

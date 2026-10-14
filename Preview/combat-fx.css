@@ -1,10 +1,10 @@
 /* Effects sit above the field but below the HUD. Coordinates use the 1600×900 stage. */
 .combat-fx{position:absolute;inset:0;pointer-events:none;z-index:7;overflow:hidden}
 .combat-fx>div{position:absolute;pointer-events:none;--fx-color:#f6c682}
-/* The full character changes pose at every phase; only local weapon contact glows. */
+/* Combat bodies change pose at each phase while local weapon contact glows. */
 .combat-fx>.melee-fighter{width:480px;height:480px;transform:translateX(-50%);transform-origin:50% 92%;z-index:1;filter:drop-shadow(0 8px 9px #0009)}
 .melee-sprite{position:absolute;inset:0;background-repeat:no-repeat;background-size:300% 200%;background-position:0 0}
-.melee-fighter:after{content:'';position:absolute;left:24%;right:24%;bottom:5%;height:16px;background:#05060b8a;border-radius:50%;filter:blur(8px);z-index:-1}
+.melee-fighter:after{content:'';position:absolute;left:37%;right:37%;bottom:5%;height:12px;background:#05060b8a;border-radius:50%;filter:blur(6px);z-index:-1}
 .melee-active .field-hero,.melee-active .enemy{opacity:.22;filter:saturate(.4)}
 .melee-active .threads,.melee-active .intent,.melee-active .parts,.melee-active .body-target,.melee-active .ally-target{opacity:0!important;pointer-events:none}
 .melee-active .field-name{opacity:.25}

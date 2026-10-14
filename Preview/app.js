@@ -230,9 +230,27 @@ const unit=id=>data.battle.allies.concat(data.battle.enemies).find(u=>u.id===id)
 const skill=(actor,id)=>unit(actor)?.skills.find(s=>s.id===id);
 const intent=id=>data.battle.intents.find(i=>i.id===id);
 function targetName(id){return intent(id)?.name||unit(id)?.name||data.battle.enemies.flatMap(u=>u.parts).find(p=>p.id===id)?.name||id;}
-function actorPoint(id){const i=data.battle.allies.findIndex(a=>a.id===id);return {x:172+i*265,y:446};}
-function targetPoint(id){let i=data.battle.intents.findIndex(a=>a.id===id);if(i>=0)return {x:945,y:270+i*122};if(data.battle.allies.some(a=>a.id===id))return actorPoint(id);i=data.battle.enemies[0].parts.findIndex(a=>a.id===id);if(i>=0)return {x:1190+i*227,y:550};return {x:1360,y:447};}
-function slotPoint(actor,slot){return{x:111+data.battle.allies.findIndex(a=>a.id===actor)*360+slot*174,y:821};}
+function actorPoint(id){return LanternBattleGeometry.allyPoint(data.battle.allies.findIndex(a=>a.id===id),data.battle.allies.length);}
+function targetPoint(id){let i=data.battle.intents.findIndex(a=>a.id===id);if(i>=0)return {x:945,y:270+i*122};if(data.battle.allies.some(a=>a.id===id))return actorPoint(id);i=data.battle.enemies[0].parts.findIndex(a=>a.id===id);if(i>=0)return {x:1190+i*227,y:550};return LanternBattleGeometry.enemyPoint();}
+function logicalElementCenter(node){
+ if(!node?.getBoundingClientRect)return null;
+ const box=node.getBoundingClientRect(),stage=game.getBoundingClientRect();
+ if(!(box.width>0&&box.height>0&&stage.width>0&&stage.height>0))return null;
+ return{x:(box.left+box.width/2-stage.left)*1600/stage.width,y:(box.top+box.height/2-stage.top)*900/stage.height};
+}
+function slotPoint(actor,slot){
+ const node=[...game.querySelectorAll('.slot')].find(n=>n.dataset.actor===actor&&Number(n.dataset.slot)===slot);
+ return logicalElementCenter(node)||LanternBattleGeometry.slotPoint(data.battle.allies.findIndex(a=>a.id===actor),slot);
+}
+function combatUnitHtml(actor,index){
+ const foot=LanternBattleGeometry.allyFoot(index,data.battle.allies.length),stem=LanternCombatAtlasStem(actor.id),layout=battleFx.options.layouts?.[actor.id],crop=layout?.frames?.[0];
+ let sprite='width:183px;height:183px;left:-91.5px;top:-183px;background-size:300% 200%;background-position:0% 0%';
+ if(crop){const scale=LanternBattleGeometry.allyBodyHeight/layout.bodyHeight;sprite=`width:${crop.width*scale}px;height:${crop.height*scale}px;left:${-(crop.footX-crop.x)*scale}px;top:${-(crop.footY-crop.y)*scale}px;background-size:${layout.atlasWidth*scale}px ${layout.atlasHeight*scale}px;background-position:${-crop.x*scale}px ${-crop.y*scale}px`;}
+ return `<div data-unit="${actor.id}" data-combat-src="/combat/${stem}.png" class="field-hero sd-unit ${settings.motion?'breathe':''} ${actor.hp<=0?'dead':''}" style="left:${foot.x}px;top:${foot.y}px;animation-delay:${-index}s" role="img" aria-label="${esc(actor.name)} 전투 캐릭터"><span class="combat-idle-sprite" style="${sprite};background-image:url('/combat/${stem}.png')"></span></div>${btn('','target:'+actor.id,'ally-target',`style="left:${foot.x-75}px;top:${foot.y-190}px" aria-label="${esc(actor.name)}에게 지원 연결"`)}<div class="field-name" style="left:${foot.x-75}px">${esc(actor.name)}<div class="bar"><span data-hp-bar="${actor.id}" style="background:${color(actor.element)};width:${actor.hp/actor.maxHp*100}%"></span></div></div>`;
+}
+function refreshBattleThreads(){
+ game.querySelectorAll('[data-link-actor]').forEach(n=>{const a=slotPoint(n.dataset.linkActor,+n.dataset.linkSlot),b=targetPoint(n.dataset.linkTarget);n.setAttribute('d',`M${a.x},${a.y} Q${(a.x+b.x)/2},${Math.min(a.y,b.y)-65} ${b.x},${b.y}`);});
+}
 function path(a,b,cls,c='',intentId=''){return `<path class="${cls}" ${intentId?`data-intent-line="${esc(intentId)}"`:''} d="M${a.x},${a.y} Q${(a.x+b.x)/2},${Math.min(a.y,b.y)-65} ${b.x},${b.y}" ${c?`style="stroke:${c}"`:''}/>`;}
 function fighterDock(actor){
  const active=actor.id===selectedActor,deck=`카드 구성 1×3 / 2×2${(actor.syncLevel||0)>0?' / 3×1':''}`;
@@ -251,20 +269,20 @@ function showBattle(){
  if(selectedSlot>=(selected.slotCount||2))selectedSlot=0;
  let lines='';
  for(const i of s.intents){const p=targetPoint(i.id);for(const a of i.kind==='Area'?s.allies:[unit(i.targetId)].filter(Boolean))lines+=path(p,actorPoint(a.id),'thread-enemy','',i.id);}
- for(const l of s.links){let c='#f2a541';if(l.kind==='Clash'){const v=data.previews?.find(p=>p.actorId===l.actorId&&p.slot===l.slot);c=v?.grade==='Advantage'?'#75c8c4':v?.grade==='Disadvantage'?'#e77a5d':'#f2a541';}lines+=path(slotPoint(l.actorId,l.slot),targetPoint(l.targetId),'thread-player flow',c);}
+ for(const l of s.links){let c='#f2a541';if(l.kind==='Clash'){const v=data.previews?.find(p=>p.actorId===l.actorId&&p.slot===l.slot);c=v?.grade==='Advantage'?'#75c8c4':v?.grade==='Disadvantage'?'#e77a5d':'#f2a541';}lines+=path(LanternBattleGeometry.slotPoint(s.allies.findIndex(a=>a.id===l.actorId),l.slot),targetPoint(l.targetId),'thread-player flow',c).replace('<path ','<path data-link-actor="'+esc(l.actorId)+'" data-link-slot="'+l.slot+'" data-link-target="'+esc(l.targetId)+'" ');}
  const choice=selectionForSlot(selectedActor,selectedSlot,true);
  if(!defenseSkill(sk)&&(!cardFor(selected,selectedCardId)||cardReserved(selectedActor,selectedCardId,selectedSlot))){selectedSkill=choice.skillId;selectedCardId=choice.cardId;}
  const selectedSk=skill(selectedActor,selectedSkill),connected=s.links.reduce((sum,l)=>sum+(skill(l.actorId,l.skillId)?.slots||1),0),capacity=s.allies.filter(a=>a.hp>0).reduce((sum,a)=>sum+(a.slotCount||2),0);
  setScreen('battle',`<header>${btn('〈','retreat','back','aria-label="퇴각"')}<div class="titles"><div class="heading">${esc(s.stageName||'요새 앞의 그림자')}</div><div class="phase">ROUND ${String(s.round).padStart(2,'0')} &nbsp; / &nbsp; ② 연결</div></div><div class="resources"><span class="gold">불씨 ${s.ember} / 6 <small class="muted">예약 ${data.plannedCost}</small></span><span>등불 ${s.lantern} / 100</span><span class="muted">어둠도 ${s.gloom}</span></div></header>
  <div class="battle-controls">${btn('AI 제안','recommend')}${btn('이전 연결','reuse')}${btn('초기화','clear')}${btn(autoBattle?'오토 켜짐':'수동 연결','automode',autoBattle?'primary':'')}${btn(s.lanternQueued?'해방 예약':'등불 해방','lantern','',s.lantern<100||s.lanternQueued?'disabled':'')}${btn('기록','battlelog')}</div>
  <div class="battle-help">아래에서 스킬을 골라 대상을 클릭하거나, 카드를 끌어 연결하세요.<br>맞불에서 두 번 연속 이기면 공격합니다. 정신력이 높을수록 불이 켜집니다.</div><svg class="threads" viewBox="0 0 1600 900" aria-hidden="true">${lines}<path id="drag-thread" class="thread-player"/></svg>
- ${s.allies.map((a,i)=>`<img src="/art/${art(a.portrait||a.id)}.png" data-unit="${a.id}" class="field-hero ${settings.motion?'breathe':''} ${a.hp<=0?'dead':''}" style="left:${40+i*265}px;animation-delay:${-i}s" alt="${esc(a.name)}">${btn('','target:'+a.id,'ally-target',`style="left:${50+i*265}px" aria-label="${esc(a.name)}에게 지원 연결"`)}<div class="field-name" style="left:${50+i*265}px">${esc(a.name)}<div class="bar"><span data-hp-bar="${a.id}" style="background:${color(a.element)};width:${a.hp/a.maxHp*100}%"></span></div></div>`).join('')}
+ ${s.allies.map(combatUnitHtml).join('')}
  <div class="enemy-stats"><div class="name">${e.isHuman?'HUMAN':'UMBRA'} / ${esc(e.name)}</div><div class="bar"><span data-hp-bar="${e.id}" style="width:${e.hp/e.maxHp*100}%"></span></div><small data-hp-text="${e.id}">${e.hp} / ${e.maxHp} &nbsp; · &nbsp; 균열 ${e.rift} / ${e.maxRift}</small><div class="enemy-sanity"><span data-sanity="${e.id}">정신력 ${sanityText(e.sanity)}</span> · 어둠 발현 ${flameChance(e.sanity)}%</div></div>
  <img src="/art/${art(e.portrait||e.id)}.png" class="enemy ${e.isHuman?'human-enemy':''}" data-unit="${e.id}" alt="${esc(e.name)}">
  ${s.intents.map((i,n)=>`<button class="intent" data-action="target:${i.id}" style="top:${228+n*122}px"><strong>${esc(i.name)}${i.kind==='Area'?' · 광역':''}</strong><small>${i.flameCount?`기본 ${i.basePower} + 어둠당 ${i.flamePower}`:`위력 ${i.hitPowers.join('/')}`} &nbsp; 속도 ${i.speed}</small>${flameBadges(i.flameCount||i.hitPowers.length,false,true)}</button>`).join('')}
  <div class="parts">${e.parts.map(p=>btn(`${esc(p.name)} &nbsp; ${p.hp<=0?'파괴됨':`${p.hp}/${p.maxHp}`}`,'target:'+p.id,'',p.hp<=0?'disabled':'')).join('')}</div>${btn('본체 공격','target:'+e.id,'body-target')}
  <div class="battle-prediction">${(data.previews||[]).filter(p=>s.links.some(l=>l.actorId===p.actorId&&l.slot===p.slot&&l.kind==='Clash')).map(p=>esc(p.summary)).join('<br>')}</div>
- <div class="action-dock" aria-label="아군 스킬 선택">${s.allies.map(fighterDock).join('')}<aside class="command-rail"><div class="rail-overline">빛실 연결</div><div class="planned-actions"><strong>${connected}<small> / ${capacity}</small></strong><span>행동 예약 · 불씨 ${data.plannedCost} / ${s.ember}</span></div><div class="selected-action"><b>${esc(selected.name)} · 행동 ${selectedSlot+1}${selectedSk?.slots===2?'·2':''}</b><span>${esc(selectedSk?.name||'스킬 선택')}<small> → 대상 클릭 또는 드래그</small></span></div><div class="command-actions">${btn('연결 해제','remove','',slotLink(selectedActor,selectedSlot)?'':'disabled')}${btn(`<strong>빛실 실행 <span>→</span></strong><small>${connected?`${connected}개 행동으로 전투 시작`:'스킬을 골라 대상을 연결하세요'}</small>`,'resolve','primary resolve-button',s.links.length?'':'disabled')}</div></aside></div>${footer('카드 클릭 → 대상 클릭 / 카드 드래그 → 연결 / 행동 칸 클릭 → 예약 교체')}`);battleFx.attach(s);
+ <div class="action-dock" aria-label="아군 스킬 선택">${s.allies.map(fighterDock).join('')}<aside class="command-rail"><div class="rail-overline">빛실 연결</div><div class="planned-actions"><strong>${connected}<small> / ${capacity}</small></strong><span>행동 예약 · 불씨 ${data.plannedCost} / ${s.ember}</span></div><div class="selected-action"><b>${esc(selected.name)} · 행동 ${selectedSlot+1}${selectedSk?.slots===2?'·2':''}</b><span>${esc(selectedSk?.name||'스킬 선택')}<small> → 대상 클릭 또는 드래그</small></span></div><div class="command-actions">${btn('연결 해제','remove','',slotLink(selectedActor,selectedSlot)?'':'disabled')}${btn(`<strong>빛실 실행 <span>→</span></strong><small>${connected?`${connected}개 행동으로 전투 시작`:'스킬을 골라 대상을 연결하세요'}</small>`,'resolve','primary resolve-button',s.links.length?'':'disabled')}</div></aside></div>${footer('카드 클릭 → 대상 클릭 / 카드 드래그 → 연결 / 행동 칸 클릭 → 예약 교체')}`);refreshBattleThreads();battleFx.attach(s);
 }
 async function linkTarget(id){
  if(game.querySelector('.modal'))return;
@@ -349,9 +367,9 @@ addEventListener('blur',cleanupDrag);
 addEventListener('keydown',e=>{if(e.code==='Space'&&page==='story'){e.preventDefault();nextStory();}if(e.code==='Escape'&&!busy&&!campaignBusy){if(game.querySelector('.modal'))closeModal();else if(page==='battle')modal('등대로 돌아갈까요?','<p>진행 중인 전투는 종료됩니다.</p>',btn('전투 계속','close','primary')+btn('등대로','go:hub'));else if(page==='settings')go(settingsReturn);else if(page!=='title')go('hub');}});
 async function loadCombatLayouts(){
  const layouts={};
- await Promise.all(['Lian','Sera','Minato','Anger'].map(async name=>{
-  try{const response=await fetch(`/combat/${name}ActionsLayout.json`);if(!response.ok)return;const layout=await response.json();
-   if(layout.bodyHeight>0&&layout.frames?.length===6&&layout.frames.every(f=>['x','y','width','height','footX','footY'].every(k=>Number.isFinite(f[k]))&&f.width>0&&f.height>0))layouts[name.toLowerCase()]=layout;
+ await Promise.all(Object.keys(LanternCombatAtlasNames).map(async id=>{
+  try{const response=await fetch(`/combat/${LanternCombatAtlasStem(id)}Layout.json`);if(!response.ok)return;const layout=await response.json();
+   if(layout.bodyHeight>0&&layout.frames?.length===6&&layout.frames.every(f=>['x','y','width','height','footX','footY'].every(k=>Number.isFinite(f[k]))&&f.width>0&&f.height>0))layouts[id]=layout;
   }catch{}
  }));battleFx.options.layouts=layouts;
 }

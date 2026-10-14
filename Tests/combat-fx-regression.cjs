@@ -137,9 +137,9 @@ const event = (type, targetId, amount = 0, actorId = 'lian') => ({ type, targetI
 
 async function main() {
   let env = environment();
-  assert.deepEqual(copy(env.fx.point('lian')), { x: 172, y: 446 });
-  assert.deepEqual(copy(env.fx.point('minato')), { x: 437, y: 446 });
-  assert.deepEqual(copy(env.fx.point('anger')), { x: 1360, y: 410 });
+  assert.deepEqual(copy(env.fx.point('lian')), { x: 333.33333333333337, y: 495.83333333333337 });
+  assert.deepEqual(copy(env.fx.point('minato')), { x: 529.1666666666667, y: 495.83333333333337 });
+  assert.deepEqual(copy(env.fx.point('anger')), { x: 1329.1666666666667, y: 470.83333333333337 });
   assert.deepEqual(copy(env.fx.point('1:anger_core')), { x: 945, y: 392 });
   assert.deepEqual(copy(env.fx.point('anger_arm')), { x: 1190, y: 550 });
   assert.equal(env.fx.point('unknown'), null); assert.equal(env.fx.point(''), null);
@@ -283,7 +283,7 @@ async function main() {
     assert.equal(atlasFighter.sprite.style.backgroundPosition, expectedCells[frame]);
     assert.equal(atlasFighter.wrapper.style.left, anchor.left); assert.equal(atlasFighter.wrapper.style.top, anchor.top);
   }
-  assert.ok(atlasFighter.sprite.style.backgroundImage.includes('/combat/LianActions.png'));
+  assert.ok(atlasFighter.sprite.style.backgroundImage.includes('/combat/LianSDActions.png'));
   env.fx.releaseMelee();
   assert.equal(originalPortrait.src, '/art/Lian.png'); assert.equal(originalPortrait.style.transform, 'translateY(-3px)');
   assert.equal(originalPortrait.style.visibility, '');
@@ -305,9 +305,9 @@ async function main() {
   env.fx.options.layouts = { lian: measuredLayout, anger: measuredLayout };
   // A decoded image is authoritative for dimensions; metadata remains the fallback.
   env.images[0].naturalWidth = 2048; env.images[0].naturalHeight = 1365;
-  env.images[0].onload(); env.images[3].onload();
+  env.images[0].onload(); env.images[5].onload();
   for (const [id, side, bodySize, atlasWidth, atlasHeight] of [
-    ['lian', 'ally-side', 380, 2048, 1365], ['anger', 'enemy-side', 410, 1536, 1024]
+    ['lian', 'ally-side', 183.33333333333334, 2048, 1365], ['anger', 'enemy-side', 258.33333333333337, 1536, 1024]
   ]) {
     const fighter = env.fx.createFighter(id, side); env.fx.meleePair = [fighter];
     const wrapperAnchor = { left: fighter.wrapper.style.left, top: fighter.wrapper.style.top };
@@ -331,13 +331,14 @@ async function main() {
   }
   pass('measured atlas crops preserve one foot anchor across all six poses and use decoded dimensions before metadata');
 
-  const realLayouts = Object.fromEntries(['Lian', 'Sera', 'Minato', 'Anger'].map(name => [
+  const realLayouts = Object.fromEntries(['Lian', 'Sera', 'Minato', 'Noa', 'Heidel', 'Anger'].map(name => [
     name.toLowerCase(), JSON.parse(fs.readFileSync(path.join(__dirname,
-      '../RequiemLantern/Assets/Resources/Combat/' + name + 'ActionsLayout.json'), 'utf8').replace(/^\uFEFF/, ''))
+      '../RequiemLantern/Assets/Resources/Combat/' + name + (name==='Anger'?'ActionsLayout.json':'SDActionsLayout.json')), 'utf8').replace(/^\uFEFF/, ''))
   ]));
-  for (const allyId of ['lian', 'sera', 'minato']) for (const reverse of [false, true]) {
+  for (const allyId of ['lian', 'sera', 'minato', 'noa', 'heidel']) for (const reverse of [false, true]) {
     const snapshot = battle();
     snapshot.allies.splice(1, 0, { id: 'sera', name: '세라', hp: 90, maxHp: 100, element: 'Flame', parts: [] });
+    if(['noa','heidel'].includes(allyId))snapshot.allies.push({id:allyId,name:allyId,hp:90,maxHp:100,element:'Shadow',parts:[]});
     env = environment(true, false, snapshot); env.fx.options.layouts = realLayouts;
     const actorId = reverse ? 'anger' : allyId, targetId = reverse ? allyId : 'anger';
     const label = actorId + ' vs ' + targetId;
@@ -356,43 +357,43 @@ async function main() {
       assert.equal(fighter.sprite.dataset.frame, String(pose), label + ' contact pose for ' + fighter.id);
       const layout = realLayouts[fighter.id], frame = layout.frames[pose];
       assert.ok(Number.isFinite(frame.contactX) && Number.isFinite(frame.contactY), label + ' missing contact metadata');
-      const scale = (fighter.id === 'anger' ? 410 : 380) / layout.bodyHeight;
+      const scale = fighter.bodyHeight / layout.bodyHeight;
       const contact = {
         x: parseFloat(fighter.wrapper.style.left) + (frame.contactX - frame.footX) * scale,
         y: parseFloat(fighter.wrapper.style.top) + 440 + (frame.contactY - frame.footY) * scale
       };
-      assert.ok(Math.abs(contact.x - 1055) <= 1, label + ' weapon missed horizontal contact: ' + contact.x);
+      assert.ok(Math.abs(contact.x - 962.5) <= 1, label + ' weapon missed horizontal contact: ' + contact.x);
       assert.equal(fighter.wrapper.style.transform, 'translateX(-50%) rotate(0deg)');
       contactPoints.push(contact);
     }
     assert.equal(contactPoints.length, 2, label + ' requires both fighters');
-    assert.ok(Math.abs(contactPoints[0].y - contactPoints[1].y) <= 40, label + ' weapon contact height mismatch');
+    assert.ok(Math.abs(contactPoints[0].y - contactPoints[1].y) <= 1, label + ' weapon contact height mismatch');
+    assert.ok(Math.abs(contactPoints[0].y-475)<=1,label+' contact must match compact battlefield height');
     assert.equal(env.root.querySelectorAll('.fx-beam').length, 0, label + ' contact must be physical');
     await env.drain(); assert.equal(await exchange, true);
     assert.equal(createdEffects.some(classes => classes.split(/\s+/).includes('fx-beam')), false,
       label + ' must not generate a travelling beam in any phase');
   }
-  pass('all four real atlas layouts align weapon contact in six directed clashes without travelling beams');
+  pass('all five real SD allies and the larger boss meet at a shared weapon contact in ten directed clashes without travelling beams');
 
   env = environment(true, true);
   assert.deepEqual(env.images.map(image => image.src), [
-    '/combat/LianActions.png', '/combat/SeraActions.png', '/combat/MinatoActions.png', '/combat/AngerActions.png'
+    '/combat/LianSDActions.png', '/combat/SeraSDActions.png', '/combat/MinatoSDActions.png', '/combat/NoaSDActions.png', '/combat/HeidelSDActions.png', '/combat/AngerActions.png'
   ]);
   const fallback = env.fx.createFighter('lian', 'ally-side'); env.fx.meleePair = [fallback];
-  assert.equal(fallback.atlas, false);
-  assert.equal(fallback.sprite.style.backgroundImage, "url('/art/lian.png')");
-  assert.equal(fallback.sprite.style.backgroundSize, 'contain');
+  assert.equal(fallback.atlas, true);
+  assert.equal(fallback.sprite.style.backgroundImage, "url('/combat/LianSDActions.png')");
   env.images[0].onload();
   env.fx.pose(fallback, 3, 'contact');
-  assert.equal(fallback.sprite.style.backgroundImage, "url('/art/lian.png')");
-  assert.equal(fallback.sprite.style.backgroundPosition, 'center bottom');
+  assert.equal(fallback.sprite.style.backgroundImage, "url('/combat/LianSDActions.png')");
+  assert.equal(fallback.sprite.style.backgroundPosition, '0% 100%');
   env.fx.releaseMelee();
   const loaded = env.fx.createFighter('lian', 'ally-side'); env.fx.meleePair = [loaded];
   assert.equal(loaded.atlas, true);
-  assert.equal(loaded.sprite.style.backgroundImage, "url('/combat/LianActions.png')");
+  assert.equal(loaded.sprite.style.backgroundImage, "url('/combat/LianSDActions.png')");
   env.fx.pose(loaded, 3, 'contact'); assert.equal(loaded.sprite.style.backgroundPosition, '0% 100%');
   env.fx.releaseMelee();
-  env.images[3].onerror();
+  env.images[5].onerror();
   const failed = env.fx.createFighter('anger', 'enemy-side'); env.fx.meleePair = [failed];
   env.fx.pose(failed, 5, 'recoil');
   assert.equal(failed.atlas, false);
@@ -401,7 +402,7 @@ async function main() {
   env.fx.releaseMelee();
   assert.equal(env.fx.portrait('lian').style.visibility, '');
   assert.equal(env.fx.portrait('anger').style.visibility, '');
-  pass('pending and failed atlas loads preserve visible art; a newly loaded atlas starts at the next exchange');
+  pass('pending ally sheets stay in SD poses and failed boss sheets retain their own compact portrait');
 
   for (const [actor, target] of [['lian', 'anger'], ['anger', 'lian']]) {
     env = environment();
@@ -465,6 +466,8 @@ async function main() {
   assert.equal(env.fx.units.get('anger').hp, 181);
   assert.equal(env.root.querySelectorAll('.fx-spark').length, 0);
   assert.ok(env.root.querySelectorAll('.melee-fighter').every(node => node.style.transform === ''));
+  assert.ok(Math.abs(parseFloat(env.fx.meleePair.find(f=>f.id==='lian').wrapper.style.top)+440-583.3333333333334)<1e-8);
+  assert.ok(Math.abs(parseFloat(env.fx.meleePair.find(f=>f.id==='anger').wrapper.style.top)+440-585)<1e-8);
   await env.drain(); assert.equal(await reducedMelee, true);
   assert.deepEqual(reducedPhases, ['approach', 'windup', 'swing', 'contact', 'recoil', 'recover', 'return']);
   assert.equal(env.root.querySelectorAll('.melee-fighter').length, 0);
@@ -506,14 +509,16 @@ async function main() {
   env=environment(true,false,human);env.fx.portrait('anger').src='/art/Eve.png';
   const humanFighter=env.fx.createFighter('anger','enemy-side');
   assert.equal(humanFighter.atlas,false);assert.equal(humanFighter.layout,null);
+  assert.equal(humanFighter.bodyHeight,258.33333333333337);
+  assert.equal(humanFighter.sprite.style.height,'258.33333333333337px');
   assert.equal(humanFighter.sprite.style.backgroundImage,"url('/art/Eve.png')");env.fx.releaseMelee();
   pass('human enemy retains its own portrait and never uses the Anger action atlas');
 
   const support=battle();support.allies[0].id='heidel';support.allies[0].portrait='Heidel';
   env=environment(true,false,support);env.fx.portrait('heidel').src='/art/Heidel.png';
   const supportFighter=env.fx.createFighter('heidel','ally-side');
-  assert.equal(supportFighter.atlas,false);assert.ok(supportFighter.sprite.style.backgroundImage.includes('Heidel.png'));
-  pass('support character with no atlas uses its own portrait instead of a different character');
+  assert.equal(supportFighter.atlas,true);assert.ok(supportFighter.sprite.style.backgroundImage.includes('HeidelSDActions.png'));
+  pass('Heidel uses his own compact combat action sheet');
 
   env=environment();
   const interruptedClash=env.fx.play([{...event('Clash','anger'),winnerStreak:1},event('Damage','anger',25)],clashFinal);

@@ -267,30 +267,32 @@ namespace RequiemLantern.Presentation
             Vector2 stageOrigin=stage.anchoredPosition;
             bool applied=false,swung=false;
             try {
-                attacker=new CombatPosePlayer(fx,actorImage,CombatArt(actor.Id),!actor.IsEnemy,actor.IsEnemy?520:480,"Duel attacker");
-                defender=new CombatPosePlayer(fx,targetImage,CombatArt(target.Id),!target.IsEnemy,target.IsEnemy?520:480,"Duel defender");
+                attacker=new CombatPosePlayer(fx,actorImage,CombatArt(actor.Id),!actor.IsEnemy,actor.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight,"Duel attacker");
+                defender=new CombatPosePlayer(fx,targetImage,CombatArt(target.Id),!target.IsEnemy,target.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight,"Duel defender");
                 int facing=actor.IsEnemy?-1:1;
                 bool lowClash=clash&&(actor.Id=="sera"||target.Id=="sera")&&(attacker.HasAtlas&&defender.HasAtlas);
                 int attackContactPose=lowClash&&actor.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 int defendContactPose=lowClash&&target.IsEnemy?CombatPosePlayer.FollowThrough:CombatPosePlayer.Swing;
                 Vector2 attackContact=attacker.ContactOffset(attackContactPose),defendContact=defender.ContactOffset(defendContactPose);
-                const float contactX=1155,groundY=740;
-                Vector2 actorMeet=new Vector2(contactX-attackContact.x,groundY);
+                const float contactX=1155,contactY=570,groundY=BattleAvatar.GroundY;
+                // The SD weapon tip and the larger enemy weapon share one contact.
+                // Foot placement follows each frame's metadata, then returns to the floor.
+                Vector2 actorMeet=new Vector2(contactX-attackContact.x,contactY-attackContact.y);
                 // During a clash the weapons meet tip to tip. An unopposed strike reaches
                 // the target's body instead of stopping at its extended weapon.
-                Vector2 targetMeet=new Vector2(clash?contactX-defendContact.x:contactX+facing*35,groundY);
-                Vector2 contact=new Vector2(contactX,clash?groundY+(attackContact.y+defendContact.y)*.5f:groundY+attackContact.y);
-                if(reducedMotion){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,target.IsEnemy?240:220);}
-                marker.Attacker=attacker.Image;marker.Defender=defender.Image;marker.ContactPoint=contact;marker.AtlasActive=attacker.HasAtlas;marker.FrameLayoutActive=attacker.HasFrameLayout;
-                var shadowA=Box(fx,"Attacker ground",0,0,140,9,new Color(0,0,0,.25f));
-                var shadowB=Box(fx,"Defender ground",0,0,170,10,new Color(0,0,0,.27f));
+                Vector2 targetMeet=new Vector2(clash?contactX-defendContact.x:contactX+facing*35,clash?contactY-defendContact.y:groundY);
+                Vector2 contact=new Vector2(contactX,contactY);
+                if(reducedMotion){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,(target.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight)*.48f);}
+                marker.Attacker=attacker.Image;marker.Defender=defender.Image;marker.ContactPoint=contact;marker.AtlasActive=attacker.HasAtlas;marker.FrameLayoutActive=attacker.HasFrameLayout;marker.SDActive=attacker.HasSDAtlas;marker.BodyHeight=actor.IsEnemy?BattleAvatar.EnemyBodyHeight:BattleAvatar.AllyBodyHeight;
+                var shadowA=Box(fx,"Attacker ground",0,0,96,7,new Color(0,0,0,.25f));
+                var shadowB=Box(fx,"Defender ground",0,0,106,8,new Color(0,0,0,.27f));
                 shadowA.transform.SetAsFirstSibling();shadowB.transform.SetAsFirstSibling();
                 var arc=MakeRect(fx,"Weapon swing arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();
-                arc.Center=ToMesh(contact)+new Vector2(-facing*36,0);arc.Facing=facing;arc.Radius=sweep?155:126+e.SkillNumber*7;arc.Thickness=heavy?21:flourish?9:14;arc.color=Color.clear;arc.raycastTarget=false;
+                arc.Center=ToMesh(contact)+new Vector2(-facing*22,0);arc.Facing=facing;arc.Radius=sweep?90:72+e.SkillNumber*5;arc.Thickness=heavy?13:flourish?6:9;arc.color=Color.clear;arc.raycastTarget=false;
                 WeaponArcGraphic counter=null;
-                if(clash){counter=MakeRect(fx,"Counter weapon arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();counter.Center=ToMesh(contact)+new Vector2(facing*32,5);counter.Facing=-facing;counter.Radius=107;counter.Thickness=10;counter.color=Color.clear;counter.raycastTarget=false;}
+                if(clash){counter=MakeRect(fx,"Counter weapon arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();counter.Center=ToMesh(contact)+new Vector2(facing*22,5);counter.Facing=-facing;counter.Radius=70;counter.Thickness=7;counter.color=Color.clear;counter.raycastTarget=false;}
                 WeaponArcGraphic flourishArc=null;
-                if(flourish){flourishArc=MakeRect(fx,"Return slash arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();flourishArc.Center=ToMesh(contact)+new Vector2(facing*22,-12);flourishArc.Facing=-facing;flourishArc.Radius=103;flourishArc.Thickness=9;flourishArc.color=Color.clear;flourishArc.raycastTarget=false;}
+                if(flourish){flourishArc=MakeRect(fx,"Return slash arc",0,0,1920,1080).gameObject.AddComponent<WeaponArcGraphic>();flourishArc.Center=ToMesh(contact)+new Vector2(facing*18,-8);flourishArc.Facing=-facing;flourishArc.Radius=70;flourishArc.Thickness=6;flourishArc.color=Color.clear;flourishArc.raycastTarget=false;}
                 var contactRoot=MakeRect(fx,"Weapon contact",0,0,1920,1080);
                 var seal=Ring(contactRoot,"Contact shock",contact.x-23,contact.y-23,46,Color.clear,3);
                 var flash=Box(contactRoot,"Contact glint",contact.x-4,contact.y-4,8,8,Color.clear);flash.rectTransform.localRotation=Quaternion.Euler(0,0,45);
@@ -358,7 +360,7 @@ namespace RequiemLantern.Presentation
                     }
                     attacker.PlaceFoot(actorFoot);defender.PlaceFoot(targetFoot);
                     marker.Phase=phase;marker.Pose=attackPose;marker.ActorFoot=actorFoot;
-                    shadowA.rectTransform.anchoredPosition=ToMesh(actorFoot+new Vector2(-70,1));shadowB.rectTransform.anchoredPosition=ToMesh(targetFoot+new Vector2(-85,1));
+                    shadowA.rectTransform.anchoredPosition=ToMesh(actorFoot+new Vector2(-48,1));shadowB.rectTransform.anchoredPosition=ToMesh(targetFoot+new Vector2(-53,1));
                     if(fatal)defender.Tint(Color.Lerp(targetColor,new Color(.33f,.35f,.41f,.45f),Mathf.Clamp01(after/.20f)));
                     else if(!reducedMotion&&damage&&applied){float tint=Mathf.Clamp01(1-after/.20f)*.34f;defender.Tint(Color.Lerp(targetColor,new Color(1,.62f,.49f,targetColor.a),tint));}
                     float trailProgress=Mathf.Clamp01((elapsed-approach-windup)/swing),trailFade=elapsed<contactAt?1:Mathf.Clamp01(1-after/.17f);

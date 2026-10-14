@@ -30,7 +30,8 @@ namespace RequiemLantern.Presentation
         public string Phase;
         public RawImage Attacker, Defender;
         public Vector2 ActorFoot, ContactPoint;
-        public bool AtlasActive, FrameLayoutActive, Clash;
+        public bool AtlasActive, FrameLayoutActive, SDActive, Clash;
+        public float BodyHeight;
         public int Pose, SkillNumber, ContactSoundCount;
         public string SkillId;
     }
@@ -59,6 +60,7 @@ namespace RequiemLantern.Presentation
         public Vector2 OriginalFoot { get; private set; }
         public bool HasAtlas { get { return atlas; } }
         public bool HasFrameLayout { get { return layout!=null; } }
+        public bool HasSDAtlas { get; private set; }
         public int Pose { get; private set; }
 
         public CombatPosePlayer(Transform parent,RawImage source,string artId,bool facesRight,float bodyHeight,string name)
@@ -66,11 +68,17 @@ namespace RequiemLantern.Presentation
             original=source;originalEnabled=source&&source.enabled;faceRight=facesRight;
             desiredBodyHeight=bodyHeight;
             var sourceRect=source.rectTransform;
-            OriginalFoot=new Vector2(sourceRect.anchoredPosition.x+(.5f-sourceRect.pivot.x)*sourceRect.sizeDelta.x,
+            var planning=source.GetComponent<BattleAvatarMarker>();
+            OriginalFoot=planning?new Vector2(sourceRect.anchoredPosition.x,-sourceRect.anchoredPosition.y):
+                new Vector2(sourceRect.anchoredPosition.x+(.5f-sourceRect.pivot.x)*sourceRect.sizeDelta.x,
                 -sourceRect.anchoredPosition.y+sourceRect.pivot.y*sourceRect.sizeDelta.y);
-            atlas=Resources.Load<Texture2D>("Combat/"+artId+"Actions");
-            if(!atlas)atlas=Resources.Load<Texture2D>("Art/Combat/"+artId+"Actions");
-            if(atlas){
+            if(planning&&!string.IsNullOrEmpty(planning.AtlasKey)){
+                atlas=source.texture as Texture2D;layout=planning.Layout;HasSDAtlas=planning.IsSD;
+            }else if(!planning){
+                atlas=Resources.Load<Texture2D>("Combat/"+artId+"Actions");
+                if(!atlas)atlas=Resources.Load<Texture2D>("Art/Combat/"+artId+"Actions");
+            }
+            if(atlas&&layout==null&&!planning){
                 var metadata=Resources.Load<TextAsset>("Combat/"+artId+"ActionsLayout");
                 if(!metadata)metadata=Resources.Load<TextAsset>("Art/Combat/"+artId+"ActionsLayout");
                 if(metadata)try{
@@ -102,10 +110,7 @@ namespace RequiemLantern.Presentation
                 // Rows in the source PNG run top to bottom; Unity UV coordinates run bottom to top.
                 float insetX=.5f/atlas.width,insetY=.5f/atlas.height;
                 if(layout!=null){
-                    var frame=layout.frames[Pose];float scale=desiredBodyHeight/layout.bodyHeight;
-                    Image.uvRect=new Rect(frame.x/atlas.width+insetX,1-(frame.y+frame.height)/atlas.height+insetY,frame.width/atlas.width-2*insetX,frame.height/atlas.height-2*insetY);
-                    rect.pivot=new Vector2((frame.footX-frame.x)/frame.width,1-(frame.footY-frame.y)/frame.height);
-                    rect.sizeDelta=new Vector2(frame.width*scale,frame.height*scale);
+                    BattleAvatar.ApplyFrame(Image,atlas,layout,Pose,desiredBodyHeight);
                 }
                 else Image.uvRect=new Rect((Pose%3)/3f+insetX,1-(Pose/3+1)/2f+insetY,1f/3-2*insetX,.5f-2*insetY);
                 rect.localRotation=Quaternion.identity;
@@ -132,7 +137,7 @@ namespace RequiemLantern.Presentation
                 if(frame.contactX>0&&frame.contactY>0)
                     return new Vector2(frame.contactX-frame.footX,frame.contactY-frame.footY)*(desiredBodyHeight/layout.bodyHeight);
             }
-            return new Vector2(faceRight?170:-170,-desiredBodyHeight*.48f);
+            return new Vector2((faceRight?1:-1)*desiredBodyHeight*.42f,-desiredBodyHeight*.48f);
         }
 
         public void Tint(Color color)

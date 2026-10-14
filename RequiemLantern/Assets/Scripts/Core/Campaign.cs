@@ -100,11 +100,12 @@ namespace RequiemLantern.Core
         }
         static BattleState Build(StageData stage, ProgressData progress, int? seed)
         {
+            if(stage.Party == null || stage.Party.Length == 0 || stage.Party.Length > PrototypeData.PartyCapacity || stage.Party.Distinct().Count() != stage.Party.Length)
+                throw new InvalidOperationException("Campaign party must have one to four distinct allies.");
             var state = PrototypeData.CreateBattle(progress, seed);
             state.StageId = stage.Id; state.StageName = stage.Number + "  " + stage.Title;
             state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
             if(progress != null)new ProgressService(progress).ApplyToBattle(state);
-            if(state.Allies.Count == 0 || state.Allies.Count > 3)throw new InvalidOperationException("Campaign party must have one to three allies.");
             var enemy=state.Enemies[0];enemy.Name=stage.EnemyName;enemy.Portrait=stage.EnemyArt;enemy.IsHuman=stage.HumanEnemy;
             if(stage.Id=="chapter1_beacon_defense")return state; // Preserve the previously delivered fight and reward identity.
             enemy.IntentProfile=stage.BattleProfile;

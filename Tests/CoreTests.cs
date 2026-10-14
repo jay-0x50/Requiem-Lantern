@@ -14,6 +14,32 @@ internal static class CoreTests
             Equal("난타", b.State.Intents[0].Name); Equal(2, b.State.Intents[0].HitPowers.Length); Equal(3, b.State.Intents[1].HitPowers.Length);
             Equal(2, b.State.Allies[0].SlotCount);
         });
+        Test("four-person default party offers eight distinct cards and keeps the ember budget", () => {
+            var b=BattleEngine.CreatePrototype(seed:31415);Equal(4,PrototypeData.PartyCapacity);
+            Equal("lian,sera,minato,noa",string.Join(",",b.State.Allies.Select(u=>u.Id)));
+            Equal(8,b.State.Allies.Sum(u=>u.SlotCount));Equal(3,b.State.Ember);
+            var cards=b.State.Allies.SelectMany(u=>u.SkillHand).ToList();Equal(8,cards.Count);Equal(8,cards.Select(c=>c.Id).Distinct().Count());
+            b.State.Intents.Clear();var enemy=b.Unit("anger");enemy.Hp=enemy.MaxHp=10000;enemy.Rift=enemy.MaxRift=10000;
+            foreach(var part in enemy.Parts)part.Hp=part.MaxHp=10000;
+            foreach(var unit in b.State.Allies){
+                var skill=unit.Skills.Single(s=>s.Number==1);ForceHand(unit,skill.Id,skill.Id);string error;
+                True(b.TryLink(unit.Id,0,skill.Id,LinkKind.Strike,enemy.Id,out error,unit.SkillHand[0].Id));
+            }
+            Equal(4,b.State.Links.Count);Equal(0,b.PlannedCost);b.ResolveRound();
+            foreach(var unit in b.State.Allies){
+                True(b.State.Events.Any(e=>e.Type=="Damage"&&e.ActorId==unit.Id));Equal(1,unit.SkillHand.Count);Equal(1,unit.DiscardPile.Count);Equal(5,Bag(unit).Count);
+            }
+            b.BeginNextRound();Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
+            b.Restart();Equal(4,b.State.Allies.Count);Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
+        });
+        Test("fourth party member can be forecast and healing target", () => {
+            var state=PrototypeData.CreateBattle(seed:31415);state.Allies.Single(u=>u.Id=="noa").Hp=50;
+            var b=new BattleEngine(state);b.BeginCampaign();
+            True(b.State.Intents.Any(i=>i.Kind==IntentKind.Normal&&i.TargetId=="noa"));
+            b.State.Intents.Clear();ForceHand(b.Unit("minato"),"minato_heal","minato_glimmer");string error;
+            True(b.TryLink("minato",0,"minato_heal",LinkKind.Support,"noa",out error));b.ResolveRound();
+            True(b.Unit("noa").Hp>50);True(b.State.Events.Any(e=>e.Type=="Heal"&&e.TargetId=="noa"));
+        });
         Test("fresh characters have sanity zero, three numbered skills and one defense", () => {
             foreach (string id in new[] { "lian", "sera", "minato", "noa", "heidel" }) {
                 var unit = PrototypeData.CreateCharacter(id); Equal(0, unit.Sanity); Equal(0, unit.SyncLevel);
@@ -95,6 +121,16 @@ internal static class CoreTests
             var b=Fixture(1,20,1,new ScriptedRandom());b.Unit("hero").Hp=5;b.State.Intents[0].Kind=IntentKind.Area;
             b.State.Allies.Add(new UnitState{Id="other",Name="동료",Element=Element.Flame,Hp=100,MaxHp=100,Defense=0});
             Link(b);b.ResolveRound();Equal(80,b.Unit("other").Hp);Equal(-3,b.Unit("other").Sanity);
+        });
+        Test("area clash defeat damages all four party members once", () => {
+            var b=Fixture(1,20,1,new ScriptedRandom());b.State.Intents[0].Kind=IntentKind.Area;
+            foreach(string id in new[]{"sera","minato","noa"})
+                b.State.Allies.Add(new UnitState{Id=id,Name=id,Element=Element.Flame,Hp=100,MaxHp=100,Defense=0});
+            Link(b);b.ResolveRound();Equal(4,b.State.Allies.Count);
+            foreach(var unit in b.State.Allies){
+                Equal(80,unit.Hp);Equal(1,b.State.Events.Count(e=>e.Type=="Damage"&&e.TargetId==unit.Id));
+            }
+            Equal(4,b.State.Events.Count(e=>e.Type=="Damage"));Equal(1,b.State.Events.Count(e=>e.Type=="ClashWin"));
         });
         Test("unopposed forecast rolls once", () => {
             var b=Fixture(1,9,1,new ScriptedRandom(0));b.ResolveRound();Equal(85,b.Unit("hero").Hp);

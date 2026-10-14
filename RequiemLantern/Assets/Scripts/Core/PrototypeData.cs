@@ -6,10 +6,12 @@ namespace RequiemLantern.Core
     /// <summary>Provisional balance values. Names, elements and roles follow the supplied design.</summary>
     public static class PrototypeData
     {
+        public const int PartyCapacity = 4;
+
         public static BattleState CreateBattle(ProgressData progress = null, int? seed = null)
         {
             var state = new BattleState { BattleId = Guid.NewGuid().ToString("N"), RandomSeed = seed ?? Guid.NewGuid().GetHashCode() };
-            foreach (string id in new[] { "lian", "sera", "minato" })
+            foreach (string id in new[] { "lian", "sera", "minato", "noa" })
             {
                 var growth = progress == null || progress.Characters == null ? null : progress.Characters.Find(x => x.Id == id);
                 state.Allies.Add(CreateCharacter(id, growth == null ? 0 : growth.SyncLevel));

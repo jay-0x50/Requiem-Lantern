@@ -1,0 +1,44 @@
+Four-party SD browser verification — 2026-10-14 (Asia/Seoul)
+
+Isolated host: port 8128, bin/qa-four-party/PreviewHost.dll, runtime four-party-sd-v6.
+Isolated save: QA/FourPartySD/2026-10-14/Browser/progress.xml.
+The test save seeds Chapters 1–3 as cleared. Player save was not used.
+
+Automated checks: Preview 57, Combat FX 37, sampled audio 8 — all passed.
+The FX suite measures all five SD sheets in ten directed clashes, verifies a
+shared weapon contact at logical (962.5,475), all six frames, cancellation,
+single contact damage/audio, reduced motion and authoritative HP restoration.
+
+Actual Chrome UI:
+- Main Lian illustration remains /art/Lian.png.
+- Noa roster and story illustrations remain /art/Noa.png.
+- Stage 3-6 deploys Lian/Sera/Minato/Noa; four SD bodies, eight actual cards,
+  eight action slots and four original portrait thumbnails are visible.
+- Final layout JSON is used for measured first-frame crops and body height.
+- No card or card name overflow at normal viewport or 1280 x 720. Small-view
+  card width measured 116.2 px. Temporary viewport override was reset.
+- Dragged Noa's first actual card to the colon-containing forecast
+  1:anger_arm. The other same-name card was separately clicked and linked
+  to anger_arm; both card identities remain reserved in actions 0 and 1.
+- Reserved SVG threads originate at the measured DOM slot centers.
+- Noa's actual moving fighter uses /combat/NoaSDActions.png, never full art.
+  Opposing monster uses its own /combat/AngerActions.png at a larger height.
+- First moving approach still shows enemy 171/171; no early HP change.
+- Completed one round: ROUND 02, enemy 163/171, arm 12/26, Noa 112/120;
+  other allies unchanged at 150/150, 110/110 and 100/100. SD idle returned
+  and two offered cards per ally are again visible.
+- Stage 2-9 deploys Lian/Sera/Minato/Heidel. Heidel uses his own SD sheet;
+  human boss retains /art/Ellen.png at compact battle size.
+- Chrome console returned no warning/error entries.
+- Retreated to the keep; isolated coins/fragments remain 0.
+
+Screenshots:
+01-original-main.png, 02-original-roster.png, 03-original-story.png,
+04-four-party-planning.png (representative final composition),
+05-two-noa-actions.png, 06-sd-melee.png (approach frame),
+08-round-two.png, 09-small-viewport.png, 10-heidel-human-boss.png.
+An attempted instantaneous contact capture missed the short contact phase;
+there is no 07 image. Exact contact timing is covered by the FX regression.
+
+Cleanup: QA Chrome tab 1516715200 was navigated by GET to live port 8127
+and marked Deliverable. The player session was not changed by UI actions.
