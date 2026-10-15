@@ -5,7 +5,7 @@ $url='http://127.0.0.1:8127/'
 $state=$null
 try { $state=Invoke-RestMethod ($url+'api/state') -TimeoutSec 2 } catch { }
 if ($state) {
-    if ($state.application -eq 'RequiemLantern' -and $state.runtimeRevision -eq 'boss-intent-dock-v10') {
+    if ($state.application -eq 'RequiemLantern' -and $state.runtimeRevision -eq 'click-to-start-v11') {
         if (-not $NoBrowser) { Start-Process $url }
         Write-Output "Preview is already running: $url"
         return

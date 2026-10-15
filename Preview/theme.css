@@ -543,3 +543,14 @@
 
 
 .intent-lamps>b{font-size:14px;line-height:24px;font-weight:500;color:#d3bced}.intent-darkness-symbol{display:block;width:18px;height:25px;background:#b79bd8;clip-path:polygon(51% 0,60% 19%,83% 40%,79% 25%,96% 52%,100% 69%,91% 87%,73% 98%,44% 100%,18% 88%,2% 70%,6% 53%,25% 29%,24% 52%,39% 37%);position:relative;flex-shrink:0}.intent-darkness-symbol:after{content:"";position:absolute;left:6px;top:12px;width:7px;height:11px;background:#524265;clip-path:polygon(50% 0,100% 60%,89% 86%,56% 100%,20% 90%,0 58%)}
+
+/* The title opens from the scene; settings remain a separate control. */
+.screen.title{cursor:pointer}
+#game .title .title-start-prompt{position:absolute;left:50%;bottom:95px;transform:translateX(-50%);width:480px;min-height:86px;padding:10px 20px;border:0;clip-path:none;background:transparent!important;box-shadow:none;color:#eee1cb;font-weight:400;text-align:center;z-index:3;animation:title-prompt-breathe 3.8s ease-in-out infinite}
+#game .title .title-start-prompt::before,#game .title .title-start-prompt::after{display:none}
+.title-start-prompt>span{display:block;font-size:24px;line-height:1.7;letter-spacing:.12em;text-shadow:0 2px 12px #02060a}
+.title-start-prompt>small{display:block;font-size:11px;line-height:1.8;letter-spacing:.35em;color:#b6a58b;margin-top:6px}
+#game .title .title-start-prompt:focus-visible{outline:1px solid #d3bb87;outline-offset:5px}
+#game .title .title-settings{position:absolute;right:46px;top:36px;min-width:82px;height:40px;padding:6px 18px;font-size:14px;z-index:4}
+@keyframes title-prompt-breathe{0%,100%{opacity:.62}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.screen.title,#game .title .title-start-prompt{animation:none!important;transition:none!important}}

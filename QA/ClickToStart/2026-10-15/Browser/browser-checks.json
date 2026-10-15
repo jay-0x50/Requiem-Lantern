@@ -1,0 +1,25 @@
+{
+  "runtimeRevision": "click-to-start-v11",
+  "isolatedPort": 8128,
+  "user8127Untouched": true,
+  "titleOnlyTests": 4,
+  "fullPreviewTests": 93,
+  "buildWarnings": 0,
+  "buildErrors": 0,
+  "browserChecks": {
+    "settingsEnterOpensSettingsOnly": true,
+    "settingsSpaceTogglesWithoutStarting": true,
+    "escapeReturnsToTitle": true,
+    "spaceBackReturnsToTitleWithoutStarting": true,
+    "motionOffAnimation": "none",
+    "osPrefersReducedMotion": true,
+    "osReducedAnimation": "none",
+    "existingEnterDestination": "등대 요새",
+    "existingSceneClickDestination": "등대 요새",
+    "freshSpaceDestination": "1-1 얼어붙은 폐허",
+    "freshStoryPage": "01 / 08",
+    "consoleErrors": []
+  },
+  "qaTabAndHostClosed": true,
+  "committed": false
+}

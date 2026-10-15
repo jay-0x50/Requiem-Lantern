@@ -48,11 +48,13 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
             combatAudio?.Update(sound);
+            if(toast)toast.gameObject.SetActive(Time.unscaledTime<toastUntil);
+            if(page=="title"){TickTitleInput();return;}
             if(dialogue&&page=="story"&&!overlay)
             {
                 revealed+=Time.unscaledDeltaTime*36;
@@ -60,9 +62,8 @@ namespace RequiemLantern.Presentation
                 if(storyAuto&&revealed>lineText.Length+90)NextStory();
                 if(Input.GetKeyDown(KeyCode.Space))NextStory();
             }
-            if(toast)toast.gameObject.SetActive(Time.unscaledTime<toastUntil);
             if(Input.GetKeyDown(KeyCode.Escape)&&page!="title"&&page!="resolve"){
-                if(overlay)Destroy(overlay.gameObject);else if(page=="battle")ConfirmRetreat();else ShowHub();
+                if(overlay)Destroy(overlay.gameObject);else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
             }
         }
         bool Persist() { try { save.Save(progress.Data); return true; } catch(Exception e) { Notify("저장하지 못했습니다. 저장 공간을 확인해 주세요."); Debug.LogException(e); return false; } }

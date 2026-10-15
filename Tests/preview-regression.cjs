@@ -138,6 +138,45 @@ function candidateActionStatusChecks(){
  pass('an incapacitated fighter reports zero available and total actions even when an old reservation remains');
 }
 
+function campaignFixture(e) {
+  const chapters = JSON.parse(fs.readFileSync(path.join(__dirname, '../기획서/메인스토리/campaign.json'), 'utf8')).chapters;
+  for(const [index,chapter] of chapters.entries()){chapter.focusCharacterId||=['lian','sera','noa','heidel','minato'][index];chapter.focusStorySummary||='메인 스토리에 이어지는 인물의 과거와 현재';}
+  for (const chapter of chapters) for (const stage of chapter.stages) { stage.unlocked = stage.id === 'c1s01'; stage.cleared = false; }
+  e.run('data.campaign=' + JSON.stringify({ chapters, activeStage: null, phase: 'None', replay: false, currentStory: [] }));
+  return chapters;
+}
+
+async function titleInputChecks(){
+ let env=environment();env.run('tone=()=>{};showTitle();');const initialTitle=env.game.innerHTML;
+ assert.ok(initialTitle.includes('화면을 클릭해 시작'));assert.ok(initialTitle.includes('CLICK TO START'));assert.ok(!initialTitle.includes('마지막 불씨를 따라서'));assert.ok(initialTitle.includes('REQUIEM<br>LANTERN'));assert.ok(initialTitle.includes('우리가 잃어버린 것들은, 아직 빛나고 있다.'));
+ await env.gameEvents.click({target:{closest:()=>null}});assert.equal(env.run('page'),'story');assert.equal(env.run('storyKey'),'prologue');
+ env=environment();env.run('tone=()=>{};data.progress.prologueCompleted=true;showTitle();');assert.equal(env.game.innerHTML,initialTitle);await env.click('begin');assert.equal(env.run('page'),'hub');
+ pass('title copy is identical for new and existing players, a scene click starts the prologue, and the prompt returns an existing player to the keep');
+
+ env=environment();campaignFixture(env);env.run(`tone=()=>{};showTitle();globalThis.titleCalls=[];command=async(action,args)=>{titleCalls.push({action,...args});await new Promise(done=>globalThis.releaseTitle=done);data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{speaker:'카이',text:'첫 불씨'}];return true;};`);
+ const pending=env.gameEvents.click({target:{closest:()=>null}});await env.click('begin');let prevented=0;
+ env.events.keydown({code:'Enter',target:{closest:()=>null},preventDefault(){prevented++;}});
+ assert.equal(env.context.titleCalls.length,1);assert.equal(env.context.titleCalls[0].stageId,'c1s01');assert.equal(env.run('titleStarting'),true);assert.equal(prevented,1);
+ env.context.releaseTitle();await pending;assert.equal(env.run('storyKey'),'stage:c1s01:BeforeStory');assert.equal(env.run('titleStarting'),false);
+ pass('scene clicks, the prompt and Enter share one pending start and enter campaign 1-1 exactly once');
+
+ env=environment();env.run('tone=()=>{};showTitle();globalThis.advanced=0;nextStory=()=>advanced++;');
+ env.events.keydown({code:'Space',target:{closest:()=>null},preventDefault(){}});assert.equal(env.run('page'),'story');assert.equal(env.run('storyKey'),'prologue');
+ env.events.keydown({code:'Space',repeat:true,preventDefault(){}});assert.equal(env.context.advanced,0);
+ env.events.keyup({code:'Space'});env.events.keydown({code:'Space',preventDefault(){}});assert.equal(env.context.advanced,1);
+ env=environment();env.run('tone=()=>{};data.progress.prologueCompleted=true;showTitle();');env.events.keydown({code:'Enter',target:{closest:()=>null},preventDefault(){}});assert.equal(env.run('page'),'hub');
+ pass('Space and Enter start from the title while a held start key cannot advance the first story line');
+
+ env=environment();env.run('tone=()=>{};showTitle();globalThis.unwantedStarts=0;command=async()=>{unwantedStarts++;return true;};');
+ const settingsButton={dataset:{action:'go:settings'}};settingsButton.closest=()=>settingsButton;
+ env.events.keydown({code:'Enter',target:settingsButton,preventDefault(){throw Error('settings key was intercepted');}});assert.equal(env.run('page'),'title');
+ await env.click('go:settings');assert.equal(env.run('page'),'settings');env.events.keydown({code:'Space',preventDefault(){}});await env.click('setting:motion');assert.equal(env.run('page'),'settings');
+ env.events.keydown({code:'Escape'});assert.equal(env.run('page'),'title');env.events.keyup({code:'Space'});assert.equal(env.run('page'),'title');
+ await env.click('go:settings');env.events.keydown({code:'Space',preventDefault(){}});await env.click('go:title');env.events.keyup({code:'Space'});env.events.keydown({code:'Space',repeat:true,preventDefault(){}});
+ assert.equal(env.run('page'),'title');assert.equal(env.run('settings.motion'),false);assert.equal(env.run('data.progress.prologueCompleted'),false);assert.equal(env.context.unwantedStarts,0);
+ pass('settings Enter, Space, toggle, Escape and back activation never leak into a title start');
+}
+
 async function intentDockChecks(){
  let env=environment();fourParty(env);
  env.run(`data.battle.isBoss=true;data.battle.enemies[0].element='Shadow';data.battle.enemies[0].sanity=20;data.battle.intents=Array.from({length:6},(_,n)=>({id:'3:anger_'+(n%2?'core':'arm')+(n>1?'_'+(Math.floor(n/2)+1):''),actorId:'anger',partId:n%2?'core':'arm',targetId:data.battle.allies[n%4].id,name:'예고 '+(n+1),kind:n===1?'Area':n===3?'Piercing':n===5?'Illusion':'Normal',speed:5+n,basePower:4,flamePower:3,flameCount:2,element:'Shadow'}));showBattle();`);
@@ -196,6 +235,7 @@ async function intentDockChecks(){
 }
 
 async function main() {
+  if(process.argv.includes('--title-only')){await titleInputChecks();console.log('TOTAL '+passed+' title input cases passed');return;}
   if(process.argv.includes('--intent-dock-only')){await intentDockChecks();console.log('TOTAL '+passed+' intent-dock cases passed');return;}
   if(process.argv.includes('--action-status-only')){candidateActionStatusChecks();console.log('TOTAL '+passed+' candidate/action status cases passed');return;}
   let env = environment('{broken');
@@ -393,13 +433,7 @@ async function main() {
   assert.ok(env.game.innerHTML.includes('stage-replay:c1s01'));assert.ok(!env.game.innerHTML.includes('독립 스토리'));assert.ok(!source.includes('characterStories'));assert.ok(!source.includes('read-character:'));
   pass('standalone character story routes and payload are retired; the archive exposes only completed main-stage replay');
 
-  function campaignFixture(e) {
-    const chapters = JSON.parse(fs.readFileSync(path.join(__dirname, '../기획서/메인스토리/campaign.json'), 'utf8')).chapters;
-    for(const [index,chapter] of chapters.entries()){chapter.focusCharacterId||=['lian','sera','noa','heidel','minato'][index];chapter.focusStorySummary||='메인 스토리에 이어지는 인물의 과거와 현재';}
-    for (const chapter of chapters) for (const stage of chapter.stages) { stage.unlocked = stage.id === 'c1s01'; stage.cleared = false; }
-    e.run('data.campaign=' + JSON.stringify({ chapters, activeStage: null, phase: 'None', replay: false, currentStory: [] }));
-    return chapters;
-  }
+
   env = environment();
   const chapters = campaignFixture(env);
   env.context.showStages();
@@ -866,6 +900,7 @@ async function main() {
   assert.equal(env.context.cancelDraws,1);assert.equal(env.run('busy'),false);assert.deepEqual(Array.from(env.context.executionModes),[true,false]);
   pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
 
+  await titleInputChecks();
   candidateActionStatusChecks();
   await intentDockChecks();
   console.log('TOTAL ' + passed + ' regression cases passed');

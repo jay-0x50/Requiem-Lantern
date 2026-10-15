@@ -12,18 +12,21 @@ namespace RequiemLantern.Presentation
         void ShowTitle()
         {
             Clear("title");Box(screen,"Title veil",0,0,1920,1080,new Color(.02f,.035f,.065f,.35f));
+            PrepareTitleInput();
             Label(screen,"Overline","T H E   L A S T   L I G H T",160,185,1200,40,19,Gold);
             var logo=Label(screen,"Logo","REQUIEM\nLANTERN",145,225,1400,270,118,Ivory);
             logo.lineSpacing=.78f;
             Box(screen,"Gold rule",162,514,100,3,Gold);
             Label(screen,"Korean title","레퀴엠 랜턴",160,546,1000,64,38);
             Label(screen,"Promise","태양이 꺼진 지 13년.\n우리가 잃어버린 것들은, 아직 빛나고 있다.",163,640,1000,96,26,Muted);
-            Button(screen,"Begin story",progress.Data.PrologueCompleted?"등대 요새로 돌아가기   →":"마지막 불씨를 따라서   →",160,814,560,76,()=>{
-                if(progress.Data.PrologueCompleted)ShowHub();else EnterCampaignStage(CampaignCatalog.Chapters[0].Stages[0].Id);
-            },true);
-            Button(screen,"Title settings","설정",748,814,164,76,ShowSettings);
+            var prompt=MakeRect(screen,"Title start prompt",510,823,900,118);
+            var promptGroup=prompt.gameObject.AddComponent<CanvasGroup>();promptGroup.blocksRaycasts=false;
+            Label(prompt,"Start invitation","화면을 클릭해 시작",0,0,900,66,38,Gold,TextAnchor.MiddleCenter);
+            Label(prompt,"Start invitation English","CLICK TO START",0,73,900,29,18,Muted,TextAnchor.MiddleCenter);
+            prompt.gameObject.AddComponent<TitlePromptBreath>().Configure(promptGroup,reducedMotion);
+            titleSettingsButton=Button(screen,"Title settings","설정",1735,34,135,52,ShowSettings).gameObject;
             Label(screen,"Small inscription","기억이 사라져도\n등불은 남는다.",1400,764,350,120,26,Muted,TextAnchor.MiddleRight);
-            Footer("초기 플레이 버전  ·  클릭 / 터치로 시작");
+            Footer("Enter / Space로도 시작할 수 있습니다");
         }
         void ShowHub()
         {
@@ -145,13 +148,14 @@ namespace RequiemLantern.Presentation
         }
         void ShowSettings()
         {
-            if(page!="settings")settingsReturn=page;Clear("settings");Header("PREFERENCES","환경 설정",()=>{if(settingsReturn=="title")ShowTitle();else ShowHub();});
+            if(page!="settings")settingsReturn=page;Clear("settings");Header("PREFERENCES","환경 설정",ReturnFromSettings);
             Label(screen,"Settings heading","편안한 속도로, 빛을 잇도록.",133,195,1700,110,57);
             SettingsRow("점화 타이밍 보조","자동으로 ‘양호’ 판정. 끄면 Space / 클릭으로 점화합니다.",390,assisted,()=>{assisted=!assisted;SaveSettings();ShowSettings();});
             SettingsRow("움직임 줄이기","캐릭터 이동, 화면 흔들림과 빛 파편을 간소화합니다.",550,reducedMotion,()=>{reducedMotion=!reducedMotion;SaveSettings();ShowSettings();});
             SettingsRow("효과음","무기 충돌, 타격, 불씨와 장비 효과음을 재생합니다.",710,sound,()=>{sound=!sound;SaveSettings();ShowSettings();});
             Footer("설정과 진행 상황은 이 기기에 저장됩니다");
         }
+        void ReturnFromSettings(){if(settingsReturn=="title")ShowTitle();else ShowHub();}
         void SettingsRow(string title,string help,int y,bool on,Action change)
         {
             Box(screen,title,132,y,1640,131,new Color(.05f,.075f,.11f,.94f));Label(screen,title+" label",title,165,y+15,1300,51,31);Label(screen,title+" help",help,166,y+76,1330,38,23,Muted);
