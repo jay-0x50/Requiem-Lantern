@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-15",
+  "runtimeRevision": "fresh-hands-voyage-v9",
+  "core": {
+    "status": "PASS",
+    "tests": 64,
+    "command": "dotnet run --project Tests/CoreTests.csproj --configuration Release",
+    "notes": "Passed after the fresh-hand implementation, including fallen actors and repeated round-transition calls. No additional Core run was needed after the later story-only catalog regeneration. No standalone prior Core stdout file was available."
+  },
+  "campaign": {
+    "status": "PASS",
+    "tests": 21,
+    "command": "dotnet run --project Tests/CampaignTests.csproj --configuration Release",
+    "catalog": "Regenerated catalog with 616 dialogue lines, including the chapter 2-1 vessel introduction.",
+    "battleRuns": 75,
+    "victories": 75,
+    "seeds": [0, 1, 2],
+    "balanceEvidence": "balance-runs.txt"
+  },
+  "previewHostBuild": {
+    "status": "PASS",
+    "command": "dotnet build PreviewHost/PreviewHost.csproj --configuration Release --output PreviewHost/bin/fresh-hands-api-qa --verbosity quiet",
+    "warnings": 0,
+    "errors": 0
+  },
+  "http": {
+    "status": "PASS",
+    "command": "python Tests/preview-api-regression.py --host PreviewHost/bin/fresh-hands-api-qa/PreviewHost.dll",
+    "port": 8129,
+    "processStopped": true,
+    "playerSaveModified": false,
+    "livePort8127Modified": false,
+    "checks": [
+      "Both offers receive fresh CardIds after used, unused and defense-only rounds.",
+      "Old CardIds are rejected atomically; recommendation, reuse and clear preserve the current hand.",
+      "Weighted bags preserve S1 x3, S2 x2, synchronized S3 x1 and recycle without duplication.",
+      "Normal R1-R5 and boss R1-R3 action capacities remain correct.",
+      "Multiple enemy and part identities, forecasts and teammate interception remain correct.",
+      "Five SD atlases/layouts, original portrait routes and 24 combat WAV routes return the exact source assets.",
+      "Stage gates, story completion, victory/after-story rewards, replay and synchronization remain valid."
+    ]
+  },
+  "review": {
+    "cardOwnershipAndLongRoundIssues": "No known unresolved issue.",
+    "unity": "Read-only review found no blocking issue with CardId/round selection restoration, tray retraction, version-based cancellation, reduced-motion identity transforms, original portraits or campaign gates.",
+    "browser": "A potential overlap between the final ports and the voyage log at ten visible stages was reported to the browser owner for layout verification."
+  }
+}

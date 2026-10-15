@@ -30,7 +30,8 @@ class Node {
   }
   set className(value) { this.classes = new Set(value.split(/\s+/).filter(Boolean)); }
   get className() { return [...this.classes].join(' '); }
-  appendChild(node) { node.parent = this; this.children.push(node); return node; }
+  appendChild(node) { node.remove(); node.parent = this; this.children.push(node); return node; }
+  setAttribute(key,value) { this.attributes??={};this.attributes[key]=value; }
   append(...nodes) { nodes.forEach(node => this.appendChild(node)); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(n => n !== this); this.parent = null; }
   descendants() { return this.children.flatMap(n => [n, ...n.descendants()]); }
@@ -79,6 +80,7 @@ function battle() {
 function environment(motion = true, mockImages = false, initialSnapshot = battle()) {
   const root = new Node(), stage = root.appendChild(new Node('div', 'battle'));
   stage.appendChild(new Node('div', 'phase'));
+  stage.appendChild(new Node('div', 'action-dock'));
   const initial = initialSnapshot;
   for (const u of [...initial.allies, ...initial.enemies]) {
     stage.appendChild(new Node('img', '', { unit: u.id })).src = '/art/' + u.id + '.png';
@@ -482,6 +484,7 @@ async function main() {
   const rolling=env.fx.play([roll,event('Sanity','lian',5)],sanityFinal);
   await env.until(()=>env.root.querySelectorAll('.flame-roll').length===1);
   const rollCard=env.root.querySelector('.flame-roll');
+  assert.equal(rollCard.parent,env.stage);
   assert.equal(rollCard.querySelectorAll('.unknown').length,5);assert.equal(rollCard.querySelectorAll('.on').length,0);
   await env.until(()=>rollCard.classList.contains('decided'));
   assert.equal(rollCard.querySelectorAll('.on').length,3);assert.equal(rollCard.querySelectorAll('.off').length,2);
@@ -677,6 +680,41 @@ async function main() {
     await env.drain();assert.equal(await exchange,true);
   }
   pass('both extra enemies use their Anger portrait contact pose in either direction against Sera, independent of logical unit ID');
+
+  env=environment();
+  const focusAnchor=copy(env.fx.point('anger')),dock=env.root.querySelector('.action-dock');
+  const framed=env.fx.play([event('Clash','anger'),event('Damage','anger',10)],copy(env.initial),{holdDock:true});
+  assert.equal(dock.inert,true);assert.equal(dock.attributes['aria-hidden'],'true');
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');
+  assert.equal(env.stage.dataset.cameraFocus,'clash');assert.equal(env.stage.dataset.cameraZoom,'1.1');
+  const sceneLayer=env.root.querySelector('.combat-fx');assert.ok(sceneLayer.style.transform.includes('scale(1.1)'));
+  assert.equal(env.fx.meleePair[0].wrapper.parent,sceneLayer);assert.equal(env.fx.meleePair[1].wrapper.parent,sceneLayer);
+  assert.deepEqual(copy(env.fx.point('anger')),focusAnchor);
+  await env.until(()=>env.stage.dataset.combatPhase==='contact');
+  const origin=sceneLayer.style.transformOrigin.split(' ').map(parseFloat),offset=sceneLayer.style.transform.match(/translate\(([-\d.]+)px,([-\d.]+)px\)/).slice(1).map(Number);
+  for(const fighter of env.fx.meleePair){const reach=env.fx.weaponOffset(fighter,2),weapon={x:fighter.x+reach.x,y:parseFloat(fighter.wrapper.style.top)+440+reach.y};assert.ok(Math.abs((weapon.x-origin[0])*1.1+origin[0]+offset[0]-875)<1e-7);assert.ok(Math.abs((weapon.y-origin[1])*1.1+origin[1]+offset[1]-462.5)<1e-7);}
+  await env.until(()=>env.stage.dataset.cameraFocus==='strike');assert.equal(env.stage.dataset.cameraZoom,'1.16');
+  await env.drain();assert.equal(await framed,true);assert.equal(sceneLayer.style.transform,'');
+  assert.equal(dock.inert,true);env.fx.execution(false);assert.equal(dock.inert,false);assert.equal(dock.attributes['aria-hidden'],'false');
+  pass('the dock stays inert through whole resolve while one shared pair frame changes from clash to strike without moving logical anchors');
+
+  env=environment();
+  const cancelledFocus=env.fx.play([event('Damage','anger',10)],copy(env.initial));
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(env.stage.dataset.cameraFocus,'strike');
+  env.fx.clear();await env.drain();assert.equal(await cancelledFocus,false);
+  assert.equal(env.root.querySelector('.action-dock').inert,false);assert.equal(env.stage.dataset.cameraFocus,'');assert.equal(env.stage.classList.contains('resolving'),false);
+  assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,0);
+  pass('cancelling a focused windup restores the dock and camera and prevents the pending contact hit');
+
+  env=environment(false);
+  const stillFocus=env.fx.play([event('Damage','anger',10)],copy(env.initial));
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');
+  assert.ok(!env.stage.dataset.cameraFocus);assert.ok(!env.root.querySelector('.combat-fx').style.transform);
+  await env.drain();assert.equal(await stillFocus,true);assert.equal(env.root.querySelector('.action-dock').inert,false);
+  env=environment();const fastFocus=env.fx.play([event('Damage','anger',10)],copy(env.initial),{fast:true});
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(env.stage.dataset.cameraZoom,'1.12');
+  await env.drain();assert.equal(await fastFocus,true);
+  pass('reduced motion omits camera movement and fast combat softens strike framing while retaining contact and dock restoration');
 
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }

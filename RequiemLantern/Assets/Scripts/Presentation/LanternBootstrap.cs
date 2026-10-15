@@ -133,6 +133,7 @@ namespace RequiemLantern.Presentation
                 if(displayed!=(stageIndex<4))throw new Exception("Campaign map must show completed 1-1..1-3 and frontier 1-4 only.");
             }
             if(screen.Find("Chapter 2"))throw new Exception("Locked future chapter tab was displayed.");
+            AssertVoyageChart(4);
             yield return Capture(directory,"16-stage-frontier");
             ShowArchive();
             if(!screen.Find("Stage "+firstChapter.Stages[2].Id)||screen.Find("Stage "+firstChapter.Stages[3].Id))throw new Exception("Archive displayed an unfinished stage.");
@@ -152,6 +153,7 @@ namespace RequiemLantern.Presentation
                 if(page!="stages"||screen.Find("Chapter focus").GetComponent<Text>().text!=focus+"의 본편 이야기")
                     throw new Exception("Main chapter focus did not display for "+focus);
                 if(chapter.Number<5&&screen.Find("Chapter "+(chapter.Number+1)))throw new Exception("Focus chapter map exposed a future chapter.");
+                AssertVoyageChart(1);
                 yield return Capture(directory,"09-chapter"+chapter.Number+"-"+chapter.FocusCharacterId+"-map");
                 string human=chapter.Number==1?"로웬":chapter.Number==2?"엘렌":chapter.Number==3?"이브":null;
                 if(human!=null){
@@ -187,6 +189,15 @@ namespace RequiemLantern.Presentation
             if(page!="stages"||selectedChapter!=1)throw new Exception("Roster story button did not open the character's main chapter map.");
             if(progress.Data.Coins!=coinsBeforeReplay)throw new Exception("Main chapter previews unexpectedly changed the ongoing player's rewards.");
             ShowStages();yield return Capture(directory,"05-stages");
+            var voyageProgress=progress;var voyageSave=save;toastText="";toastUntil=0;
+            var voyageChapter=CampaignCatalog.Chapters[1];UseSmokeChapterFixture(voyageChapter,voyageChapter.Stages.Last());ShowStages();
+            AssertVoyageChart(voyageChapter.Stages.Count);
+            if(!screen.Find("Stage "+voyageChapter.Stages.Last(stage=>stage.IsBoss).Id).Find("Anchor eye"))throw new Exception("Final boss port lost its anchor symbol.");
+            int routeCoins=progress.Data.Coins;
+            var revisit=voyageChapter.Stages[0];screen.Find("Stage "+revisit.Id).GetComponent<Button>().onClick.Invoke();
+            if(selectedStage!=revisit.Id||progress.Data.Coins!=routeCoins||!screen.Find("Selected stage").GetComponent<Text>().text.Contains(revisit.Title))throw new Exception("Selecting a voyage port entered it or changed its rewards.");
+            yield return Capture(directory,"31-voyage-full-chart");
+            campaign.Exit();progress=voyageProgress;save=voyageSave;ShowStages();
             int coinsBeforeLegacy=progress.Data.Coins;
             yield return SmokeActionProgression(directory);
             // Isolated UI fixture: choosing an expensive new card should use
@@ -295,12 +306,15 @@ namespace RequiemLantern.Presentation
                     }
                 }
                 if(!capturedWindup&&marker&&marker.Phase=="windup"){
+                    AssertDockRetracted();
+                    if(marker.FocusScale<=1||marker.FocusScale>1.17f)throw new Exception("Melee pair was not brought into controlled foreground focus.");
                     if(marker.ContactSoundCount!=0)throw new Exception("A contact sound played before weapon contact.");
                     if(!marker.AtlasActive||!marker.Attacker||marker.Attacker.uvRect.width>=.5f)throw new Exception("Melee is missing its attack pose atlas.");
                     if(damage.GetComponentsInChildren<ThreadGraphic>().Length!=0)throw new Exception("Melee still contains a travelling light beam.");
                     testedMelee=marker;windupUv=marker.Attacker.uvRect;windupHealth=visibleHealth.Values.Sum();
                     yield return new WaitForEndOfFrame();
                     WriteSmokeScreenshot(directory,"06a-windup");capturedWindup=true;
+                    WriteSmokeScreenshot(directory,"32-focus-dock-retracted");
                 }
                 var clashFx=overlay?(overlay.Find("FX Clash")??overlay.Find("FX Tie")):null;
                 var clashFeedback=clashFx?clashFx.Find("Battle feedback"):null;
@@ -328,6 +342,9 @@ namespace RequiemLantern.Presentation
             if(page!="battle"||resolving||overlay||battle.State.Round!=3||battle.State.Outcome!=BattleOutcome.Ongoing)
                 throw new Exception("Visual round did not return cleanly to round 3 planning.");
             AssertSmallBattleAvatars();
+            if(battleDockRetracted||Mathf.Abs(screen.Find("Action dock").GetComponent<RectTransform>().anchoredPosition.y+758)>.01f)
+                throw new Exception("Round-3 planning did not restore the card tray.");
+            yield return Capture(directory,"33-focus-next-planning");
             foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies)){
                 if(!visibleHealth.TryGetValue(unit.Id,out var shown)||shown!=unit.Hp)throw new Exception("Visible HP differs from core HP for "+unit.Id);
                 if(healthFills.TryGetValue(unit.Id,out var fills))foreach(var fill in fills){
@@ -346,21 +363,70 @@ namespace RequiemLantern.Presentation
             if(progress.Data.Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not granted exactly once.");
             if(save.Load().Coins!=coinsBeforeLegacy+120)throw new Exception("Smoke reward was not persisted to the isolated save.");
             yield return SmokeMultipleEnemies(directory);
+            yield return SmokeFocusCancellation(directory);
             string[] screenshots={"01-title","02-story","03-hub","04-roster","05-stages","06-battle","06a-windup","06b-impact","06c-recoil","07-result",
                 "08-main-archive","09-chapter1-lian-map","09-chapter2-sera-map","09-chapter3-noa-map","09-chapter4-heidel-map","09-chapter5-minato-map",
                 "11-lian-human","11-sera-human","11-noa-human","12-campaign-map","13-campaign-solo-battle","14-campaign-after-story","15-campaign-ensemble",
                 "16-stage-frontier","17-skill-bag","18-flame-suspense","19-roster-focus-lock","20-three-enemies-intercept","21-third-enemy-target","22-enemy-2-impact","23-enemy-3-impact","24-single-boss",
-                "25-normal-round1","26-normal-round2","27-normal-round3","28-normal-round5","29-boss-round3","30-boss-round5"};
+                "25-normal-round1","26-normal-round2","27-normal-round3","28-normal-round5","29-boss-round3","30-boss-round5","31-voyage-full-chart","32-focus-dock-retracted","33-focus-next-planning","34-focus-reduced-motion"};
             float writesDeadline=Time.realtimeSinceStartup+10;
             while(screenshots.Any(name=>!FreshSmokeScreenshot(Path.Combine(directory,name+".png")))){
-                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all thirty-eight fresh screenshots.");yield return null;
+                if(Time.realtimeSinceStartup>writesDeadline)throw new Exception("Smoke did not write all forty-two fresh screenshots.");yield return null;
             }
             if(!string.IsNullOrEmpty(smokeAsyncError))throw new Exception("Asynchronous smoke failure: "+smokeAsyncError);
-            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 38 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 2 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 3 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
-            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Four-person standard party, eight visible skill cards at least 160 canvas pixels wide; selection details in the right rail. All five battle SD atlases retained their six poses and planted-foot geometry. Fielded allies stayed at 220/1080 body height through planning and action; original hub, dialogue, roster and dock face portraits remained separate.\n");
-            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Multiple-enemy acceptance: 38 fresh screenshots total. Campaign 2-4 fielded three uniquely selectable enemies and four SD allies; every intent displayed its owning enemy number and original named recipient. Sera's real offered card intercepted the second enemy's attack aimed at Lian; only that intent's route changed to Sera, with Lian retained as original target. Direct card drag selected the third enemy's body. Actual core damage events from enemies 2 and 3 animated their own art and applied damage only at contact to the exact target; losing the intercepted clash hit Sera rather than Lian. A main chapter boss still rendered as one larger enemy.\n");
-            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Progressive action acceptance: 38 fresh screenshots total. Both battle types started with one usable action per ally while retaining two offered choices. Normal battles progressed [1,1,1,1] → [2,1,1,1] → [2,2,1,1] → [2,2,2,1] → [2,2,2,2]; bosses remained [2,2,1,1] from round 3 through round 5. Locked second chips showed their unlock round or boss limit and rejected clicks, direct calls and drags without reservations or hand consumption. Selecting another candidate replaced the existing first action. Guard actions used the same limit; the dock count matched usable actions and consumed slots. Restart selection clamped to action 1. Synchronized S3 used one action on round 1 for every standard party member, including boss positions 3 and 4; its card identity and the two-choice hand were preserved. The older two-action drag and budget fixtures ran at an explicitly later round.\n");
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 42 fresh screenshots; campaign map, free story-only completion, mixed solo battle and after-story, ensemble replay; title, story, hub, roster, stages, battle, windup, impact, recoil, victory; five character-focused main chapters and three integrated human friend encounters.\nEach focus chapter map showed its main character; Rowan, Ellen and Eve spoke in normal pre-battle stages whose completion remained gated by victory. Roster story buttons opened unlocked main chapter maps and guarded locked chapters; archive showed completed main stages only. Campaign 1-1 unlocked 1-2 without rewards; 1-2 completed only after victory and after-story; replay changed no rewards. Future stages/chapter tabs are hidden; after 1-3 the map shows 1-1 through 1-4. Every ally's two offered cards appeared together; a card focused its owner; the next card automatically used the empty second action, dragged directly to an intent without destroying its source and retained its unique CardId. Reserved cards returned to their own action for editing. Flame suspense began with zero flames revealed, progressed sequentially to all flames and left displayed health unchanged until damage.\nActual Resolve coroutine completed round 2 within 60 seconds; atlas pose changed from windup at weapon contact, no melee light beams, sequential HP changed at contact"+(sawClash?", weapon clash captured":"")+"; round 3 returned with synchronized HP/gauges.\nReward granted once and persisted to isolated smoke-progress.xml.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Four-person standard party, eight visible skill cards at least 160 canvas pixels wide; selection details in the right rail. All five battle SD atlases retained their six poses and planted-foot geometry. Allies retained a 220/1080 base body height; pair focus applied a shared 1.10/1.16 foreground transform; original hub, dialogue, roster and dock face portraits remained separate.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Multiple-enemy acceptance: 42 fresh screenshots total. Campaign 2-4 fielded three uniquely selectable enemies and four SD allies; every intent displayed its owning enemy number and original named recipient. Sera's real offered card intercepted the second enemy's attack aimed at Lian; only that intent's route changed to Sera, with Lian retained as original target. Direct card drag selected the third enemy's body. Actual core damage events from enemies 2 and 3 animated their own art and applied damage only at contact to the exact target; losing the intercepted clash hit Sera rather than Lian. A main chapter boss still rendered as one larger enemy.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Progressive action acceptance: 42 fresh screenshots total. Both battle types started with one usable action per ally while retaining two offered choices. Normal battles progressed [1,1,1,1] → [2,1,1,1] → [2,2,1,1] → [2,2,2,1] → [2,2,2,2]; bosses remained [2,2,1,1] from round 3 through round 5. Locked second chips showed their unlock round or boss limit and rejected clicks, direct calls and drags without reservations or hand consumption. Selecting another candidate replaced the existing first action. Guard actions used the same limit; the dock count matched usable actions and consumed slots. Restart selection clamped to action 1. Synchronized S3 used one action on round 1 for every standard party member, including boss positions 3 and 4; its card identity and the two-choice hand were preserved. The older two-action drag and budget fixtures ran at an explicitly later round.\n");
+            File.AppendAllText(Path.Combine(directory,"smoke-result.txt"),"Voyage/focus acceptance: 42 fresh screenshots total. Visible completed/frontier stages were circular ports connected by exactly visibleCount-1 sea wakes; boss ports used their anchor symbols. Selecting a port changed its landing details without entering it or granting rewards. Full-size original portrait separation, archive replay and stage gates remained intact. The planning tray moved down by 282 canvas pixels before flame judgements, stayed below the main combat area through melee and restored at the next planning round. Melee performers, weapon contact and sparks shared the controlled foreground transform while health changed once at contact. Navigation during tray retraction invalidated the old resolution without leaving its card tray or overlay behind. Reduced-motion resolution retracted the tray immediately, kept scale/offset at identity, completed under auto mode, and returned with two freshly dealt CardIds per living ally and working planning controls.\n");
             Debug.Log("REQUIEM_LANTERN_SMOKE_PASS");Application.Quit(0);
+        }
+        void AssertVoyageChart(int visible)
+        {
+            if(!screen.Find("Voyage chart backing")||!screen.Find("Voyage ship")||!screen.Find("Voyage route")
+                ||screen.Find("The eternal night").GetComponent<RawImage>().texture!=Texture("VoyageSea"))throw new Exception("Voyage chart lost its sea, ship or route layer.");
+            if(screen.Find("Voyage route").GetComponentsInChildren<ThreadGraphic>().Length!=Mathf.Max(0,visible-1))throw new Exception("Sea wakes do not connect exactly the visible ports.");
+            var ports=screen.GetComponentsInChildren<Button>().Where(button=>button.name.StartsWith("Stage ",StringComparison.Ordinal)).ToArray();
+            if(ports.Length!=visible||ports.Any(port=>!port.transform.Find("Port seal")||port.GetComponent<RectTransform>().sizeDelta!=new Vector2(84,84)))
+                throw new Exception("Voyage stages remained rectangular panels or displayed hidden future ports.");
+        }
+        void AssertDockRetracted()
+        {
+            var dock=screen.Find("Action dock");
+            if(!battleDockRetracted||!dock||Mathf.Abs(dock.GetComponent<RectTransform>().anchoredPosition.y+1040)>.1f)
+                throw new Exception("Planning tray did not retract below the combat viewport.");
+            foreach(var button in screen.GetComponentsInChildren<Button>().Where(button=>button.name.StartsWith("Skill card ",StringComparison.Ordinal)))
+                if(-button.GetComponent<RectTransform>().anchoredPosition.y<1050)throw new Exception("An offered skill card remained over the focused battle.");
+        }
+        IEnumerator SmokeFocusCancellation(string directory)
+        {
+            smokePhase="tray cancellation and reduced-motion focus";smokeDeadline=Time.realtimeSinceStartup+60;
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,17);PrepareBattlePresentation();battle.RecommendLinks();
+            var cancelled=battle;StartCoroutine(Resolve());ShowHub();yield return new WaitForSecondsRealtime(.30f);
+            if(page!="hub"||resolving||overlay||cancelled.State.Round!=1)throw new Exception("Navigation during tray retraction leaked or resolved the abandoned round.");
+            battle=BattleEngine.CreatePrototype(progress.Data,18);foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))unit.Hp=unit.MaxHp=5000;
+            PrepareBattlePresentation();
+            if(battleDockRetracted||screen.Find("Action dock").GetComponent<RectTransform>().anchoredPosition.y!=-758)throw new Exception("A fresh battle inherited the abandoned tray offset.");
+            var oldCards=battle.State.Allies.ToDictionary(actor=>actor.Id,actor=>actor.SkillHand.Select(card=>card.Id).ToArray());
+            reducedMotion=true;autoMode=true;battle.RecommendLinks();DrawBattle();StartCoroutine(Resolve());bool captured=false;
+            while(resolving||page=="resolve"){
+                if(Time.realtimeSinceStartup>smokeDeadline)throw new TimeoutException("Reduced-motion focus fixture did not finish.");
+                if(battleDockRetracted)AssertDockRetracted();
+                foreach(var marker in overlay?overlay.GetComponentsInChildren<CombatPhaseMarker>():new CombatPhaseMarker[0]){
+                    if(marker.FocusScale!=1||marker.FocusOffset!=Vector2.zero||marker.transform.localScale!=Vector3.one)
+                        throw new Exception("Reduced-motion melee still moved or enlarged the camera.");
+                    if(!captured){yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"34-focus-reduced-motion");captured=true;}
+                }
+                // Stop the next auto continuation while this round is still presenting.
+                if(captured)autoMode=false;
+                yield return null;
+            }
+            if(!captured||page!="battle"||battle.State.Round!=2||battleDockRetracted||overlay)throw new Exception("Reduced-motion resolve did not restore planning.");
+            foreach(var actor in battle.State.Allies.Where(actor=>actor.Alive)){
+                if(actor.SkillHand.Count!=2||actor.SkillHand.Any(card=>oldCards[actor.Id].Contains(card.Id))
+                    ||actor.SkillHand.Any(card=>!screen.Find("Skill card "+card.Id)))throw new Exception("A new planning round retained stale offered card identities.");
+            }
+            reducedMotion=false;autoMode=false;ShowHub();
         }
         IEnumerator SmokeActionProgression(string directory)
         {
@@ -388,8 +454,9 @@ namespace RequiemLantern.Presentation
                         if(!lockLabel.Contains(unlockRound==0?"보스전 제한":"R"+unlockRound+" 개방"))throw new Exception("Locked second action did not explain when it unlocks.");
                         int handCount=actor.SkillHand.Count,linksBefore=battle.State.Links.Count;string actorBefore=selectedActor;int slotBefore=selectedSlot;
                         second.onClick.Invoke();BeginLinkDrag(new PointerEventData(EventSystem.current),actor.Id,1,null);
-                        var card=actor.SkillHand.First(value=>battle.Skill(actor.Id,value.SkillId).Kind==SkillKind.Attack);
-                        if(battle.TryLink(actor.Id,1,card.SkillId,LinkKind.Strike,battle.State.Enemies[0].Id,out _,card.Id)||dragVisuals
+                        var card=actor.SkillHand.First();var skill=battle.Skill(actor.Id,card.SkillId);
+                        bool attacking=skill.Kind==SkillKind.Attack;
+                        if(battle.TryLink(actor.Id,1,card.SkillId,attacking?LinkKind.Strike:LinkKind.Support,attacking?battle.State.Enemies[0].Id:actor.Id,out _,card.Id)||dragVisuals
                             ||selectedActor!=actorBefore||selectedSlot!=slotBefore||battle.State.Links.Count!=linksBefore||actor.SkillHand.Count!=handCount)
                             throw new Exception("Locked second action accepted a click, drag or reservation.");
                     }

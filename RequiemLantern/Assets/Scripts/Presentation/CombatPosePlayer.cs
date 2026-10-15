@@ -32,6 +32,8 @@ namespace RequiemLantern.Presentation
         public Vector2 ActorFoot, ContactPoint;
         public bool AtlasActive, FrameLayoutActive, SDActive, Clash;
         public float BodyHeight;
+        public float FocusScale=1;
+        public Vector2 FocusOffset;
         public int Pose, SkillNumber, ContactSoundCount;
         public string SkillId, ActorId, TargetId;
     }

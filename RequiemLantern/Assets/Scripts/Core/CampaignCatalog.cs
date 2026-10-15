@@ -343,7 +343,11 @@ namespace RequiemLantern.Core
                         Participants=new string[] {"kai","lian","sera","minato"},
                         Party=new string[] {},
                         Before=new List<StoryLine> {
-                            new StoryLine("미나토", "약재와 붕대. 식량보다 먼저 적고 싶어요.", "keep", "Minato", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="", MusicCue="" },
+                            new StoryLine("", "작전실 창밖, 선착장의 낡은 보급선에 마지막 항해등이 켜진다. 동료들이 손본 선체에는 등대와 같은 빛이 머문다.", "keep", "", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="", MusicCue="" },
+                            new StoryLine("카이", "이름은 귀항호로 하자. 출발할 때부터 돌아올 곳을 기억하게.", "keep", "", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="", MusicCue="" },
+                            new StoryLine("리안", "등대는 여기 남아 있어. 배는 연안을 따라가고, 안쪽 길은 정박한 뒤에 걷자. 돌아오는 신호는 내가 볼게.", "keep", "Lian", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="", MusicCue="" },
+                            new StoryLine("세라", "좋아. 이번엔 돌아올 사람 목록에 내 이름도 먼저 적어 줘.", "keep", "Sera", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="Lian", MusicCue="" },
+                            new StoryLine("미나토", "약재와 붕대. 식량보다 먼저 적고 싶어요.", "keep", "Minato", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="Sera", MusicCue="" },
                             new StoryLine("세라", "북쪽 길도 적어 줘. 고아원으로 이어질 수 있어.", "keep", "Sera", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="Minato", MusicCue="" },
                             new StoryLine("리안", "둘 다 가면 돌아오는 시간이 늦어져.", "keep", "Lian", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="Sera", MusicCue="" },
                             new StoryLine("카이", "각자 찾을 것을 나눠 보자. 같은 곳에서 확인할 수 있는 것부터.", "keep", "Lian", true) { Location="등대 요새 · 작전실", Caption="제2장 · 세라 · 2-1 · 식량과 약의 목록", ListenerPortrait="Sera", MusicCue="" },

@@ -1,0 +1,9 @@
+{
+  "background": "linear-gradient(90deg, rgba(10, 16, 29, 0.88), rgba(11, 20, 36, 0.263) 70%, rgba(9, 15, 27, 0.396)), url(\"http://127.0.0.1:8128/art/VoyageSea.png\")",
+  "largeShip": 1,
+  "ports": [
+    "c4s01"
+  ],
+  "ship": "c4s01",
+  "shipLoaded": 1536
+}

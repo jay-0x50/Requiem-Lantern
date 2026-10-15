@@ -242,12 +242,14 @@ internal static class CampaignTests
             var failures=new List<string>();var runs=new List<string>();
             foreach(var stage in Stages.Where(s=>s.HasBattle))foreach(int seed in new[]{0,1,2}){
                 var battle=CampaignBattleFactory.Create(stage,new ProgressData(),seed);int stalemates=0;
+                var offeredIds=new HashSet<string>();
                 Equal(string.Join(",",stage.Party),string.Join(",",battle.State.Allies.Select(u=>u.Id)));True(battle.State.Allies.All(u=>u.SyncLevel==0&&u.Sanity==0));
                 while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=40){
                     for(int index=0;index<battle.State.Allies.Count;index++)
                         Equal(battle.State.Round>=index+2&&(!stage.IsBoss||index<2)?2:1,battle.State.Allies[index].SlotCount,"Action capacity drifted in "+stage.Number+" round "+battle.State.Round);
                     foreach(var unit in battle.State.Allies.Where(u=>u.Alive)){
                         Equal(2,unit.SkillHand.Count,"Expected two offered cards for "+stage.Number+" / "+unit.Name);
+                        True(unit.SkillHand.All(card=>offeredIds.Add(card.Id)),"A prior-round offer survived in "+stage.Number+" / "+unit.Name);
                         var bag=unit.SkillHand.Select(c=>c.SkillId).Concat(unit.DrawPile).Concat(unit.DiscardPile).Select(id=>battle.Skill(unit.Id,id).Number).ToList();
                         Equal(3,bag.Count(n=>n==1));Equal(2,bag.Count(n=>n==2));Equal(0,bag.Count(n=>n==3));
                     }
@@ -259,7 +261,10 @@ internal static class CampaignTests
                     True(numbered.All(l=>battle.Unit(l.ActorId).SkillHand.Any(c=>c.Id==l.CardId&&c.SkillId==l.SkillId)),"AI selected an unavailable card in "+stage.Number);
                     var events=battle.ResolveRound(IgniteGrade.Good);stalemates+=events.Count(e=>e.Type=="Stalemate");
                     foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))True(unit.Sanity>=-20&&unit.Sanity<=20,"Sanity overflow in "+stage.Number);
-                    if(battle.State.Outcome==BattleOutcome.Ongoing)battle.BeginNextRound();
+                    if(battle.State.Outcome==BattleOutcome.Ongoing){
+                        battle.BeginNextRound();Equal(0,battle.State.Links.Count);
+                        True(battle.State.Allies.SelectMany(unit=>unit.SkillHand).All(card=>!offeredIds.Contains(card.Id)),"Round refresh retained an old card in "+stage.Number);
+                    }
                 }
                 string line=stage.Number+" seed="+seed+" outcome="+battle.State.Outcome+" rounds="+battle.State.Round+" stalemates="+stalemates;
                 runs.Add(line);if(battle.State.Outcome!=BattleOutcome.Victory||stalemates>0)failures.Add(line);

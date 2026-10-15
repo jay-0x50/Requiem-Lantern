@@ -37,14 +37,34 @@ class LanternCombatFX {
   this.root.querySelector('.battle')?.insertAdjacentHTML('beforeend',
    '<div class="combat-fx" aria-hidden="true"></div><div class="drag-cursor" aria-hidden="true"><i></i><span></span></div><div class="combat-caption" role="status" aria-live="polite"><div class="caption-overline">RESONANCE / 連光</div><strong></strong><span></span><div class="playback-progress"><i></i></div></div>');
  }
+ execution(active){
+  const stage=this.root.querySelector('.battle');stage?.classList.toggle('resolving',active);
+  const dock=this.root.querySelector('.action-dock');
+  if(dock){dock.inert=active;dock.setAttribute?.('aria-hidden',String(active));}
+ }
+ frameContact(point,clash,fast){
+  const layer=this.root.querySelector('.combat-fx'),stage=this.root.querySelector('.battle');
+  if(!layer||!this.motion)return;
+  // One parent transform carries poses AND contact effects. All authoritative
+  // anchors, HP, flame rolls and input geometry remain in logical coordinates.
+  const zoom=1+(clash?.10:.16)*(fast?.75:1),dx=875-point.x,dy=462.5-point.y;
+  layer.style.transformOrigin=`${point.x}px ${point.y}px`;
+  layer.style.transform=`translate(${dx}px,${dy}px) scale(${zoom})`;
+  if(stage){stage.dataset.cameraFocus=clash?'clash':'strike';stage.dataset.cameraZoom=String(zoom);}
+ }
+ resetFrame(){
+  const layer=this.root.querySelector('.combat-fx'),stage=this.root.querySelector('.battle');
+  if(layer){layer.style.transform='';layer.style.transformOrigin='';}
+  if(stage){stage.dataset.cameraFocus='';stage.dataset.cameraZoom='';}
+ }
  clear(){
   this.epoch++;
   this.options.stopSound?.();
   this.releaseMelee();
   for(const [id,done] of this.pending){clearTimeout(id);done(false);}this.pending.clear();
-  this.root.querySelectorAll('.combat-fx,.combat-caption,.drag-cursor').forEach(n=>n.remove());
+  this.root.querySelectorAll('.combat-fx,.combat-caption,.drag-cursor,.flame-roll').forEach(n=>n.remove());
   this.root.querySelectorAll('.fx-active,.drop-ready,.drop-focus,.fx-lunge,.fx-hit').forEach(n=>n.classList.remove('fx-active','drop-ready','drop-focus','fx-lunge','fx-hit'));
-  this.root.querySelector('.battle')?.classList.remove('resolving','fx-shake','tension-roll');
+  this.execution(false);this.resetFrame();this.root.querySelector('.battle')?.classList.remove('fx-shake','tension-roll');
  }
  wait(ms){return new Promise(done=>{const id=setTimeout(()=>{this.pending.delete(id);done(true);},ms);this.pending.set(id,done);});}
  step(ms){
@@ -143,6 +163,7 @@ class LanternCombatFX {
   for(const fighter of this.meleePair||[]){if(!fighter)continue;fighter.original.style.visibility=fighter.visibility;fighter.wrapper.remove();}
   this.meleePair=null;
   const stage=this.root.querySelector('.battle');if(stage){stage.classList.remove('melee-active','hit-stop','contact-kick');stage.dataset.combatPhase='';stage.dataset.attackStyle='';}
+  this.resetFrame();
  }
  async melee(e,fast,epoch,clash){
   // Atlas cells share one foot pivot. Translation belongs to the wrapper;
@@ -170,6 +191,7 @@ class LanternCombatFX {
   if(defender&&this.motion)defender.wrapper.style.top=clash?contactY-counterReach.y-440+'px':defender.footY-440+'px';
   const direction=f=>f?.side==='enemy-side'?-1:1;
   const hit={x:contactX,y:contactY};
+  this.frameContact(hit,clash,fast);
   try{
    if(!ongoing){
     this.setPosePhase(pair,'approach');
@@ -206,7 +228,7 @@ class LanternCombatFX {
    if(e.type==='Damage')this.expire(this.node('fx-number', this.motion?{x:center(defender),y:contactY-65}:this.point(e.targetId),this.tint(e.targetId),String(e.amount)),800);
    else {this.caption(e.type==='Tie'?'맞불 · 무승부':'맞불 · '+(e.winnerStreak||0)+'연속 우세',e.message);this.expire(this.node('fx-link-label',hit,'#ffdfa5',e.type==='Tie'?'무승부':(e.winnerStreak||0)+'연속'),600);}
    // Both silhouettes hold on the exact contact pose before the recoil.
-   if(!await this.step(this.motion?(heavy?100:style==='double-slash'&&special?45:65):90)||!valid())return;
+   if(!await this.step(this.motion?(clash?65:heavy?100:75):90)||!valid())return;
    stage?.classList.remove('hit-stop');
    this.setPosePhase(pair,'recoil');this.pose(attacker,3,'recoil');this.pose(defender,e.type==='Damage'?5:4,'recoil');
    this.place(defender,center(defender)-direction(defender)*(e.type==='Damage'?46:22),-direction(defender)*7,110);
@@ -266,6 +288,8 @@ class LanternCombatFX {
   this.rollActors=new Set([e.actorId,...(e.enemyFlameStates?.length?[e.targetId]:[])]);
   this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());
   const card=this.node('flame-roll',{x:1055,y:150});if(!card)return null;
+  // Rolls stay in screen space even while the paired fighters are framed.
+  this.root.querySelector('.battle')?.appendChild(card);
   card.dataset.clashIndex=String(e.clashIndex||0);
   const title=document.createElement('div');title.className='flame-roll-title';title.textContent=e.clashIndex?`맞불 ${e.clashIndex}회 · 2연속 우세를 겨룹니다`:'스킬 점등';card.appendChild(title);
   const sides=[];
@@ -347,15 +371,17 @@ class LanternCombatFX {
    if(!['Cancel','DefeatUnit'].includes(e.type))await pause(e.type==='Rift'||e.type==='PartBreak'?650:330);
   }
  }
- async play(events,finalBattle,{fast=false}={}){
-  const epoch=this.epoch;this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();this.lastClash=null;this.root.querySelector('.battle')?.classList.add('resolving');
+ async play(events,finalBattle,{fast=false,holdDock=false}={}){
+  const epoch=this.epoch;this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();this.lastClash=null;this.execution(true);
   const phase=this.root.querySelector('.phase');if(phase)phase.textContent='ROUND '+String(this.battle.round).padStart(2,'0')+' / ③ 실행';
-  for(let i=0;i<events.length;i++){
-   if(epoch!==this.epoch)return false;
-   const bar=this.root.querySelector('.playback-progress i');if(bar)bar.style.width=(i+1)/events.length*100+'%';
-   await this.event(events[i],fast,epoch);
-  }
-  if(epoch!==this.epoch)return false;this.releaseMelee();this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());this.sync(finalBattle);await this.wait(fast?240:550);return epoch===this.epoch;
+  try{
+   for(let i=0;i<events.length;i++){
+    if(epoch!==this.epoch)return false;
+    const bar=this.root.querySelector('.playback-progress i');if(bar)bar.style.width=(i+1)/events.length*100+'%';
+    await this.event(events[i],fast,epoch);
+   }
+   if(epoch!==this.epoch)return false;this.releaseMelee();this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());this.sync(finalBattle);await this.wait(fast?240:550);return epoch===this.epoch;
+  }finally{if(epoch===this.epoch){this.releaseMelee();if(!holdDock)this.execution(false);}}
  }
 }
 globalThis.LanternCombatFX=LanternCombatFX;

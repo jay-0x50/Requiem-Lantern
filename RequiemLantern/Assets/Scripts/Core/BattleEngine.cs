@@ -161,6 +161,14 @@ namespace RequiemLantern.Core
                 actor.SkillHand.Add(new SkillCard { Id = actor.Id + ":card:" + (++actor.NextCardNumber), SkillId = skillId });
             }
         }
+        private void RefreshHand(UnitState actor)
+        {
+            // Unused offers expire at the round boundary. They join the discard pile
+            // once, then the same weighted bag supplies two newly identified cards.
+            actor.DiscardPile.AddRange(actor.SkillHand.Select(card => card.SkillId));
+            actor.SkillHand.Clear();
+            if (actor.Alive) FillHand(actor);
+        }
         private void CommitHandCards()
         {
             // Resolve is the commitment point, including actions later cancelled by death.
@@ -376,7 +384,7 @@ namespace RequiemLantern.Core
         {
             if (State.Phase != BattlePhase.WrapUp || State.Outcome != BattleOutcome.Ongoing) return;
             State.Round++; State.Links.Clear(); State.Events.Clear();
-            foreach (var actor in State.Allies.Where(x => x.Alive)) FillHand(actor);
+            foreach (var actor in State.Allies) RefreshHand(actor);
             foreach (var enemy in State.Enemies.Where(x => x.Alive && x.Rift == 0 && x.BrokenThroughRound < State.Round)) enemy.Rift = enemy.MaxRift;
             Observe();
         }

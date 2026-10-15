@@ -52,7 +52,10 @@
 .combat-caption{position:absolute;bottom:51px;left:385px;width:830px;min-height:133px;z-index:14;pointer-events:none;text-align:center;padding:20px 35px 22px;background:linear-gradient(90deg,transparent,#0c121bea 12%,#0c121bfa 50%,#0c121bea 88%,transparent);opacity:0;transition:opacity .15s}
 .combat-caption.visible{opacity:1}.caption-overline{font-size:12px;letter-spacing:.23em;color:#caa875}.combat-caption strong{display:block;font-size:27px;font-weight:500;color:#f5ddba;margin:9px 0 4px}.combat-caption>span{font-size:15px;color:#aeb9c7}
 .playback-progress{position:absolute;bottom:0;left:20%;right:20%;height:2px;background:#454035}.playback-progress i{display:block;width:0;height:100%;background:#f0c181;transition:width .2s;box-shadow:0 0 8px #f2a541}
-.resolving .action-dock{opacity:.17;filter:saturate(.4);pointer-events:none}.resolving .battle-controls{opacity:.25}.resolving .battle-help,.resolving .battle-prediction{opacity:0}.resolving .thread-enemy{opacity:.16}.resolving .thread-player{opacity:.35}
+.battle .action-dock{transition:transform .24s cubic-bezier(.2,.75,.25,1),opacity .2s ease;will-change:transform}
+.resolving .action-dock{transform:translateY(235px);opacity:0;pointer-events:none}.resolving .battle-controls{opacity:.25;pointer-events:none}.resolving .battle-help,.resolving .battle-prediction{opacity:0}.resolving .thread-enemy{opacity:.16}.resolving .thread-player{opacity:.35}
+.combat-fx{transition:transform .2s cubic-bezier(.2,.75,.25,1);transform-origin:800px 583.333px}
+.reduce-motion .action-dock,.reduce-motion .combat-fx{transition:none;will-change:auto}
 .intent-cancelled{opacity:.17!important;filter:grayscale(1);transition:opacity .3s}.intent.intent-cancelled strong{text-decoration:line-through}.part-broken{opacity:.35!important}
 .fx-shake{animation:field-shake .28s ease!important}
 .modal.ignite-modal{background:linear-gradient(90deg,#080d1899,#080d1855,#080d1899);backdrop-filter:none;justify-content:flex-end;padding-bottom:74px}.ignite-modal h2{font-size:27px;margin:0;color:#ffe0ac}.ignite-modal p{font-size:16px;margin:9px 0}.ignite-modal .ignite-area{height:290px}.ignite-modal .ring{box-shadow:0 0 16px #f2a54133}.ignite-modal .ignite-grade{font-size:40px}
@@ -86,7 +89,7 @@
 .flame.unknown{background:#283241;border-color:#a08d7288;opacity:.65;box-shadow:none}
 .flame.flicker{animation:flame-suspense .09s linear infinite;background:#d8b882;box-shadow:0 0 11px #ecc88290}
 .flame-roll.tension{border-color:#eed39eb5;box-shadow:0 0 35px #e6b96b30,0 12px 28px #0009}.flame-roll.decided .flame-roll-side strong{color:#ffe2ac;text-shadow:0 0 13px #dcb36d65}.flame-roll.decided .darkness strong{color:#e1cdfb}
-.tension-roll .combat-fx{scale:1.025;transform-origin:66% 45%;transition:scale .15s ease}
+.tension-roll .flame-roll{border-color:#f3d4a0;box-shadow:0 0 32px #e6b96b30,0 12px 28px #0009}
 .battle[data-attack-style="shield-blow"].contact-kick .combat-fx{animation-duration:.25s}.heavy-cut{border-right-width:12px!important}.shield-impact{width:94px;height:94px;border:3px solid #f5cf8b;transform:translate(-50%,-50%) rotate(45deg);box-shadow:0 0 23px #f2c3798a;animation:shield-strike .3s ease-out both}
 .feint-cut{height:130px!important;animation-duration:.17s!important;opacity:.75}.second-cut{rotate:22deg}.staff-wave{width:142px;height:100px;border:3px solid #91ddd7;border-radius:50%;transform:translate(-50%,-50%) rotate(-24deg);box-shadow:0 0 19px #75c8c485;animation:staff-ripple .35s ease-out both}
 @keyframes flame-suspense{0%,100%{opacity:.3;filter:brightness(.8)}50%{opacity:1;filter:brightness(1.5)}}

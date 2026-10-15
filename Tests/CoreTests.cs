@@ -77,7 +77,9 @@ internal static class CoreTests
             Equal(original,b.State.Links.Single());Equal(cost,b.PlannedCost);Equal(ember,b.State.Ember);Equal(before,BagTrace(actor));
             False(b.IsCardAvailable(actor,actor.SkillHand[1].Id));False(b.OfferedSkills(actor).Any(s=>s.Number==3));
             b.State.Intents.Clear();b.ResolveRound();Equal(1,actor.DiscardPile.Count);Equal("lian_crescendo",actor.SkillHand.Single().SkillId);
-            b.BeginNextRound();Equal(2,actor.SlotCount);True(b.IsCardAvailable(actor,actor.SkillHand.Single(c=>c.SkillId=="lian_crescendo").Id));
+            var expired=actor.SkillHand.Single().Id;b.BeginNextRound();Equal(2,actor.SlotCount);
+            False(b.IsCardAvailable(actor,expired));True(actor.SkillHand.All(c=>c.Id!=expired));
+            True(b.IsCardAvailable(actor,actor.SkillHand.First().Id,1));
         });
         Test("every synchronized skill three costs one action even in the boss party's third and fourth positions", () => {
             foreach(string id in new[]{"lian","sera","minato","noa","heidel"})foreach(int index in new[]{2,3}){
@@ -462,21 +464,40 @@ internal static class CoreTests
             True(b.TryLink(unit.Id,0,"lian_crescendo",LinkKind.Strike,"anger",out error,third));Equal(1,b.State.Links.Count);Equal(3,b.PlannedCost);
             b.ResolveRound();Equal(1,unit.SkillHand.Count);Equal("lian_glimmer",unit.SkillHand[0].SkillId);Equal(1,unit.DiscardPile.Count);
         });
-        Test("defense remains available without cards and rejected budgets do not consume", () => {
+        Test("defense and rejected budgets preserve current offers until both expire next round", () => {
             var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_breakthrough");b.State.Ember=0;string error;
+            var oldIds=unit.SkillHand.Select(c=>c.Id).ToArray();
             string trace=BagTrace(unit);False(b.TryLink(unit.Id,0,"lian_breakthrough",LinkKind.Strike,"anger",out error,unit.SkillHand[1].Id));Equal(trace,BagTrace(unit));
             True(b.TryLink(unit.Id,0,"lian_guard",LinkKind.Guard,unit.Id,out error));True(b.TryLink(unit.Id,1,"lian_guard",LinkKind.Guard,unit.Id,out error));
-            b.ResolveRound();Equal(trace,BagTrace(unit));b.BeginNextRound();Equal(trace,BagTrace(unit));
+            b.ResolveRound();Equal(trace,BagTrace(unit));b.BeginNextRound();Equal(2,unit.SkillHand.Count);Equal(5,Bag(unit).Count);
+            True(unit.SkillHand.All(c=>!oldIds.Contains(c.Id)));Equal(2,unit.DiscardPile.Count);
         });
-        Test("discard-only recycling retains unused hand and total bag composition", () => {
-            var b=DeckBattle(true);var unit=b.Unit("lian");ForceHand(unit,"lian_crescendo","lian_glimmer");string retained=unit.SkillHand[0].Id;string error;
-            for(int i=0;i<14;i++) {
-                b.State.Intents.Clear();var card=unit.SkillHand.Single(x=>x.Id!=retained);
-                True(b.TryLink(unit.Id,0,card.SkillId,LinkKind.Strike,"anger",out error,card.Id));b.ResolveRound();b.BeginNextRound();
-                Equal(2,unit.SkillHand.Count);True(unit.SkillHand.Any(x=>x.Id==retained));Equal(6,Bag(unit).Count);
-                Equal(3,Bag(unit).Count(x=>x=="lian_glimmer"));Equal(2,Bag(unit).Count(x=>x=="lian_breakthrough"));Equal(1,Bag(unit).Count(x=>x=="lian_crescendo"));
+        Test("every round replaces both offers and preserves the weighted bag after zero one or two used cards", () => {
+            foreach(bool sync in new[]{false,true})foreach(int used in new[]{0,1,2}) {
+                var b=DeckBattle(sync);var unit=b.Unit("lian");var allIds=new HashSet<string>(unit.SkillHand.Select(c=>c.Id));string error;
+                for(int i=0;i<14;i++) {
+                    b.State.Intents.Clear();b.State.Ember=6;var old=unit.SkillHand.ToArray();int before=unit.NextCardNumber;
+                    for(int action=0;action<used;action++)True(b.TryLink(unit.Id,action,old[action].SkillId,LinkKind.Strike,"anger",out error,old[action].Id));
+                    b.ResolveRound();Equal(2-used,unit.SkillHand.Count);int discards=unit.DiscardPile.Count;
+                    b.ResolveRound();Equal(discards,unit.DiscardPile.Count);b.BeginNextRound();
+                    Equal(2,unit.SkillHand.Count);Equal(before+2,unit.NextCardNumber);True(unit.SkillHand.All(c=>allIds.Add(c.Id)));
+                    Equal(sync?6:5,Bag(unit).Count);Equal(3,Bag(unit).Count(x=>x=="lian_glimmer"));Equal(2,Bag(unit).Count(x=>x=="lian_breakthrough"));Equal(sync?1:0,Bag(unit).Count(x=>x=="lian_crescendo"));
+                    string trace=BagTrace(unit);foreach(var stale in old){
+                        False(b.IsCardAvailable(unit,stale.Id));False(b.TryLink(unit.Id,0,stale.SkillId,LinkKind.Strike,"anger",out error,stale.Id));
+                        Equal("이번 손패에 없는 스킬 카드",b.Preview(new LinkCommand{ActorId=unit.Id,Slot=0,SkillId=stale.SkillId,CardId=stale.Id,Kind=LinkKind.Strike,TargetId="anger"}).Summary);
+                    }
+                    Equal(0,b.State.Links.Count);Equal(trace,BagTrace(unit));
+                    b.BeginNextRound();Equal(trace,BagTrace(unit));Equal(before+2,unit.NextCardNumber);
+                }
             }
-            True(unit.NextCardNumber>6);
+        });
+        Test("unused third skill returns to the bag and reuse binds only fresh offered identities", () => {
+            var b=DeckBattle(true);var unit=b.Unit("lian");ForceHand(unit,"lian_crescendo","lian_glimmer");var old=unit.SkillHand.ToArray();string error;
+            True(b.TryLink(unit.Id,0,old[1].SkillId,LinkKind.Strike,"anger",out error,old[1].Id));b.ResolveRound();b.BeginNextRound();
+            True(unit.DiscardPile.Contains("lian_crescendo"));True(unit.SkillHand.All(c=>!old.Any(o=>o.Id==c.Id)));
+            string trace=BagTrace(unit);b.ReusePreviousLinks();Equal(trace,BagTrace(unit));Equal(1,b.State.Links.Count);
+            var reused=b.State.Links.Single();Equal("lian_glimmer",reused.SkillId);True(reused.CardId!=old[1].Id);
+            True(unit.SkillHand.Any(c=>c.Id==reused.CardId&&c.SkillId==reused.SkillId));
         });
         Test("cancelled committed actions discard once even when the actor falls", () => {
             var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_glimmer");unit.Hp=1;string error;
@@ -484,6 +505,8 @@ internal static class CoreTests
             True(b.TryLink(unit.Id,0,"lian_glimmer",LinkKind.Strike,"anger",out error));b.ResolveRound();
             Equal(1,unit.SkillHand.Count);Equal(1,unit.DiscardPile.Count);True(b.State.Events.Any(x=>x.Type=="Cancel"));
             b.ResolveRound();Equal(1,unit.DiscardPile.Count);
+            string unused=unit.SkillHand.Single().Id;b.BeginNextRound();Equal(0,unit.SkillHand.Count);Equal(2,unit.DiscardPile.Count);Equal(5,Bag(unit).Count);
+            False(b.IsCardAvailable(unit,unused));b.BeginNextRound();Equal(2,unit.DiscardPile.Count);
         });
         Test("recommendation, clear, reuse and previews cannot reroll the hand", () => {
             var b=DeckBattle(false);var unit=b.Unit("lian");ForceHand(unit,"lian_glimmer","lian_breakthrough");string initial=BagTrace(unit);

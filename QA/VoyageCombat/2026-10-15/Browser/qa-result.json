@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-15",
+  "runtimeRevision": "fresh-hands-voyage-v9",
+  "url": "http://127.0.0.1:8128/",
+  "isolatedSave": "QA/VoyageCombat/2026-10-15/Browser/progress.xml",
+  "checks": {
+    "fourAlliesEightChoices": true,
+    "multipleIndependentEnemies": 3,
+    "seraInterceptsOriginalLianTarget": true,
+    "thirdEnemyInterceptUsesOwnBody": true,
+    "allEightCardsFreshNextRound": true,
+    "unusedCardsAlsoReplace": true,
+    "planningDockDuringExecution": {
+      "translateY": 235,
+      "opacity": 0,
+      "ariaHidden": true
+    },
+    "planningDockRestored": {
+      "opacity": 1,
+      "transform": "none",
+      "ariaHidden": false
+    },
+    "clashZoom": 1.1,
+    "strikeZoom": 1.16,
+    "fastStrikeZoom": 1.12,
+    "contactScreenTarget": {
+      "x": 875,
+      "y": 462.5
+    },
+    "knownChapterPorts": 10,
+    "frontierChapterPorts": [
+      "c4s01"
+    ],
+    "futureChapter5Hidden": true,
+    "shipMarkerPort": "c4s01",
+    "shipAssetDimensions": {
+      "width": 1536,
+      "height": 1024
+    },
+    "seaAssetLoaded": true,
+    "mainAndDialogueOriginalArt": true,
+    "newShipDialogueFourLinesRead": true,
+    "errors": []
+  },
+  "cards": {
+    "round1": [
+      "skill-card:lian:lian:card:1",
+      "skill-card:lian:lian:card:2",
+      "skill-card:sera:sera:card:1",
+      "skill-card:sera:sera:card:2",
+      "skill-card:minato:minato:card:1",
+      "skill-card:minato:minato:card:2",
+      "skill-card:heidel:heidel:card:1",
+      "skill-card:heidel:heidel:card:2"
+    ],
+    "round2": [
+      "skill-card:lian:lian:card:3",
+      "skill-card:lian:lian:card:4",
+      "skill-card:sera:sera:card:3",
+      "skill-card:sera:sera:card:4",
+      "skill-card:minato:minato:card:3",
+      "skill-card:minato:minato:card:4",
+      "skill-card:heidel:heidel:card:3",
+      "skill-card:heidel:heidel:card:4"
+    ]
+  },
+  "automated": {
+    "previewCases": 79,
+    "combatFxCases": 43
+  },
+  "evidence": [
+    "01-ten-ports-voyage.jpg",
+    "02-next-port-only.jpg",
+    "03-planning-four-party.jpg",
+    "04-retracted-dock-clash.jpg",
+    "05-focused-melee-b.jpg",
+    "06-round-two-new-hands.jpg",
+    "07-ship-story-introduction.jpg",
+    "08-final-focus-third-enemy-b.jpg",
+    "ship-dialogue.txt",
+    "map-frontier-layout.json"
+  ],
+  "cleanup": "QA-only browser tab closed and verified QA host PID 29504 stopped. User server 8127 and user save unchanged."
+}

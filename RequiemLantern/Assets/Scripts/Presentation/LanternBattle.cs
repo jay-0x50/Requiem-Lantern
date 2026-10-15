@@ -345,6 +345,9 @@ namespace RequiemLantern.Presentation
             foreach(var drag in screen.GetComponentsInChildren<LinkDrag>())drag.enabled=false;
             foreach(var sway in screen.GetComponentsInChildren<IdleSway>())sway.enabled=false;
             var phase=screen.Find("Phase");if(phase)phase.GetComponent<Text>().text=$"ROUND {battle.State.Round:00}   /   ③ 실행";
+            HideResolutionPlanning();
+            yield return RetractBattleDock(version);
+            if(version!=screenVersion)yield break;
             var grades=new Dictionary<string,IgniteGrade>();
             var planned=battle.State.Links.OrderByDescending(l=>battle.Skill(l.ActorId,l.SkillId).Speed).ToList();
             foreach(var link in planned){

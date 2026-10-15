@@ -739,6 +739,44 @@ async function main() {
   assert.equal((env.game.innerHTML.match(/class="party-number"/g)||[]).length,8);
   pass('the selected action follows a refreshed card identity and both battlefield and dock show fixed party order numbers');
 
+  env=environment();campaignFixture(env);
+  env.run(`for(const stage of data.campaign.chapters[0].stages.slice(0,3)){stage.cleared=true;stage.unlocked=true;}data.campaign.chapters[0].stages[3].unlocked=true;showStages();`);
+  assert.equal((env.game.innerHTML.match(/data-port=/g)||[]).length,4);
+  assert.equal((env.game.innerHTML.match(/data-action="stage-select:/g)||[]).length,4);
+  assert.ok(env.game.innerHTML.includes('voyage-map'));assert.ok(env.game.style.backgroundImage.includes('VoyageSea.png'));
+  assert.ok(env.game.innerHTML.includes('/art/VoyageShip.png'));assert.ok(env.game.innerHTML.includes('data-ship-port="c1s04"'));
+  assert.equal(env.run('voyagePorts(data.campaign.chapters[0].stages.filter(s=>s.unlocked||s.cleared)).length'),4);
+  assert.equal(env.run('voyageRoute(voyagePorts(data.campaign.chapters[0].stages.filter(s=>s.unlocked||s.cleared))).match(/ C/g).length'),3);
+  assert.ok(!env.game.innerHTML.includes('data-port="c1s05"'));assert.ok(!env.game.innerHTML.includes('boss-port selected'));
+  pass('voyage chart connects only the four known ports and anchors the lantern vessel at the next real stage without future silhouettes');
+
+  env.run(`for(const stage of data.campaign.chapters[0].stages){stage.cleared=true;stage.unlocked=true;}showStages(1,'chapter1_beacon_defense');`);
+  assert.equal((env.game.innerHTML.match(/data-port=/g)||[]).length,10);assert.ok(env.game.innerHTML.includes('boss-port selected'));
+  assert.ok(env.game.innerHTML.includes('data-action="stage-replay:chapter1_beacon_defense"'));assert.ok(env.game.innerHTML.includes('data-ship-port="c1s10"'));
+  const portGeometry=JSON.parse(JSON.stringify(env.run('voyagePorts(data.campaign.chapters[0].stages).map(({x,y})=>({x,y}))')));
+  assert.deepEqual(portGeometry.slice(4,7),[{x:932,y:110},{x:932,y:320},{x:724,y:320}]);
+  assert.ok(portGeometry.every(p=>p.x>=100&&p.x<=932&&p.y>=110&&p.y<=320));
+  pass('completed chapter voyage bends across two rows, identifies the discovered boss port and preserves stage-specific replay');
+
+  env=environment();fourParty(env);lateRound(env,3,true);
+  env.run(`selectedActor='minato';selectedSlot=0;manualSlotFocus=true;selectedSkill='minato_heal';selectedCardId='minato-card-2';data.battle.links=[];data.battle.allies[2].skillHand=[{id:'minato:card:new:1',skillId:'minato_glimmer'},{id:'minato:card:new:2',skillId:'minato_glimmer'}];showBattle();`);
+  assert.equal(env.run('selectedCardId'),'minato:card:new:1');assert.equal(env.run('selectedSkill'),'minato_glimmer');
+  assert.ok(!env.game.innerHTML.includes('data-action="skill-card:minato:minato-card-2"'));
+  env.run(`globalThis.newHandCall=null;command=async(action,args)=>{newHandCall={action,...args};return true;};showBattle=()=>{};`);
+  await env.context.linkTarget('anger');assert.equal(env.context.newHandCall.cardId,'minato:card:new:1');
+  pass('a wholly refreshed hand discards the unused old selection and links only a new full colon-containing card identity');
+
+  env=environment();fourParty(env);
+  env.run(`busy=true;page='resolve';globalThis.hiddenDockCalls=[];command=async(action,args)=>{hiddenDockCalls.push({action,...args});return true;};`);
+  await env.context.linkTarget('anger');assert.equal(env.context.hiddenDockCalls.length,0);
+  pass('a concealed execution dock cannot submit a stale direct target link while presentation is busy');
+
+  env=environment();
+  env.run(`page='battle';globalThis.cancelDraws=0;globalThis.executionModes=[];battleFx.execution=active=>executionModes.push(active);battleFx.play=async()=>false;command=async()=>true;showBattle=()=>{cancelDraws++;page='battle';};`);
+  await env.context.resolveRound();
+  assert.equal(env.context.cancelDraws,1);assert.equal(env.run('busy'),false);assert.deepEqual(Array.from(env.context.executionModes),[true,false]);
+  pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
+
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 

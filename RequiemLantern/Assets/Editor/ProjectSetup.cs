@@ -50,7 +50,7 @@ namespace RequiemLantern.Editor
         [MenuItem("Requiem Lantern/Build Windows Preview")]
         public static void BuildWindows()
         {
-            Prepare();ValidateStoryArt();ValidateCombatAudio();ValidateBattleAvatars();ValidateEnemyGroups();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
+            Prepare();ValidateStoryArt();ValidateCombatAudio();ValidateBattleAvatars();ValidateEnemyGroups();ValidateVoyageArt();string folder=Path.GetFullPath("../Builds/Windows");Directory.CreateDirectory(folder);
             var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
                 scenes=new[]{"Assets/Scenes/Main.unity"},locationPathName=Path.Combine(folder,"RequiemLantern.exe"),
                 target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
@@ -104,6 +104,11 @@ namespace RequiemLantern.Editor
                 if(battle.State.Intents.Any(intent=>!battle.State.Enemies.Any(enemy=>enemy.Id==intent.ActorId)))
                     throw new System.Exception("Enemy intent lost its owning enemy: "+stage.Id);
             }
+        }
+        static void ValidateVoyageArt()
+        {
+            foreach(string id in new[]{"VoyageSea","VoyageShip"})if(!Resources.Load<Texture2D>("Art/"+id))
+                throw new System.Exception("Voyage map art cannot be loaded: Art/"+id);
         }
     }
     public sealed class ArtImporter : AssetPostprocessor

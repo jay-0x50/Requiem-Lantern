@@ -40,6 +40,14 @@ def four_party(data,ids=('lian','sera','minato','noa')):
         assert len(bag)==5
         numbers=[skills[skill_id]['number'] for skill_id in bag]
         assert numbers.count(1)==3 and numbers.count(2)==2 and numbers.count(3)==0
+def hands(data):
+    return {actor['id']:actor['skillHand'] for actor in data['battle']['allies']}
+def fresh_hands(previous,data):
+    assert not data['battle']['links']
+    old_ids={card['id'] for hand in previous.values() for card in hand}
+    for actor in data['battle']['allies']:
+        assert len(actor['skillHand'])==(2 if actor['alive'] else 0)
+        assert all(card['id'] not in old_ids for card in actor['skillHand'])
 def combat_art_routes():
     for name in ['Lian','Sera','Minato','Noa','Heidel']:
         atlas_size=None
@@ -75,7 +83,7 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='round-action-slots-v8'
+    assert data and data['runtimeRevision']=='fresh-hands-voyage-v9'
     four_party(data)
     assert data['battle']['ember']==3 and data['battle']['isBoss']
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
@@ -110,13 +118,20 @@ try:
     data=call('resolve')
     assert len(next(actor for actor in data['battle']['allies'] if actor['id']=='noa')['discardPile'])==1
     assert len(next(actor for actor in data['battle']['allies'] if actor['id']=='noa')['skillHand'])==1
-    data=call('next');four_party(data)
+    data=call('next');four_party(data);fresh_hands(original_hands,data)
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[2,1,1,1]
+    # Even unused offers expire. The previous round's exact identity cannot be linked again.
+    current_hands=hands(data);stale=original_hands['lian'][0]
+    data=call('link',400,actorId='lian',slot=0,skillId=stale['skillId'],cardId=stale['id'],kind='Strike',targetId='anger')
+    assert not data['battle']['links'] and hands(data)==current_hands
+    for action in ['recommend','clear','reuse','clear']:
+        data=call(action);assert hands(data)==current_hands
+        assert all(any(card['id']==link['cardId'] and card['skillId']==link['skillId'] for card in current_hands[link['actorId']]) for link in data['battle']['links'] if link['cardId'])
     data=call('link',actorId='lian',slot=1,skillId='lian_guard',kind='Guard',targetId='lian')
     assert data['battle']['links'][0]['slot']==1
     data=call('link',400,actorId='noa',slot=1,skillId='noa_evade',kind='Guard',targetId='noa')
     assert len(data['battle']['links'])==1 and data['battle']['links'][0]['actorId']=='lian'
-    call('recommend');call('resolve');data=call('next');four_party(data)
+    call('recommend');call('resolve');data=call('next');four_party(data);fresh_hands(current_hands,data)
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[2,2,1,1]
     data=call('restart');four_party(data)
     assert data['progress']['coins']==data['progress']['lanternFragments']==0
@@ -249,16 +264,17 @@ try:
         assert all(actor['alive'] for actor in data['battle']['allies'])
         assert all(len(actor['skillHand'])==2 for actor in data['battle']['allies'])
         if round_number==5:break
+        previous_hands=hands(data)
         for actor in data['battle']['allies']:
             defense=next(skill for skill in actor['skills'] if skill['number']==0)
             data=call('link',actorId=actor['id'],slot=0,skillId=defense['id'],kind='Guard',targetId=actor['id'])
-        data=call('resolve');assert data['battle']['outcome']=='Ongoing'
-        data=call('next')
+        data=call('resolve');assert data['battle']['outcome']=='Ongoing' and hands(data)==previous_hands
+        data=call('next');fresh_hands(previous_hands,data)
     data=call('restart');four_party(data,('lian','sera','minato','heidel'))
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
-    print('PASS: HTTP normal R1-R5 roster progression, boss R1-R3 caps, locked-second-action atomic rejection, unchanged two-card choices and full restart.')
+    print('PASS: HTTP normal R1-R5 roster progression, boss R1-R3 caps, locked-second-action atomic rejection, both offers replaced after used or defense-only rounds, stale CardId rejection and full restart.')
     combat_art_routes()
-    print('PASS: v8 HTTP revision; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth-actor interception and damage events; atomic card/slot/budget checks; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
+    print('PASS: v9 HTTP revision; fresh two-card offers per round with stable weighted bags and non-mutating recommendation/reuse; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth-actor interception and damage events; atomic card/slot/budget checks; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)

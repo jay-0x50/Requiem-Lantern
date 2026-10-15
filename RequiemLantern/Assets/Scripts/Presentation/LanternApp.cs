@@ -111,7 +111,7 @@ namespace RequiemLantern.Presentation
         {
             combatAudio?.Stop();
             screenVersion++;
-            resolving=false;activeClashActor=null;CancelDragVisuals();
+            resolving=false;battleDockRetracted=false;activeClashActor=null;CancelDragVisuals();
             if(screen){screen.gameObject.SetActive(false);Destroy(screen.gameObject);}if(overlay){overlay.gameObject.SetActive(false);Destroy(overlay.gameObject);}overlay=null;
             screen=MakeRect(stage,name,0,0,1920,1080);page=name;dialogue=null;
             Box(screen,"Background",0,0,1920,1080,Ink);

@@ -1,0 +1,20 @@
+[
+  {
+    "asset": "VoyageShip",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGBA",
+    "alphaMin": 0,
+    "alphaMax": 254,
+    "transparentFraction": 0.520113
+  },
+  {
+    "asset": "VoyageSea",
+    "width": 1672,
+    "height": 941,
+    "mode": "RGB",
+    "alphaMin": 255,
+    "alphaMax": 255,
+    "transparentFraction": 0.0
+  }
+]

@@ -39,7 +39,7 @@ namespace RequiemLantern.Presentation
             Label(screen,"Main quest label","MAIN STORY / "+CampaignCharacterName(nextChapter.FocusCharacterId)+"의 이야기",1010,177,760,40,18,Gold);
             Label(screen,"Main quest title",next.Chapter+"장 · "+CampaignCatalog.Chapters[next.Chapter-1].Title,1007,222,800,80,38);
             Label(screen,"Main quest body",next.Number+"  "+next.Title+"\n"+next.Summary,1013,318,775,95,25,Muted);
-            HubCard("Sortie","01","작전실","동료들과 함께 걷는 다섯 장의 여정",1008,462,()=>{selectedChapter=next.Chapter;selectedStage=next.Id;ShowStages();},true);
+            HubCard("Sortie","01","귀항호 항해도","등대를 떠나 동료들과 이어 가는 다섯 장의 여정",1008,462,()=>{selectedChapter=next.Chapter;selectedStage=next.Id;ShowStages();},true);
             HubCard("Roster","02","잔영 기록","별의 파편을 품은 동료들",1008,594,()=>ShowRoster(0));
             HubCard("FirstMeal","03","지나온 이야기","스테이지의 대화와 기억을 다시 펼치기",1008,726,ShowArchive);
             Button(screen,"Archive","기록실",1010,890,245,65,ShowArchive);

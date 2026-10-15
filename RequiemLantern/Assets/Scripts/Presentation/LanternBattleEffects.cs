@@ -27,6 +27,38 @@ namespace RequiemLantern.Presentation
         readonly Dictionary<string,int> visibleHealth=new Dictionary<string,int>();
         readonly Dictionary<Image,float> gaugeWidths=new Dictionary<Image,float>();
         readonly List<BattleEvent> lastPresentedEvents=new List<BattleEvent>();
+        bool battleDockRetracted;
+
+        // Keep the card nodes in place in the hierarchy: input and accessibility
+        // focus keep their owner/CardId even while the planning tray slides away.
+        IEnumerator RetractBattleDock(int version)
+        {
+            var tray=new Dictionary<RectTransform,Vector2>();
+            foreach(Transform child in screen){
+                var rect=child as RectTransform;
+                if(rect&&-rect.anchoredPosition.y>=758)tray[rect]=rect.anchoredPosition;
+            }
+            float duration=reducedMotion?0:.24f;
+            for(float elapsed=0;elapsed<duration;elapsed+=Time.unscaledDeltaTime){
+                if(version!=screenVersion)yield break;
+                float offset=282*Mathf.SmoothStep(0,1,elapsed/duration);
+                foreach(var item in tray)if(item.Key)item.Key.anchoredPosition=item.Value+Vector2.down*offset;
+                yield return null;
+            }
+            if(version!=screenVersion)yield break;
+            foreach(var item in tray)if(item.Key)item.Key.anchoredPosition=item.Value+Vector2.down*282;
+            battleDockRetracted=true;
+        }
+        void HideResolutionPlanning()
+        {
+            foreach(Transform child in screen){
+                string name=child.name;
+                if(name=="Thread layer"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
+                    ||name.StartsWith("Support target ",StringComparison.Ordinal)||name.StartsWith("Enemy body target ",StringComparison.Ordinal)
+                    ||name=="Action progression"||name=="Battle instruction"||name=="Recommend"||name=="Reuse"||name=="Clear links"
+                    ||name=="Auto mode"||name=="Release lantern"||name=="Battle log")child.gameObject.SetActive(false);
+            }
+        }
 
         void RegisterHealth(string id,Image fill,Text label=null)
         {
@@ -315,15 +347,15 @@ namespace RequiemLantern.Presentation
                 status.transform.SetAsLastSibling();
                 float speed=autoMode?.72f:1;
                 float approach=(reducedMotion?.10f:.25f)*speed,windup=.16f*speed,swing=.11f*speed;
-                float contactAt=approach+windup+swing,hold=.045f,follow=.12f*speed,recoil=.11f*speed,recover=.18f*speed;
+                float contactAt=approach+windup+swing,hold=reducedMotion?.025f:.075f,follow=.12f*speed,recoil=.11f*speed,recover=.18f*speed;
                 if(!clash){
                     windup=(heavy?.27f:flourish?.11f:sweep?.21f:.16f)*speed;
                     swing=(heavy?.14f:flourish?.08f:sweep?.14f:.11f)*speed;
-                    hold=heavy?.075f:.045f;follow=(flourish?.23f:heavy?.18f:.12f)*speed;
+                    hold=reducedMotion?.025f:heavy?.10f:.075f;follow=(flourish?.23f:heavy?.18f:.12f)*speed;
                     recover=(heavy?.23f:flourish?.20f:.18f)*speed;contactAt=approach+windup+swing;
                 }
                 float recoilAt=contactAt+hold+follow,recoverAt=recoilAt+recoil,duration=recoverAt+recover;
-                if(clash){approach=(reducedMotion?.06f:.15f)*speed;windup=.10f*speed;swing=.08f*speed;hold=.045f;follow=.06f*speed;recoil=.05f*speed;recover=.10f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
+                if(clash){approach=(reducedMotion?.06f:.15f)*speed;windup=.10f*speed;swing=.08f*speed;hold=reducedMotion?.025f:.065f;follow=.06f*speed;recoil=.05f*speed;recover=.10f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
                 Action impact=()=>{
                     if(applied||version!=screenVersion)return;applied=true;
                     if(damage&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);
@@ -349,6 +381,14 @@ namespace RequiemLantern.Presentation
                     Vector2 actorFoot=actorMeet,targetFoot=targetMeet;
                     float after=Mathf.Max(0,elapsed-contactAt),motionAfter=Mathf.Max(0,elapsed-contactAt-hold),returning=Smooth((elapsed-recoverAt)/recover);
                     if(!reducedMotion){
+                        // Camera focus belongs to this pair's foreground layer. The
+                        // sprites, foot pivots, weapon tips and sparks share a single
+                        // transform, while HP and flame judgement remain stationary.
+                        float focus=Smooth(elapsed/approach)*(1-returning);
+                        float zoom=1+(clash?.10f:.16f)*focus*(autoMode?.75f:1);
+                        Vector2 offset=new Vector2(1050-contact.x*zoom,555-contact.y*zoom)*focus;
+                        fx.localScale=new Vector3(zoom,zoom,1);fx.anchoredPosition=ToMesh(offset);
+                        marker.FocusScale=zoom;marker.FocusOffset=offset;
                         float arrive=Smooth(elapsed/approach);
                         actorFoot=Vector2.Lerp(attacker.OriginalFoot,actorMeet,arrive);
                         targetFoot=Vector2.Lerp(defender.OriginalFoot,targetMeet,arrive);
