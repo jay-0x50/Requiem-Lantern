@@ -34,7 +34,8 @@ namespace RequiemLantern.Presentation
             };
             Application.logMessageReceived+=onLog;
             var watchdog=StartCoroutine(SmokeWatchdog());
-            var steps=new Stack<IEnumerator>();steps.Push(Environment.GetCommandLineArgs().Contains("--ux-smoke")?SmokeUxSteps():SmokeSteps());
+            var arguments=Environment.GetCommandLineArgs();var steps=new Stack<IEnumerator>();
+            steps.Push(arguments.Contains("--intent-smoke")?SmokeIntentDockSteps():arguments.Contains("--ux-smoke")?SmokeUxSteps():SmokeSteps());
             try {
                 // Drive nested enumerators ourselves so errors inside Capture/SmokeSteps
                 // produce a failure marker and exit code instead of silently ending a coroutine.

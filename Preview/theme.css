@@ -523,3 +523,23 @@
 .voyage-vessel-portrait{position:absolute;left:476px;top:204px;width:440px;height:276px;pointer-events:none;opacity:.94}.voyage-vessel-portrait img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 18px 12px #0008)}
 .voyage-log{position:absolute;left:35px;bottom:15px;right:125px;padding:10px 18px;background:linear-gradient(90deg,#06151cdc,#06151c88,transparent);border-left:2px solid #a28e63;pointer-events:none}.voyage-log span{display:block;letter-spacing:.14em;font-size:9px;color:#8da6a9}.voyage-log strong{display:block;font-size:14px;font-weight:400;color:#d6c6a0;margin-top:5px}.voyage-log small{display:block;font-size:10px;color:#98adaa;margin-top:6px}
 .stages .campaign-detail{top:288px;min-height:512px;background:linear-gradient(160deg,#101e26f2,#07111bea);border-color:#7d927a77;box-shadow:0 12px 36px #0007}.stages .campaign-detail h2{margin-top:17px;font-size:29px}.stages .campaign-detail p{margin:18px 0}.stages .campaign-detail .stage-status{margin-top:17px}
+
+/* Enemy actions remain compact; the detailed forecast appears on hover/focus. */
+#game .battle .intent.intent-tile{min-height:0;padding:6px 7px 5px;display:flex;flex-direction:column;gap:3px;--button-cut:12px;--intent-color:#b7a2dc;--button-fill:linear-gradient(150deg,#28253bdc,#101722f5 72%);--button-trim:color-mix(in srgb,var(--intent-color) 44%,transparent);letter-spacing:0;overflow:hidden}
+.intent-tile.intent-area{--intent-color:#d2ac70!important}.intent-tile.intent-piercing{--intent-color:#e3a69d!important}.intent-tile.intent-illusion{--intent-color:#87abb7!important}
+.intent-topline{width:100%;display:flex;justify-content:space-between;align-items:center;gap:3px;line-height:12px}.intent-topline b{font-size:9px;font-weight:400;color:#ad9e88}.intent-topline>span{font-size:10px;color:var(--intent-color)}
+.intent-lamps{display:flex;align-items:center;justify-content:center;min-height:24px;gap:7px;width:100%;background:radial-gradient(ellipse,#b092e01b,transparent 70%)}
+.battle .intent.intent-tile .intent-shortname{width:100%;font-size:11px;line-height:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e1d5e9}
+.battle .intent.intent-tile .intent-recipient{font-size:11px;line-height:14px;color:#c6b7b9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.battle .intent.intent-tile .intent-assignment{display:block;font-size:11px;line-height:14px;margin:0;color:#a6a0ac;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+.battle .intent.intent-tile.intercepted{--button-trim:#8cddca99;--button-fill:linear-gradient(150deg,#27443fdc,#101e27f5 72%)}.battle .intent.intent-tile .intent-assignment.intercepted{color:#9fe4d6}
+.intent-tooltip{position:absolute;width:360px;max-height:720px;overflow:hidden;padding:16px 18px;background:linear-gradient(145deg,#1d2536fc,#09121cfc);border:1px solid #b69f7080;box-shadow:0 10px 35px #000b;z-index:35;pointer-events:none;line-height:1.5;color:#d1d6df}
+.intent-detail-overline{font-size:10px;letter-spacing:.04em;color:#b9a7ca}.intent-tooltip h3{font-size:20px;line-height:1.35;font-weight:500;color:#efddbb;margin:5px 0 12px;word-break:keep-all}
+.intent-tooltip dl{display:grid;grid-template-columns:92px 1fr;gap:6px 9px;margin:0;font-size:11px;line-height:1.5}.intent-tooltip dt{color:#a8a0b8}.intent-tooltip dd{margin:0;color:#dce1e7}.intent-tooltip dd small{display:block;font-size:10px;color:#a5b0be;line-height:1.5}
+.intent-detail-effect{font-size:11px;line-height:1.7;color:#c0c9d5;border-top:1px solid #a6957340;margin:12px 0 0;padding-top:10px;word-break:keep-all}.intent-detail-affinity{font-size:10px;line-height:1.7;color:#b6c7c9;margin-top:10px;padding:8px 10px;background:#10242a99}.intent-detail-affinity b{display:block;font-size:10px;color:#b5d5d1;font-weight:500}
+.resolving .intent-tile{opacity:0!important;pointer-events:none}.resolving .intent-tooltip{display:none}
+
+.intent-detail-affinity small{display:block;font-size:10px;margin-top:6px;padding-top:6px;border-top:1px solid #91aaa333;color:#c9d6d6}
+
+
+.intent-lamps>b{font-size:14px;line-height:24px;font-weight:500;color:#d3bced}.intent-darkness-symbol{display:block;width:18px;height:25px;background:#b79bd8;clip-path:polygon(51% 0,60% 19%,83% 40%,79% 25%,96% 52%,100% 69%,91% 87%,73% 98%,44% 100%,18% 88%,2% 70%,6% 53%,25% 29%,24% 52%,39% 37%);position:relative;flex-shrink:0}.intent-darkness-symbol:after{content:"";position:absolute;left:6px;top:12px;width:7px;height:11px;background:#524265;clip-path:polygon(50% 0,100% 60%,89% 86%,56% 100%,20% 90%,0 58%)}

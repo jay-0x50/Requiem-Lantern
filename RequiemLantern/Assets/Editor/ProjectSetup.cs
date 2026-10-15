@@ -99,6 +99,8 @@ namespace RequiemLantern.Editor
                     throw new System.Exception("Invalid enemy group for stage: "+stage.Id);
                 if(battle.State.IsBoss!=stage.IsBoss||battle.State.Allies.Any(actor=>actor.SlotCount!=1))
                     throw new System.Exception("Battle action progression lost its stage boss flag or round-1 action limit: "+stage.Id);
+                if(stage.IsBoss&&battle.State.Intents.Count!=System.Math.Min(6,battle.State.Allies.Sum(actor=>actor.SlotCount)))
+                    throw new System.Exception("Boss intent dock does not match actual round-1 party actions: "+stage.Id);
                 foreach(var enemy in battle.State.Enemies)if(!Resources.Load<Texture2D>("Art/"+enemy.Portrait))
                     throw new System.Exception("Enemy group art is missing: "+stage.Id+" / "+enemy.Portrait);
                 if(battle.State.Intents.Any(intent=>!battle.State.Enemies.Any(enemy=>enemy.Id==intent.ActorId)))

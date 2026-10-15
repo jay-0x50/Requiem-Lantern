@@ -1,0 +1,114 @@
+[
+  {
+    "className": "enemy-stats",
+    "height": 74,
+    "owner": "anger",
+    "width": 243,
+    "x": 820,
+    "y": 108
+  },
+  {
+    "className": "parts",
+    "height": 29,
+    "owner": "anger",
+    "width": 243,
+    "x": 820,
+    "y": 180
+  },
+  {
+    "className": "intent intent-tile intent-normal  ",
+    "height": 103,
+    "id": "1:anger_arm",
+    "owner": "anger",
+    "text": "01✧ 단일×2연속 공격표적 · 리안맞불 미지정",
+    "width": 112,
+    "x": 825,
+    "y": 215
+  },
+  {
+    "className": "intent intent-tile intent-area  ",
+    "height": 103,
+    "id": "1:anger_core",
+    "owner": "anger",
+    "text": "02✦ 광역×3번지는 어둠표적 · 아군 전체맞불 미지정",
+    "width": 112,
+    "x": 947,
+    "y": 215
+  },
+  {
+    "className": "enemy  ",
+    "height": 188,
+    "owner": "anger",
+    "width": 169,
+    "x": 857,
+    "y": 398
+  },
+  {
+    "className": "enemy-stats",
+    "height": 74,
+    "owner": "enemy_2",
+    "width": 243,
+    "x": 1087,
+    "y": 108
+  },
+  {
+    "className": "parts",
+    "height": 29,
+    "owner": "enemy_2",
+    "width": 243,
+    "x": 1087,
+    "y": 180
+  },
+  {
+    "className": "intent intent-tile intent-normal  ",
+    "height": 103,
+    "id": "1:enemy_2_arm",
+    "owner": "enemy_2",
+    "text": "01✧ 단일×2연속 공격표적 · 세라맞불 미지정",
+    "width": 112,
+    "x": 1153,
+    "y": 215
+  },
+  {
+    "className": "enemy  ",
+    "height": 188,
+    "owner": "enemy_2",
+    "width": 169,
+    "x": 1124,
+    "y": 398
+  },
+  {
+    "className": "enemy-stats",
+    "height": 74,
+    "owner": "enemy_3",
+    "width": 243,
+    "x": 1353,
+    "y": 108
+  },
+  {
+    "className": "parts",
+    "height": 29,
+    "owner": "enemy_3",
+    "width": 243,
+    "x": 1353,
+    "y": 180
+  },
+  {
+    "className": "intent intent-tile intent-normal  ",
+    "height": 103,
+    "id": "1:enemy_3_arm",
+    "owner": "enemy_3",
+    "text": "01✧ 단일×2연속 공격표적 · 미나토맞불 미지정",
+    "width": 112,
+    "x": 1419,
+    "y": 215
+  },
+  {
+    "className": "enemy  ",
+    "height": 188,
+    "owner": "enemy_3",
+    "width": 169,
+    "x": 1391,
+    "y": 398
+  }
+]

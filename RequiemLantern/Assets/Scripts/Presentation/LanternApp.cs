@@ -48,7 +48,7 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
@@ -110,6 +110,7 @@ namespace RequiemLantern.Presentation
         void Clear(string name)
         {
             combatAudio?.Stop();
+            HideIntentTooltip();
             screenVersion++;
             resolving=false;battleDockRetracted=false;activeClashActor=null;CancelDragVisuals();
             if(screen){screen.gameObject.SetActive(false);Destroy(screen.gameObject);}if(overlay){overlay.gameObject.SetActive(false);Destroy(overlay.gameObject);}overlay=null;

@@ -51,6 +51,7 @@ namespace RequiemLantern.Presentation
         }
         void HideResolutionPlanning()
         {
+            HideIntentTooltip();
             foreach(Transform child in screen){
                 string name=child.name;
                 if(name=="Thread layer"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
@@ -149,7 +150,15 @@ namespace RequiemLantern.Presentation
             Color color=Gold;string hint=battle.Skill(selectedActor,selectedSkill).Name+" · 연결할 대상을 선택하세요";
             if(snappedTarget!=null){
                 hint=TargetName(snappedTarget);
-                if(battle.Intent(snappedTarget)!=null){var intent=battle.Intent(snappedTarget);var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,CardId=selectedCard,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;hint=preview.Summary+"\n"+(intent.Kind==IntentKind.Area?"전체 공격에 맞불":intent.TargetId==selectedActor?"자신을 향한 공격에 맞불":IntentOriginalTarget(intent)+" 대신 "+battle.Unit(selectedActor).Name+" 가로막기");}
+                if(battle.Intent(snappedTarget)!=null){
+                    var intent=battle.Intent(snappedTarget);
+                    if(intent.Kind==IntentKind.Illusion){color=Gold;hint="허상 · 연결 시 행동만 소모하고 피해 없음";}
+                    else{
+                        var preview=battle.Preview(new LinkCommand{ActorId=selectedActor,SkillId=selectedSkill,CardId=selectedCard,TargetId=snappedTarget,Slot=selectedSlot,Kind=LinkKind.Clash});
+                        color=preview.Grade==PreviewGrade.Advantage?Teal:preview.Grade==PreviewGrade.Disadvantage?Hex("E77A5D"):Gold;
+                        hint=preview.Summary+"\n"+(intent.Kind==IntentKind.Area?"전체 공격에 맞불":intent.TargetId==selectedActor?"자신을 향한 공격에 맞불":IntentOriginalTarget(intent)+" 대신 "+battle.Unit(selectedActor).Name+" 가로막기");
+                    }
+                }
                 else if(battle.Skill(selectedActor,selectedSkill).Kind!=SkillKind.Attack)color=Teal;
             }
             dragLine.To=ToMesh(point);dragLine.color=color;dragLine.SetVerticesDirty();

@@ -240,11 +240,19 @@ internal static class CampaignTests
         });
         Test("all twenty-five campaign battles win under AI at Good for seeds zero, one and two",()=>{
             var failures=new List<string>();var runs=new List<string>();
+            var bossRounds=new List<string>{"stage\tseed\tround\tforecasts\tallyActions\tbossDamage\tremainingBossHp\tremainingPartyHp\tsurvivors\tbrokenParts"};
             foreach(var stage in Stages.Where(s=>s.HasBattle))foreach(int seed in new[]{0,1,2}){
                 var battle=CampaignBattleFactory.Create(stage,new ProgressData(),seed);int stalemates=0;
                 var offeredIds=new HashSet<string>();
                 Equal(string.Join(",",stage.Party),string.Join(",",battle.State.Allies.Select(u=>u.Id)));True(battle.State.Allies.All(u=>u.SyncLevel==0&&u.Sanity==0));
                 while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=40){
+                    if(stage.IsBoss){
+                        int available=battle.State.Allies.Sum(actor=>actor.SlotCount),forecasts=battle.State.Intents.Count;
+                        True(forecasts<=available,"Boss exceeded the fixed roster action budget in "+stage.Number);
+                        if(battle.State.Round==1||battle.State.Enemies.All(enemy=>enemy.Parts.All(part=>!part.Destroyed)&&enemy.BrokenThroughRound<battle.State.Round))
+                            Equal(available,forecasts,"Intact boss did not reveal its expanded action sequence in "+stage.Number);
+                        True(battle.State.Intents.Count(intent=>intent.Kind==IntentKind.Area)<=1,"Boss spammed area attacks in "+stage.Number);
+                    }
                     for(int index=0;index<battle.State.Allies.Count;index++)
                         Equal(battle.State.Round>=index+2&&(!stage.IsBoss||index<2)?2:1,battle.State.Allies[index].SlotCount,"Action capacity drifted in "+stage.Number+" round "+battle.State.Round);
                     foreach(var unit in battle.State.Allies.Where(u=>u.Alive)){
@@ -260,6 +268,9 @@ internal static class CampaignTests
                     Equal(numbered.Count,numbered.Select(l=>l.CardId).Distinct().Count(),"One offered card was reserved for multiple actions in "+stage.Number);
                     True(numbered.All(l=>battle.Unit(l.ActorId).SkillHand.Any(c=>c.Id==l.CardId&&c.SkillId==l.SkillId)),"AI selected an unavailable card in "+stage.Number);
                     var events=battle.ResolveRound(IgniteGrade.Good);stalemates+=events.Count(e=>e.Type=="Stalemate");
+                    if(stage.IsBoss)bossRounds.Add(string.Join("\t",stage.Number,seed,battle.State.Round,battle.State.Intents.Count,battle.State.Links.Count,
+                        events.Where(e=>e.Type=="Damage"&&battle.Unit(e.ActorId)?.IsEnemy==true).Sum(e=>e.Amount),battle.State.Enemies.Sum(enemy=>enemy.Hp),
+                        battle.State.Allies.Sum(actor=>actor.Hp),battle.State.Allies.Count(actor=>actor.Alive),battle.State.Enemies.Sum(enemy=>enemy.Parts.Count(part=>part.Destroyed))));
                     foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))True(unit.Sanity>=-20&&unit.Sanity<=20,"Sanity overflow in "+stage.Number);
                     if(battle.State.Outcome==BattleOutcome.Ongoing){
                         battle.BeginNextRound();Equal(0,battle.State.Links.Count);
@@ -270,6 +281,7 @@ internal static class CampaignTests
                 runs.Add(line);if(battle.State.Outcome!=BattleOutcome.Victory||stalemates>0)failures.Add(line);
             }
             File.WriteAllLines(OutputPath("balance-runs.txt"),runs);
+            File.WriteAllLines(OutputPath("boss-pressure-runs.tsv"),bossRounds);
             Equal(75,runs.Count);True(failures.Count==0,"Campaign balance failures:\n"+string.Join("\n",failures));
         });
         Console.WriteLine("Campaign tests: "+passed+" passed, "+failed+" failed.");

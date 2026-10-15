@@ -83,9 +83,10 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='fresh-hands-voyage-v9'
+    assert data and data['runtimeRevision']=='boss-intent-dock-v10'
     four_party(data)
     assert data['battle']['ember']==3 and data['battle']['isBoss']
+    assert len(data['battle']['intents'])==4
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
     original_hands={actor['id']:actor['skillHand'] for actor in data['battle']['allies']}
     # Every dock actor submits its own offered card without changing another hand.
@@ -133,6 +134,28 @@ try:
     assert len(data['battle']['links'])==1 and data['battle']['links'][0]['actorId']=='lian'
     call('recommend');call('resolve');data=call('next');four_party(data);fresh_hands(current_hands,data)
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[2,2,1,1]
+    data=call('restart');four_party(data)
+    # Guard-only turns leave the boss intact while its visible sequence expands.
+    for round_number,count in [(1,4),(2,5),(3,6)]:
+        assert data['battle']['round']==round_number
+        intents=data['battle']['intents'];assert len(intents)==len({intent['id'] for intent in intents})==count
+        assert sum(intent['kind']=='Area' for intent in intents)<=1
+        assert all(intent['actorId']=='anger' and intent['flameCount']>=1 for intent in intents)
+        assert all(intent['targetId']=='all' or any(actor['id']==intent['targetId'] and actor['alive'] for actor in data['battle']['allies']) for intent in intents)
+        if round_number==3:break
+        old=hands(data)
+        for actor in data['battle']['allies']:
+            defense=next(skill for skill in actor['skills'] if skill['number']==0)
+            data=call('link',actorId=actor['id'],slot=0,skillId=defense['id'],kind='Guard',targetId=actor['id'])
+        data=call('resolve');assert data['battle']['outcome']=='Ongoing'
+        data=call('next');fresh_hands(old,data)
+    extra=next(intent for intent in data['battle']['intents'] if intent['id']=='3:anger_core_2')
+    interceptor=next(actor for actor in data['battle']['allies'] if actor['alive'] and actor['id']!=extra['targetId'] and any(next(skill for skill in actor['skills'] if skill['id']==card['skillId'])['kind']=='Attack' for card in actor['skillHand']))
+    card=next(card for card in interceptor['skillHand'] if next(skill for skill in interceptor['skills'] if skill['id']==card['skillId'])['kind']=='Attack')
+    data=call('link',actorId=interceptor['id'],slot=0,skillId=card['skillId'],cardId=card['id'],kind='Clash',targetId=extra['id'])
+    linked=data['battle']['links'][0]
+    assert linked['targetId']==extra['id'] and linked['intentActorId']=='anger' and linked['intentPartId']=='anger_core'
+    assert next(intent for intent in data['battle']['intents'] if intent['id']==extra['id'])['targetId']==extra['targetId']
     data=call('restart');four_party(data)
     assert data['progress']['coins']==data['progress']['lanternFragments']==0
     assert 'characterStories' not in data
@@ -274,7 +297,7 @@ try:
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
     print('PASS: HTTP normal R1-R5 roster progression, boss R1-R3 caps, locked-second-action atomic rejection, both offers replaced after used or defense-only rounds, stale CardId rejection and full restart.')
     combat_art_routes()
-    print('PASS: v9 HTTP revision; fresh two-card offers per round with stable weighted bags and non-mutating recommendation/reuse; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth-actor interception and damage events; atomic card/slot/budget checks; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
+    print('PASS: v10 HTTP revision; boss 4/5/6 actions on intact guard-only rounds and interception of an extra uniquely identified core action; fresh two-card offers per round with stable weighted bags and non-mutating recommendation/reuse; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups with solo tutorial/bosses; exact enemy/part/intent identity; fourth-actor interception and damage events; atomic card/slot/budget checks; original art and five SD PNG/layout routes; 24 combat WAVs; staged joins and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)

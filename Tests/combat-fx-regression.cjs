@@ -176,7 +176,7 @@ async function main() {
   assert.deepEqual(copy(env.fx.point('lian')), { x: 333.33333333333337, y: 495.83333333333337 });
   assert.deepEqual(copy(env.fx.point('minato')), { x: 529.1666666666667, y: 495.83333333333337 });
   assert.deepEqual(copy(env.fx.point('anger')), { x: 1329.1666666666667, y: 470.81666666666666 });
-  assert.deepEqual(copy(env.fx.point('1:anger_core')), { x: 996.6666666666667, y: 344.58333333333337 });
+  assert.deepEqual(copy(env.fx.point('1:anger_core')), { x: 1390, y: 266.6666666666667 });
   assert.deepEqual(copy(env.fx.point('anger_arm')), { x: 1270.8333333333335, y: 195 });
   assert.equal(env.fx.point('unknown'), null); assert.equal(env.fx.point(''), null);
   pass('unit, part and colon-containing intent IDs have correct anchors');
@@ -749,6 +749,15 @@ async function main() {
   await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(env.stage.dataset.cameraZoom,'1.12');
   await env.drain();assert.equal(await fastFocus,true);
   pass('reduced motion omits camera movement and fast combat softens strike framing while retaining contact and dock restoration');
+
+  const six=battle();six.intents=Array.from({length:6},(_,n)=>({id:'3:anger_'+n,actorId:'anger',partId:n%2?'anger_core':'anger_arm'}));
+  env=environment(true,false,six);const points=six.intents.map(i=>env.fx.point(i.id));
+  points.forEach((p,n)=>{assert.ok(p.x>=800&&p.x<=1880/1.2);assert.ok(Math.abs(p.y-266.6666666666667)<1e-8);if(n)assert.ok(p.x-points[n-1].x>121);});
+  pass('six boss intent FX anchors stay on their own horizontal tile centers with stable full intent identities');
+  let hidden=0;env.fx.options.hideTooltip=()=>hidden++;
+  const inspectingPlay=env.fx.play([event('Damage','anger',10)],copy(env.initial));await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(hidden,1);
+  env.fx.clear();await env.drain();assert.equal(await inspectingPlay,false);assert.equal(hidden,2);assert.equal(env.root.querySelector('.action-dock').inert,false);
+  pass('starting or cancelling playback hides inspection through the shared hook and restores the planning dock');
 
   await actorLabelChecks();
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');

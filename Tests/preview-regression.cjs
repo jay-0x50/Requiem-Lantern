@@ -43,7 +43,7 @@ const state = {
 
 function environment(storage = 'null') {
   const events = {}, gameEvents = {}, timers = new Map(), intervals = new Map();
-  let id = 0, hasModal = false, hit = null, elementSlots=[], linkPaths=[], gameBox={ left: 0, top: 0, width: 1600, height: 900 };
+  let id = 0, hasModal = false, hit = null, tooltip=null, elementSlots=[], linkPaths=[], gameBox={ left: 0, top: 0, width: 1600, height: 900 };
   const words = { textContent: '' };
   const thread = { d: '', setAttribute(key, value) { this[key] = value; } };
   const game = {
@@ -52,8 +52,8 @@ function environment(storage = 'null') {
     getBoundingClientRect: () => gameBox,
     querySelector: selector => selector === '.modal'
       ? (hasModal ? { remove() { hasModal = false; } } : null)
-      : selector === '.words' ? words : selector === '#drag-thread' ? thread : null,
-    insertAdjacentHTML() { hasModal = true; },
+      : selector === '.intent-tooltip' ? tooltip : selector === '.words' ? words : selector === '#drag-thread' ? thread : null,
+    insertAdjacentHTML(_position,html) { if(html.includes('class="intent-tooltip"'))tooltip={html,style:{},offsetHeight:420,remove(){tooltip=null;}};else hasModal = true; },
     querySelectorAll: selector => selector==='.slot'?elementSlots:selector==='[data-link-actor]'?linkPaths:[]
   };
   const context = {
@@ -80,6 +80,7 @@ function environment(storage = 'null') {
   vm.runInContext('battleFx.attach(data.battle)', context);
   return {
     context, events, gameEvents, game, words, thread, timers, intervals,
+    get tooltip(){return tooltip;},
     run: code => vm.runInContext(code, context),
     setGeometry(box,slots=[],paths=[]) { gameBox=box;elementSlots=slots;linkPaths=paths; },
     setHit(targetId, disabled = false) {
@@ -137,7 +138,65 @@ function candidateActionStatusChecks(){
  pass('an incapacitated fighter reports zero available and total actions even when an old reservation remains');
 }
 
+async function intentDockChecks(){
+ let env=environment();fourParty(env);
+ env.run(`data.battle.isBoss=true;data.battle.enemies[0].element='Shadow';data.battle.enemies[0].sanity=20;data.battle.intents=Array.from({length:6},(_,n)=>({id:'3:anger_'+(n%2?'core':'arm')+(n>1?'_'+(Math.floor(n/2)+1):''),actorId:'anger',partId:n%2?'core':'arm',targetId:data.battle.allies[n%4].id,name:'예고 '+(n+1),kind:n===1?'Area':n===3?'Piercing':n===5?'Illusion':'Normal',speed:5+n,basePower:4,flamePower:3,flameCount:2,element:'Shadow'}));showBattle();`);
+ const boxes=JSON.parse(env.run('JSON.stringify(data.battle.intents.map(i=>LanternBattleGeometry.intentRect(data.battle,i.id)))'));
+ assert.equal((env.game.innerHTML.match(/data-intent-id=/g)||[]).length,6);
+ boxes.forEach((box,n)=>{assert.equal(box.y,215);assert.ok(Math.abs(box.width-134/1.2)<1e-8);assert.ok(Math.abs(box.height-124/1.2)<1e-8);assert.ok(box.x>=800&&box.x+box.width<=1880/1.2+1e-8);if(n)assert.ok(box.x>=boxes[n-1].x+boxes[n-1].width+9.99);});
+ assert.ok(env.game.innerHTML.includes('표적 · 아군 전체'));assert.ok(env.game.innerHTML.includes('intent-illusion'));
+ for(let n=0;n<6;n++){const point=JSON.parse(env.run(`JSON.stringify(targetPoint(data.battle.intents[${n}].id))`));assert.ok(Math.abs(point.x-boxes[n].x-boxes[n].width/2)<1e-8);assert.ok(Math.abs(point.y-boxes[n].y-boxes[n].height/2)<1e-8);}
+ pass('six boss forecasts form one bounded horizontal darkness row, and target threads use each exact tile center');
+
+ const intentId=env.run('data.battle.intents[0].id'),attrs={},node={dataset:{intentId},disabled:false,contains:other=>other===node,getBoundingClientRect:()=>({left:1450,top:215,width:112,height:103}),setAttribute:(key,value)=>attrs[key]=value,removeAttribute:key=>delete attrs[key]};node.closest=selector=>selector==='.intent-tile'?node:null;
+ env.run(`globalThis.inspectCalls=[];command=async(action,args)=>{inspectCalls.push({action,...args});return true;};selectedActor='sera';selectedSkill='sera_glimmer';selectedCardId='sera-card-1';selectedSlot=0;`);
+ const before=env.run('JSON.stringify([selectedActor,selectedSkill,selectedCardId,selectedSlot,data.battle.links])');
+ env.gameEvents.pointerover({target:node,relatedTarget:null});
+ assert.ok(env.tooltip);assert.ok(env.tooltip.html.includes('4–10'));assert.ok(env.tooltip.html.includes('속성·어둠도 적용 전'));assert.ok(env.tooltip.html.includes('+20 / 90%'));assert.ok(env.tooltip.html.includes('팔 · 30/30'));assert.ok(env.tooltip.html.includes('속성 상성'));assert.ok(env.tooltip.html.includes('특수 효과'));
+ assert.equal(attrs['aria-describedby'],'intent-details');assert.equal(env.run('JSON.stringify([selectedActor,selectedSkill,selectedCardId,selectedSlot,data.battle.links])'),before);assert.equal(env.context.inspectCalls.length,0);
+ const tipRect={x:parseFloat(env.tooltip.style.left),y:parseFloat(env.tooltip.style.top),width:360,height:420};assert.ok(tipRect.x>=12&&tipRect.x+tipRect.width<=1588);assert.ok(tipRect.y>=108&&tipRect.y+tipRect.height<=844);
+ env.gameEvents.pointerout({target:node,relatedTarget:null});assert.equal(env.tooltip,null);assert.equal(attrs['aria-describedby'],undefined);
+ env.gameEvents.focusin({target:node});assert.ok(env.tooltip);assert.equal(env.run('JSON.stringify([selectedActor,selectedSkill,selectedCardId,selectedSlot,data.battle.links])'),before);
+ env.gameEvents.focusout({target:node,relatedTarget:null});assert.equal(env.tooltip,null);
+ env.gameEvents.pointerout({target:{closest:()=>null},relatedTarget:null});env.gameEvents.focusout({target:{closest:()=>null},relatedTarget:null});
+ pass('hover and keyboard focus inspect real power, sanity, part, effects and affinity without selecting a card or assigning an action');
+
+ env.run(`data.battle.links=[{actorId:'sera',slot:0,skillId:'sera_glimmer',kind:'Clash',targetId:${JSON.stringify(intentId)}}];data.previews=[{actorId:'sera',slot:0,summary:'기존 상세 판정 유지'}];showBattle();`);
+ assert.ok(env.game.innerHTML.includes('대신 맞불 · 세라'));const details=env.run(`intentDetails(intent(${JSON.stringify(intentId)}))`);assert.ok(details.includes('현재 배정'));assert.ok(details.includes('기존 상세 판정 유지'));assert.ok(details.includes('대신 맞불 · 세라'));
+ assert.equal(env.run("intentDetails(data.battle.intents[1]).includes('아군 전체')"),true);assert.equal(env.run("intentDetails(data.battle.intents[3]).includes('방어·회피·반격 대행을 무시')"),true);assert.equal(env.run("intentDetails(data.battle.intents[5]).includes('피해를 주지 않는 허상')"),true);
+ env.run(`data.battle.intents[5].targetId='all';data.battle.links[0].targetId=data.battle.intents[5].id;data.previews[0].summary='2연승 시 공격';showBattle();`);
+ const illusionDetails=env.run('intentDetails(data.battle.intents[5])');assert.ok(!illusionDetails.includes('2연승 시 공격'));assert.ok(!illusionDetails.includes('속성 상성'));assert.ok(illusionDetails.includes('맞불을 연결하면 해당 행동만 소모'));assert.ok(illusionDetails.includes('기본 속도 / 속성'));assert.ok(illusionDetails.includes('아군 전체'));assert.ok(illusionDetails.includes('허상 연결 · 세라'));assert.equal(env.run('intentAssignment(data.battle.intents[5]).changed'),false);
+ assert.ok(!env.game.innerHTML.includes('class="thread-intercept"'));
+ assert.equal(env.run("targetHint('sera',data.battle.intents[5].id)"),'허상 연결 · 피해 없이 행동 소모');
+ env.run('data.battle.gloom=3;');assert.ok(!env.run('intentDetails(data.battle.intents[5])').includes('그림자 위력'));
+ assert.ok(env.game.innerHTML.includes('class="intent-darkness-symbol"'));assert.ok(env.game.innerHTML.includes('aria-label="어둠 2개"'));assert.ok(env.game.innerHTML.includes('<b>×2</b>'));
+ env.run(`data.battle.intents[0].name='<img src=x>';`);assert.ok(env.run('intentDetails(data.battle.intents[0])').includes('&lt;img src=x&gt;'));
+ pass('interception keeps the original recipient and current partner separate, reuses the authoritative summary and escapes detailed names');
+
+ const inspect=()=>env.gameEvents.focusin({target:node});
+ inspect();assert.ok(env.tooltip);env.gameEvents.pointerdown({target:{closest:()=>null}});assert.equal(env.tooltip,null);
+ inspect();env.run('cleanupDrag()');assert.equal(env.tooltip,null);
+ inspect();env.events.resize();assert.equal(env.tooltip,null);
+ inspect();env.events.blur();assert.equal(env.tooltip,null);
+ inspect();env.run("modal('기록','내용')");assert.equal(env.tooltip,null);env.run('closeModal()');
+ env.run(`busy=true;`);inspect();assert.equal(env.tooltip,null);env.run(`busy=false;dragInfo={moved:true};`);inspect();assert.equal(env.tooltip,null);env.run(`dragInfo=null;`);
+ env.run(`data.battle.intents[0].cancelled=true;`);inspect();assert.equal(env.tooltip,null);env.run(`data.battle.intents[0].cancelled=false;`);
+ inspect();env.run("setScreen('hub','정리')");assert.equal(env.tooltip,null);assert.equal(attrs['aria-describedby'],undefined);
+ pass('inspection closes on pointer input, drag cleanup, resize, blur, modal and screen changes and never opens while busy, dragging or cancelled');
+
+ for(const anchor of [{x:0,y:0,width:112},{x:1580,y:890,width:112}]){const p=JSON.parse(env.run(`JSON.stringify(tooltipBounds(${JSON.stringify(anchor)},360,950))`));assert.ok(p.x>=12&&p.x+360<=1588);assert.ok(p.y>=108&&p.y+720<=844);}
+ assert.deepEqual(JSON.parse(env.run('JSON.stringify(intentPower({hitPowers:[7,8]}))')),{count:2,base:5,flame:2,max:9});
+ pass('edge tooltips stay inside the logical viewport and legacy attack powers use the Core fallback formula');
+
+ env=environment();threeEnemies(env);
+ env.run(`for(const enemy of data.battle.enemies)data.battle.intents.push({...data.battle.intents.find(i=>i.actorId===enemy.id),id:'2:'+enemy.id+':extra'});showBattle();`);
+ const rows=JSON.parse(env.run('JSON.stringify(data.battle.enemies.map(e=>data.battle.intents.filter(i=>i.actorId===e.id).map(i=>LanternBattleGeometry.intentRect(data.battle,i.id))))'));
+ rows.forEach((row,n)=>{assert.equal(row.length,2);assert.ok(row[0].x>=40/1.2);assert.ok(row[1].x+row[1].width<=1880/1.2+1e-8);if(n)assert.ok(row[0].x>rows[n-1][1].x+rows[n-1][1].width);});
+ pass('three ordinary enemies retain separate compact owner rows with no adjacent-row overlap or viewport spill');
+}
+
 async function main() {
+  if(process.argv.includes('--intent-dock-only')){await intentDockChecks();console.log('TOTAL '+passed+' intent-dock cases passed');return;}
   if(process.argv.includes('--action-status-only')){candidateActionStatusChecks();console.log('TOTAL '+passed+' candidate/action status cases passed');return;}
   let env = environment('{broken');
   assert.equal(env.run('settings.assisted'), true);
@@ -643,7 +702,7 @@ async function main() {
   }
   assert.ok(env.game.innerHTML.includes('data-action="target:enemy_3_core"'));
   assert.ok(env.game.innerHTML.includes('data-owner="enemy_2"'));
-  assert.ok(env.game.innerHTML.includes('원래 대상 · 리안'));
+  assert.ok(env.game.innerHTML.includes('표적 · 리안'));
   assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
   pass('three opponents each own a body, HP, parts and forecast while four allies retain eight actual cards');
 
@@ -661,18 +720,18 @@ async function main() {
   assert.equal(env.context.interceptRecord.actorId,'sera');assert.equal(env.context.interceptRecord.kind,'Clash');
   assert.equal(env.context.interceptRecord.targetId,'1:enemy_2_arm');
   assert.ok(env.game.innerHTML.includes('data-original-target="lian" data-interceptor="sera"'));
-  assert.ok(env.game.innerHTML.includes('가로막기 · 세라'));
+  assert.ok(env.game.innerHTML.includes('대신 맞불 · 세라'));
   assert.ok(env.game.innerHTML.includes('class="thread-intercept"'));
   assert.ok(env.game.innerHTML.includes('original-threat'));
   assert.equal(env.run("targetHint('sera','1:enemy_2_arm')"),'리안 대신 가로막기');
   env.run('data.battle.links=[];showBattle()');
   assert.ok(!env.game.innerHTML.includes('class="thread-intercept"'));
-  assert.ok(!env.game.innerHTML.includes('가로막기 · 세라'));
+  assert.ok(!env.game.innerHTML.includes('대신 맞불 · 세라'));
   pass('the second ally can intercept an exact second-enemy forecast for the first ally; removing it restores the original route and label');
 
   env=environment();threeEnemies(env);env.run(`data.battle.intents[2].kind='Area';data.battle.links=[{actorId:'sera',slot:0,skillId:'sera_glimmer',cardId:'sera-card-1',kind:'Clash',targetId:'1:enemy_3_arm'}];showBattle();`);
-  assert.ok(env.game.innerHTML.includes('원래 대상 · 아군 전체'));
-  assert.ok(env.game.innerHTML.includes('광역 전체 유지'));
+  assert.ok(env.game.innerHTML.includes('표적 · 아군 전체'));
+  assert.ok(env.run("intentDetails(intent('1:enemy_3_arm'))").includes('광역의 전체 범위는 유지'));
   assert.ok(!env.game.innerHTML.includes('class="thread-intercept"'));
   assert.equal(env.run("targetHint('sera','1:enemy_3_arm')"),'광역 맞불 · 패배 시 전원 피격');
   pass('an area forecast keeps the whole-party threat and never promises single-character protection');
@@ -808,6 +867,7 @@ async function main() {
   pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
 
   candidateActionStatusChecks();
+  await intentDockChecks();
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using RequiemLantern.Core;
 
 internal static class CoreTests
@@ -10,7 +12,7 @@ internal static class CoreTests
     private static void Main()
     {
         Test("fresh battle deterministic intents", () => {
-            var b = BattleEngine.CreatePrototype(); Equal(3, b.State.Ember); Equal(2, b.State.Intents.Count);
+            var b = BattleEngine.CreatePrototype(); Equal(3, b.State.Ember); Equal(4, b.State.Intents.Count);
             Equal("난타", b.State.Intents[0].Name); Equal(2, b.State.Intents[0].HitPowers.Length); Equal(3, b.State.Intents[1].HitPowers.Length);
             Equal(1, b.State.Allies[0].SlotCount); True(b.State.IsBoss);
         });
@@ -31,6 +33,56 @@ internal static class CoreTests
             }
             b.BeginNextRound();Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
             b.Restart();Equal(4,b.State.Allies.Count);Equal(8,b.State.Allies.Sum(u=>u.SkillHand.Count));
+        });
+        Test("boss forecasts match the fixed roster's growing actions and distribute their targets", () => {
+            foreach(var stage in CampaignCatalog.Chapters.SelectMany(chapter=>chapter.Stages).Where(stage=>stage.IsBoss)){
+                var b=CampaignBattleFactory.Create(stage,seed:0);int roster=b.State.Allies.Count;
+                True(roster==3||roster==4);
+                for(int round=1;round<=5;round++){
+                    b.State.Round=round;b.BeginCampaign();int expected=roster+Math.Min(2,round-1);
+                    Equal(expected,b.State.Intents.Count);Equal(expected,b.State.Allies.Sum(actor=>actor.SlotCount));
+                    Equal(expected,b.State.Intents.Select(intent=>intent.Id).Distinct().Count());
+                    True(b.State.Intents.All(intent=>intent.ActorId=="anger"&&BattleRules.Flames(intent)>=1));
+                    True(b.State.Intents.Count(intent=>intent.Kind==IntentKind.Area)<=1);
+                    var aimed=b.State.Intents.Where(intent=>intent.TargetId!="all").ToList();
+                    Equal(Math.Min(roster,aimed.Count),aimed.Select(intent=>intent.TargetId).Distinct().Count());
+                    if(stage.HumanEnemy){True(b.State.Intents.All(intent=>intent.Kind!=IntentKind.Area));Equal(1,b.State.Intents.Count(intent=>intent.Kind==IntentKind.Piercing));}
+                    b.State.Allies[0].Hp=0;b.BeginCampaign();Equal(expected,b.State.Intents.Count);
+                    True(b.State.Intents.All(intent=>intent.TargetId=="all"||intent.TargetId!=b.State.Allies[0].Id));
+                    b.State.Allies[0].Hp=b.State.Allies[0].MaxHp;
+                }
+            }
+            var tutorial=CampaignBattleFactory.Create(CampaignCatalog.Get("c1s02"),seed:0);
+            for(int round=1;round<=5;round++){tutorial.State.Round=round;tutorial.BeginCampaign();Equal(1,tutorial.State.Intents.Count);False(tutorial.State.IsBoss);}
+        });
+        Test("broken boss parts remove their repeated actions instead of transferring them", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);b.State.Round=3;b.BeginCampaign();Equal(6,b.State.Intents.Count);
+            var boss=b.Unit("anger");var arm=boss.Parts.Single(part=>part.Id=="anger_arm");var core=boss.Parts.Single(part=>part.Id=="anger_core");
+            Equal(3,b.State.Intents.Count(intent=>intent.PartId==arm.Id));Equal(3,b.State.Intents.Count(intent=>intent.PartId==core.Id));
+            arm.Hp=0;b.BeginCampaign();Equal(3,b.State.Intents.Count);True(b.State.Intents.All(intent=>intent.PartId==core.Id));
+            core.Hp=0;b.BeginCampaign();Equal(1,b.State.Intents.Count);Equal("3:anger_body",b.State.Intents.Single().Id);
+            b.Restart();Equal(1,b.State.Round);Equal(4,b.State.Intents.Count);True(b.Unit("anger").Parts.All(part=>!part.Destroyed));
+        });
+        Test("breaking a boss weapon cancels all of its repeated forecasts and preserves the core", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);b.State.Round=3;b.BeginCampaign();var boss=b.Unit("anger");
+            boss.Hp=boss.MaxHp=10000;boss.Rift=boss.MaxRift=10000;boss.Parts[0].Hp=1;boss.Parts[1].Hp=boss.Parts[1].MaxHp=10000;
+            ForceHand(b.Unit("sera"),"sera_glimmer","sera_glimmer");string error;
+            True(b.TryLink("sera",0,"sera_glimmer",LinkKind.Strike,"anger_arm",out error));b.ResolveRound();
+            Equal(3,b.State.Intents.Count(intent=>intent.PartId=="anger_arm"&&intent.Cancelled));
+            True(b.State.Intents.Where(intent=>intent.PartId=="anger_core").All(intent=>!intent.Cancelled));
+        });
+        Test("a teammate intercepts an extra boss action and reuse finds that exact fresh forecast", () => {
+            var b=BattleEngine.CreatePrototype(seed:0);b.State.Round=3;b.BeginCampaign();
+            foreach(var unit in b.State.Allies.Concat(b.State.Enemies))unit.Hp=unit.MaxHp=100000;
+            var boss=b.Unit("anger");boss.Rift=boss.MaxRift=10000;foreach(var part in boss.Parts)part.Hp=part.MaxHp=10000;
+            var actor=b.Unit("sera");actor.Skills.Single(skill=>skill.Number==1).BasePower=1000;ForceHand(actor,"sera_glimmer","sera_glimmer");string error;
+            var extra=b.Intent("3:anger_core_2");True(extra.TargetId!="sera");string oldCard=actor.SkillHand[0].Id;
+            True(b.TryLink("sera",0,"sera_glimmer",LinkKind.Clash,extra.Id,out error,oldCard));b.ResolveRound();
+            True(extra.Resolved);Equal(1,b.State.Events.Count(e=>e.Type=="Intercept"&&e.IntentId==extra.Id&&e.ActorId=="sera"));
+            True(b.State.Intents.Where(intent=>intent.Id!=extra.Id).All(intent=>!intent.Cancelled));
+            b.BeginNextRound();string hand=BagTrace(actor);b.ReusePreviousLinks();Equal(hand,BagTrace(actor));
+            var reused=b.State.Links.Single();Equal("4:anger_core_2",reused.TargetId);Equal("anger",reused.IntentActorId);Equal("anger_core",reused.IntentPartId);
+            True(reused.CardId!=oldCard&&actor.SkillHand.Any(card=>card.Id==reused.CardId));
         });
         Test("normal encounters unlock one extra action per round in fixed roster order", () => {
             var b=CampaignBattleFactory.Create(CampaignCatalog.Get("c2s04"),seed:0);False(b.State.IsBoss);
@@ -317,13 +369,13 @@ internal static class CoreTests
             True(b.TryLink("sera", 0, "sera_glimmer", LinkKind.Strike, "anger", out error));
             b.ResolveRound(); True(b.State.Intents.All(x => x.Cancelled)); Equal(150, b.Unit("lian").Hp);
             b.BeginNextRound(); Equal(2, b.State.Round); Equal(0, b.State.Intents.Count);
-            b.ResolveRound(); b.BeginNextRound(); Equal(3, b.State.Round); Equal(125, b.Unit("anger").Rift); Equal(2, b.State.Intents.Count);
+            b.ResolveRound(); b.BeginNextRound(); Equal(3, b.State.Round); Equal(125, b.Unit("anger").Rift); Equal(6, b.State.Intents.Count);
         });
         Test("guard redirects but piercing bypasses", () => {
-            var b = BattleEngine.CreatePrototype(); string error; b.State.Intents.RemoveAt(1); b.State.Intents[0].TargetId = "minato";
+            var b = BattleEngine.CreatePrototype(); string error; b.State.Intents.RemoveRange(1,b.State.Intents.Count-1); b.State.Intents[0].TargetId = "minato";
             True(b.TryLink("lian", 0, "lian_guard", LinkKind.Guard, "minato", out error)); b.ResolveRound();
             Equal(100, b.Unit("minato").Hp); True(b.Unit("lian").Hp < 150);
-            b = BattleEngine.CreatePrototype(); b.State.Intents.RemoveAt(1); b.State.Intents[0].TargetId = "minato"; b.State.Intents[0].Kind = IntentKind.Piercing;
+            b = BattleEngine.CreatePrototype(); b.State.Intents.RemoveRange(1,b.State.Intents.Count-1); b.State.Intents[0].TargetId = "minato"; b.State.Intents[0].Kind = IntentKind.Piercing;
             True(b.TryLink("lian", 0, "lian_guard", LinkKind.Guard, "minato", out error)); b.ResolveRound();
             True(b.Unit("minato").Hp < 100); Equal(150, b.Unit("lian").Hp);
         });
@@ -406,6 +458,28 @@ internal static class CoreTests
             var preview=b.Preview(new LinkCommand{ActorId="lian",SkillId="lian_crescendo",TargetId=b.State.Intents[0].Id,Kind=LinkKind.Clash});
             True(preview.Summary.Contains("잠금"));Equal(PreviewGrade.Disadvantage,preview.Grade);
             var random=new ScriptedRandom();var fixture=Fixture(6,6,1,random);fixture.Preview(new LinkCommand{ActorId="hero",SkillId="hit",TargetId="forecast"});Equal(0,random.Calls);
+        });
+        Test("illusion previews and API summaries promise no attack without changing state or RNG", () => {
+            var random=new ScriptedRandom();var b=Fixture(6,20,1,random);b.Intent("forecast").Kind=IntentKind.Illusion;
+            var actor=b.Unit("hero");var card=actor.SkillHand[0];
+            var candidate=new LinkCommand{ActorId=actor.Id,Slot=0,SkillId=card.SkillId,CardId=card.Id,Kind=LinkKind.Clash,TargetId="forecast"};
+            var first=b.Preview(candidate);Equal(PreviewGrade.Close,first.Grade);Equal(0,first.AllyHits);Equal(0,first.EnemyHits);Equal(0,first.Ties);
+            Equal("허상 — 피해 없이 행동만 소모합니다.",first.Summary);False(first.Summary.Contains("2연승"));
+            string error;True(b.TryLink(actor.Id,0,card.SkillId,LinkKind.Clash,"forecast",out error,card.Id));
+            var json=new JsonSerializerOptions{IncludeFields=true,PropertyNamingPolicy=JsonNamingPolicy.CamelCase,Converters={new JsonStringEnumConverter()}};
+            string before=JsonSerializer.Serialize(b.State,json);
+            for(int i=0;i<10;i++){
+                var payload=new{previews=b.State.Links.Where(link=>link.Kind==LinkKind.Clash).Select(link=>new{actorId=link.ActorId,slot=link.Slot,preview=b.Preview(link)})};
+                using(var api=JsonDocument.Parse(JsonSerializer.Serialize(payload,json))){
+                    var preview=api.RootElement.GetProperty("previews")[0].GetProperty("preview");
+                    Equal("Close",preview.GetProperty("grade").GetString());Equal(first.Summary,preview.GetProperty("summary").GetString());
+                    Equal(0,preview.GetProperty("allyHits").GetInt32());Equal(0,preview.GetProperty("enemyHits").GetInt32());
+                }
+                Equal(before,JsonSerializer.Serialize(b.State,json));Equal(0,random.Calls);
+            }
+            b.ResolveRound();Equal(0,random.Calls);Equal(100,actor.Hp);Equal(300,b.Unit("enemy").Hp);
+            Equal(1,b.State.Events.Count(e=>e.Type=="Illusion"));False(b.State.Events.Any(e=>e.Type=="Damage"||e.Type=="FlameRoll"));
+            Equal(1,actor.DiscardPile.Count);
         });
         Test("lit guard flames strengthen mitigation", () => {
             Func<double,int> run=roll=> { var b=Fixture(6,20,1,new ScriptedRandom(roll,.99));var hero=b.Unit("hero");

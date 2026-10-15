@@ -1,0 +1,1 @@
+PASS: actual offered-card drag to a live illusion intent showed the neutral gold hint '허상 · 연결 시 행동만 소모하고 피해 없음' without a standard two-win attack prediction or substitute-defender claim. Hover/drag changed no selection, reservation, resource, unit or hand state; cancelling consumed no action. The existing ten-case intent dock report was preserved.

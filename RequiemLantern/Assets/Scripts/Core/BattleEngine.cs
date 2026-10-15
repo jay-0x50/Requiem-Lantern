@@ -227,6 +227,8 @@ namespace RequiemLantern.Core
             { preview.Summary = "이번 손패에 없는 스킬 카드"; preview.Grade = PreviewGrade.Disadvantage; return preview; }
             if (intent == null || actor == null || skill == null)
             { preview.Summary = "공격·방어·지원 연결"; preview.Grade = PreviewGrade.Close; return preview; }
+            if (intent.Kind == IntentKind.Illusion)
+            { preview.Summary = "허상 — 피해 없이 행동만 소모합니다."; preview.Grade = PreviewGrade.Close; return preview; }
             var enemy = Unit(intent.ActorId);
             float multiplier = grade == IgniteGrade.Perfect ? 1.25f : grade == IgniteGrade.Miss ? .75f : 1f;
             preview.AllyPower = Power(Expected(BattleRules.Base(skill), BattleRules.Flame(skill), BattleRules.Flames(skill), actor.Sanity), skill.Element, enemy, multiplier, false);
@@ -422,11 +424,13 @@ namespace RequiemLantern.Core
                         Kind=profile=="illusion"?IntentKind.Illusion:profile=="command"?IntentKind.Piercing:IntentKind.Area });
                     if(State.Intents.All(x=>x.ActorId!=enemy.Id))State.Intents.Add(new IntentState { Id=intentPrefix+"body",ActorId=enemy.Id,TargetId=target.Id,
                         Name=enemy.IsHuman?"남은 저항":"남은 어둠",HitPowers=new[]{6+anger},Speed=8,Element=enemy.Element });
+                    AddBossForecasts(enemy,intentPrefix,arm,core,anger,targets);
                     continue;
                 }
                 if (arm == null || !arm.Destroyed) State.Intents.Add(new IntentState { Id = intentPrefix + "arm", ActorId = enemy.Id, TargetId = target.Id, PartId = arm == null ? null : arm.Id, Name = "난타", HitPowers = new[] { 10 + anger, 10 + anger }, Speed = 11, Element = Element.Shadow, Kind = IntentKind.Normal });
                 if (core == null || !core.Destroyed) State.Intents.Add(new IntentState { Id = intentPrefix + "core", ActorId = enemy.Id, TargetId = "all", PartId = core == null ? null : core.Id, Name = "절규", HitPowers = new[] { 6 + anger, 6 + anger, 6 + anger }, Speed = 9, Element = Element.Shadow, Kind = IntentKind.Area });
                 if (State.Intents.All(x => x.ActorId != enemy.Id)) State.Intents.Add(new IntentState { Id = intentPrefix + "body", ActorId = enemy.Id, TargetId = target.Id, Name = "남은 분노", HitPowers = new[] { 8 + anger }, Speed = 8, Element = Element.Shadow });
+                AddBossForecasts(enemy,intentPrefix,arm,core,anger,targets);
             }
             foreach (var intent in State.Intents)
             {
@@ -434,6 +438,32 @@ namespace RequiemLantern.Core
             }
             State.Phase = BattlePhase.Link;
             Log("Observe", "", "", "관측 — 예고선을 읽고 빛실을 연결하세요.", State.Intents.Count);
+        }
+
+        private void AddBossForecasts(UnitState enemy,string prefix,PartState arm,PartState core,int anger,List<UnitState> targets)
+        {
+            if(!State.IsBoss)return;
+            // The roster and its unlocked actions remain fixed when a teammate
+            // falls. Losing an ally never removes the boss's planned pressure.
+            int actionBudget=Math.Min(6,State.Allies.Sum(actor=>actor.SlotCount));
+            for(int action=2;action<actionBudget;action++){
+                bool usesArm=action%2==0;var part=usesArm?arm:core;
+                // Keep each action attached to its original part rather than
+                // moving a broken weapon's extra actions onto the surviving core.
+                if(part!=null&&part.Destroyed)continue;
+                int occurrence=action/2+1;
+                State.Intents.Add(new IntentState{
+                    Id=prefix+(usesArm?"arm_":"core_")+occurrence,ActorId=enemy.Id,PartId=part==null?null:part.Id,
+                    Name=enemy.IsHuman?(usesArm?"연속 압박":"지휘 타격"):(usesArm?"추격 난타":"응축된 어둠"),
+                    HitPowers=new[]{(usesArm?7:6)+anger,(usesArm?7:6)+anger},
+                    Speed=usesArm?10:8,Element=enemy.Element,Kind=IntentKind.Normal
+                });
+            }
+            int targetOffset=State.Round-1+State.Enemies.IndexOf(enemy),singleTarget=0;
+            foreach(var intent in State.Intents.Where(intent=>intent.ActorId==enemy.Id)){
+                if(intent.Kind==IntentKind.Area||intent.Kind==IntentKind.Illusion)continue;
+                intent.TargetId=targets[(targetOffset+singleTarget++)%targets.Count].Id;
+            }
         }
 
         private void ResolveLink(LinkCommand link, IgniteGrade grade)

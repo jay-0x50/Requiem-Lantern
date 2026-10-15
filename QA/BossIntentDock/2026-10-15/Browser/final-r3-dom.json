@@ -1,0 +1,68 @@
+[
+  {
+    "height": 103,
+    "id": "3:anger_arm",
+    "interceptor": "",
+    "original": "lian",
+    "owner": "anger",
+    "text": "01✧ 단일×2연속 공격표적 · 리안맞불 미지정",
+    "width": 112,
+    "x": 847,
+    "y": 215
+  },
+  {
+    "height": 103,
+    "id": "3:anger_core",
+    "interceptor": "",
+    "original": "all",
+    "owner": "anger",
+    "text": "02✦ 광역×3번지는 어둠표적 · 아군 전체맞불 미지정",
+    "width": 112,
+    "x": 968,
+    "y": 215
+  },
+  {
+    "height": 103,
+    "id": "3:anger_arm_2",
+    "interceptor": "",
+    "original": "heidel",
+    "owner": "anger",
+    "text": "03✧ 단일×2추격 난타표적 · 하이델맞불 미지정",
+    "width": 112,
+    "x": 1090,
+    "y": 215
+  },
+  {
+    "height": 103,
+    "id": "3:anger_core_2",
+    "interceptor": "",
+    "original": "minato",
+    "owner": "anger",
+    "text": "04✧ 단일×2응축된 어둠표적 · 미나토맞불 미지정",
+    "width": 112,
+    "x": 1212,
+    "y": 215
+  },
+  {
+    "height": 103,
+    "id": "3:anger_arm_3",
+    "interceptor": "",
+    "original": "sera",
+    "owner": "anger",
+    "text": "05✧ 단일×2추격 난타표적 · 세라맞불 미지정",
+    "width": 112,
+    "x": 1333,
+    "y": 215
+  },
+  {
+    "height": 103,
+    "id": "3:anger_core_3",
+    "interceptor": "sera",
+    "original": "lian",
+    "owner": "anger",
+    "text": "06✧ 단일×2응축된 어둠표적 · 리안대신 맞불 · 세라",
+    "width": 112,
+    "x": 1455,
+    "y": 215
+  }
+]

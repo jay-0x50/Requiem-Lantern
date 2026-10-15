@@ -7,7 +7,8 @@ const LanternBattleGeometry={
  enemyFoot:(index=0,count=1)=>({x:(count===1?1595:count===2?[1310,1660][index]:[1130,1450,1770][index])/1.2,y:585}),
  enemyHeight:(count=1)=>(count===1?310:count===2?250:225)/1.2,
  enemyPoint:(index=0,count=1)=>{const foot=LanternBattleGeometry.enemyFoot(index,count);return{x:foot.x,y:foot.y-LanternBattleGeometry.enemyHeight(count)*.442};},
- intentPoint:(battle,id)=>{const intent=battle.intents.find(i=>i.id===id);if(!intent)return null;const owner=battle.enemies.findIndex(e=>e.id===intent.actorId);if(owner<0)return null;const own=battle.intents.filter(i=>i.actorId===intent.actorId),index=own.findIndex(i=>i.id===id),foot=LanternBattleGeometry.enemyFoot(owner,battle.enemies.length);return{x:battle.enemies.length===1?996.6666666666667:foot.x,y:215+(own.length>2?73.33333333333334:88.33333333333334)*index+41.25};},
+ intentRect:(battle,id)=>{const intent=battle.intents.find(i=>i.id===id);if(!intent)return null;const owner=battle.enemies.findIndex(e=>e.id===intent.actorId);if(owner<0)return null;const own=battle.intents.filter(i=>i.actorId===intent.actorId),index=own.findIndex(i=>i.id===id),foot=LanternBattleGeometry.enemyFoot(owner,battle.enemies.length),gap=10,width=battle.enemies.length===1?134/1.2:Math.min(134/1.2,(243.33333333333334-gap*(own.length-1))/own.length),total=width*own.length+gap*(own.length-1),minimum=battle.enemies.length===1?800:40/1.2,maximum=1880/1.2,start=Math.max(minimum,Math.min(maximum-total,foot.x-total/2));return{x:start+index*(width+gap),y:215,width,height:124/1.2};},
+ intentPoint:(battle,id)=>{const box=LanternBattleGeometry.intentRect(battle,id);return box?{x:box.x+box.width/2,y:box.y+box.height/2}:null;},
  partPoint:(battle,id)=>{const owner=battle.enemies.findIndex(e=>e.parts.some(p=>p.id===id));if(owner<0)return null;const enemy=battle.enemies[owner],index=enemy.parts.findIndex(p=>p.id===id),foot=LanternBattleGeometry.enemyFoot(owner,battle.enemies.length);return{x:foot.x+(index-(enemy.parts.length-1)/2)*116.66666666666667,y:195};},
  allyBodyHeight:183.33333333333334,enemyBodyHeight:258.33333333333337,humanBodyHeight:258.33333333333337,
  slotPoint:(index,slot)=>({x:104.5+305*index+148.5*slot,y:821})
@@ -59,6 +60,7 @@ class LanternCombatFX {
  }
  clear(){
   this.epoch++;
+  this.options.hideTooltip?.();
   this.options.stopSound?.();
   this.releaseMelee();
   for(const [id,done] of this.pending){clearTimeout(id);done(false);}this.pending.clear();
@@ -377,7 +379,7 @@ class LanternCombatFX {
   }
  }
  async play(events,finalBattle,{fast=false,holdDock=false}={}){
-  const epoch=this.epoch;this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();this.lastClash=null;this.execution(true);
+  const epoch=this.epoch;this.options.hideTooltip?.();this.presentationElapsed=0;this.tensionCount=0;this.rollActors=new Set();this.lastClash=null;this.execution(true);
   const phase=this.root.querySelector('.phase');if(phase)phase.textContent='ROUND '+String(this.battle.round).padStart(2,'0')+' / ③ 실행';
   try{
    for(let i=0;i<events.length;i++){

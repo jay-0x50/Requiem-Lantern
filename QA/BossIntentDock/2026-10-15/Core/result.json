@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-15",
+  "runtimeRevision": "boss-intent-dock-v10",
+  "coreTests": {"status":"PASS", "count":69},
+  "campaignTests": {"status":"PASS", "count":21, "battles":25, "seeds":[0,1,2], "runs":75, "victories":75, "stalemates":0},
+  "hostBuild": {"status":"PASS", "output":"PreviewHost/bin/boss-intent-api-qa", "warnings":0, "errors":0},
+  "http": {"status":"PASS", "port":8129, "processStopped":true, "playerSaveModified":false, "livePort8127Modified":false},
+  "bossRules": {
+    "fourPersonRoundActions":[4,5,6],
+    "threePersonRoundActions":[3,4,5],
+    "laterRoundsKeepFinalCount":true,
+    "fallenAlliesReduceBudget":false,
+    "brokenPartsRemoveTheirActions":true,
+    "maxAreaActionsPerBossRound":1,
+    "humanPattern":"One piercing command; remaining actions use distributed single targets.",
+    "monsterPattern":"One area attack; remaining actions use distributed single targets.",
+    "tutorial":"Stage 1-2 is not a boss and keeps its single forecast."
+  },
+  "regressions": [
+    "Public Illusion previews and API-shaped JSON summaries report Close, zero predicted attacks and no damage/action-only consumption. Ten consecutive reads preserve the complete battle state and consume no RNG. Real Illusion resolution still consumes its offered card without damage or flame rolls.",
+    "Extra forecasts have unique round/enemy/part/occurrence identities.",
+    "All repeated actions from a broken weapon cancel while the core actions remain valid.",
+    "Both destroyed parts leave only one body fallback; restart restores every boss part and the initial action count.",
+    "Interception of an extra core action retains the original recipient and reusable exact part/occurrence identity.",
+    "Four-person guard-only HTTP rounds reveal exactly four, five and six intact boss forecasts.",
+    "Sanity, flames, two consecutive clash wins, one attack after victory, physical damage events and rewards retain their existing rules.",
+    "New hands, fixed party action positions, boss backline one-action cap, stage gates and after-story rewards remain covered."
+  ],
+  "illusionPreviewCorrection": {
+    "status":"PASS",
+    "summary":"허상 — 피해 없이 행동만 소모합니다.",
+    "grade":"Close",
+    "allyHits":0,
+    "enemyHits":0,
+    "verification":"Core full suite rerun only, now 69 tests. One new regression covers direct/assigned public Preview, API-shaped JSON serialization, complete battle-state equality after ten reads, zero RNG calls and the unchanged actual no-damage/no-roll resolution.",
+    "campaignAndHttpRerun":"Not repeated for this presentation-query correction; the previously recorded 75 campaign runs and isolated HTTP checks remain applicable to the unchanged battle resolver."
+  },
+  "balanceObservation": {
+    "bossRuns":24,
+    "bossRounds":141,
+    "roundsWithBossDamage":54,
+    "loggedBossDamage":435,
+    "allAlliesSurvivedRecommendedPlay":true,
+    "oldMeanBossClearRounds":5.958333333333333,
+    "newMeanBossClearRounds":5.875,
+    "oldAndNewBossClearRoundRange":[5,8],
+    "comparisonSource":"QA/VoyageCombat/2026-10-15/Core/balance-runs.txt",
+    "interpretation":"The change expands the number of threats and interception choices. It does not demonstrate a large difficulty increase under recommended play: winning more clashes also supplies attack opportunities and existing resource gains. No HP, power, reward or clash-economy adjustment was made."
+  },
+  "evidence":["balance-runs.txt", "boss-pressure-runs.tsv"]
+}

@@ -137,7 +137,7 @@ namespace RequiemLantern.Presentation
         LinkCommand IntentClash(IntentState intent)
         {return battle.State.Links.FirstOrDefault(link=>link.Kind==LinkKind.Clash&&link.TargetId==intent.Id);}
         string IntentOriginalTarget(IntentState intent)
-        {return intent.Kind==IntentKind.Area?"아군 전체":battle.Unit(intent.TargetId)?.Name??"아군";}
+        {return intent.Kind==IntentKind.Area||intent.TargetId=="all"?"아군 전체":battle.Unit(intent.TargetId)?.Name??"아군";}
         string EnemyNumber(UnitState enemy)
         {return battle.State.Enemies.Count<=1?"":(battle.State.Enemies.IndexOf(enemy)+1)+"번 · ";}
         void DrawEnemyField(UnitState enemy)
@@ -168,33 +168,7 @@ namespace RequiemLantern.Presentation
         }
         void DrawEnemyIntents(UnitState enemy,Transform lineLayer)
         {
-            var intents=battle.State.Intents.Where(intent=>intent.ActorId==enemy.Id).ToList();
-            bool solo=battle.State.Enemies.Count==1;
-            for(int i=0;i<intents.Count;i++){
-                var intent=intents[i];var clash=IntentClash(intent);var defender=clash==null?null:battle.Unit(clash.ActorId);
-                bool intercept=defender!=null&&intent.Kind!=IntentKind.Area&&defender.Id!=intent.TargetId;
-                float x=solo?1050:EnemyFoot(enemy).x-146,y=258+i*106;
-                anchors[intent.Id]=new Vector2(x+146,y+49);
-                var card=Button(screen,"Intent "+intent.Id,"",x,y,292,99,()=>Target(intent.Id));card.gameObject.AddComponent<LinkTarget>().Id=intent.Id;
-                card.interactable=enemy.Alive&&!intent.Cancelled&&!intent.Resolved;
-                Label(card.transform,"Intent name",EnemyNumber(enemy)+intent.Name+(intent.Kind==IntentKind.Area?" · 광역":""),12,5,270,24,18,Violet);
-                Label(card.transform,"Intent original target","원래 표적 · "+IntentOriginalTarget(intent),12,30,270,20,15,intercept?Muted:Ivory);
-                string recipient=intercept?"가로막기 · "+defender.Name:clash!=null?(intent.Kind==IntentKind.Area?"전체 공격 맞불 · ":"맞불 · ")+defender.Name:"표적 → "+IntentOriginalTarget(intent);
-                Label(card.transform,"Intent target",recipient,12,52,270,20,17,clash!=null?Teal:Gold);
-                string power=$"어둠 {BattleRules.Flames(intent)} · 위력 {BattleRules.Base(intent)}~{BattleRules.Base(intent)+BattleRules.Flame(intent)*BattleRules.Flames(intent)} · 속도 {intent.Speed}";
-                if(clash!=null){var preview=battle.Preview(clash);power=preview.Summary;}
-                var detail=Label(card.transform,"Power",power,12,75,270,20,14,Muted);detail.resizeTextForBestFit=true;detail.resizeTextMinSize=11;detail.resizeTextMaxSize=14;
-                var source=new Vector2(x+12,y+62);
-                Thread(lineLayer,"Enemy intent "+intent.Id,anchors[enemy.Id],new Vector2(x+270,y+94),new Color(.66f,.49f,.82f,.32f),true,1.5f);
-                if(intent.Kind==IntentKind.Area){
-                    foreach(var ally in battle.State.Allies.Where(ally=>ally.Alive))IntentRoute(lineLayer,"Area intent "+intent.Id,source,anchors[ally.Id],new Color(.66f,.49f,.82f,.37f),true,1.6f);
-                    if(defender!=null)IntentRoute(lineLayer,"Intent thread "+intent.Id,source,anchors[defender.Id],Teal,false,3);
-                }else{
-                    string recipientId=defender?.Id??intent.TargetId;
-                    if(intercept&&anchors.TryGetValue(intent.TargetId,out var original))IntentRoute(lineLayer,"Original intent "+intent.Id,source,original,new Color(.66f,.49f,.82f,.18f),true,1);
-                    if(anchors.TryGetValue(recipientId,out var target))IntentRoute(lineLayer,"Intent thread "+intent.Id,source,target,clash==null?Violet:Teal,clash==null,clash==null?2:3);
-                }
-            }
+            DrawCompactEnemyIntents(enemy,lineLayer);
         }
         void IntentRoute(Transform parent,string name,Vector2 from,Vector2 to,Color color,bool dashed,float width)
         {
@@ -267,6 +241,7 @@ namespace RequiemLantern.Presentation
         }
         void RefreshDockFocus()
         {
+            HideIntentTooltip();
             foreach(var actor in battle.State.Allies){
                 foreach(var card in actor.SkillHand){
                     var node=screen.Find("Skill card "+card.Id);if(!node)continue;
@@ -331,6 +306,7 @@ namespace RequiemLantern.Presentation
         {var g=MakeRect(p,name,0,0,1920,1080).gameObject.AddComponent<ThreadGraphic>();g.From=ToMesh(from);g.To=ToMesh(to);g.color=c;g.Dashed=dashed;g.Width=width;g.raycastTarget=false;return g;}
         void ConfirmRetreat()
         {
+            HideIntentTooltip();
             if(overlay)return;
             overlay=MakeRect(stage,"Retreat prompt",0,0,1920,1080);Box(overlay,"Scrim",0,0,1920,1080,new Color(0,0,0,.84f)).raycastTarget=true;
             Label(overlay,"Retreat question","이 전투를 중단하고 작전실로 돌아갈까요?",370,350,1180,120,38,Ivory,TextAnchor.MiddleCenter);
@@ -338,6 +314,7 @@ namespace RequiemLantern.Presentation
         }
         void ShowBattleLog()
         {
+            HideIntentTooltip();
             if(overlay)return;
             overlay=MakeRect(stage,"Battle log",0,0,1920,1080);Box(overlay,"Scrim",0,0,1920,1080,new Color(0,0,0,.92f)).raycastTarget=true;
             Label(overlay,"Log heading","라운드 기록",100,65,1400,70,44,Gold);
