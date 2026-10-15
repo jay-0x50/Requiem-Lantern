@@ -1,13 +1,28 @@
 """Export authored main-story stages to the shared C# catalog and planning document."""
 import json
+import math
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parent.parent
-ART={"리안":"Lian","세라":"Sera","미나토":"Minato","하이델":"Heidel","노아":"Noa","오르페":"Orphe","로웬":"Rowan","엘렌":"Ellen","이브":"Eve"}
+ART={"리안":"Lian","세라":"Sera","미나토":"Minato","하이델":"Heidel","노아":"Noa","마레":"Mare","오르페":"Orphe","로웬":"Rowan","엘렌":"Ellen","이브":"Eve"}
 IDS={"카이":"kai",**{name:art.lower() for name,art in ART.items()}}
 KINDS={"Story":"스토리","Battle":"전투","StoryBattle":"스토리 + 전투"}
 FOCUS={"lian":"리안","sera":"세라","noa":"노아","heidel":"하이델","minato":"미나토"}
 def cs(value):return json.dumps(value,ensure_ascii=False)
+def story_line(line):
+    assert isinstance(line,list) and 2<=len(line)<=4,'Story rows require 2 to 4 items.'
+    speaker,text=line[:2]
+    assert isinstance(speaker,str) and isinstance(text,str) and text.strip(),'Story speaker/text must be strings with nonempty text.'
+    cue=line[2] if len(line)>=3 else ''
+    assert isinstance(cue,str),'Story music cue must be a string; use an empty string before timing metadata.'
+    delay=None
+    if len(line)==4:
+        metadata=line[3]
+        assert isinstance(metadata,dict) and set(metadata)=={'autoDelay'},'Story metadata permits only autoDelay.'
+        delay=metadata['autoDelay']
+        assert type(delay) in (int,float) and math.isfinite(delay) and 1<=delay<=6,'autoDelay must be a finite number between 1 and 6 seconds.'
+    return speaker,text,cue,delay
+
 def main():
     data=json.loads((ROOT/'기획서/메인스토리/campaign.json').read_text(encoding='utf-8'))
     chapters=data['chapters'];assert data['schemaVersion']==1
@@ -23,7 +38,8 @@ def main():
          '이동 거점은 등대 보급선을 개조한 귀항호다. 등대 요새는 귀환 거점으로 남고, 귀항호는 연안의 기항지와 상륙 원정을 잇는다. 항해도 노드는 바다 이동뿐 아니라 정박 뒤의 거리·의무실·시계탑 등 임무 동선도 포함한다. 2-1 도입에서 배의 이름과 귀환 신호를 동료 대화로 소개한다.','',
          '일반 전투는 적 2~3명을 배치하고, 첫 튜토리얼 1-2와 보스는 1명을 배치한다. 적 수는 스테이지의 `enemyCount`를 원본으로 공용 카탈로그에 전달한다. 각 적은 독립 체력·부위·균열·정신력·예고선을 갖고, 모든 적을 쓰러뜨려야 승리한다. 예고선은 원래 공격 대상을 표시하며, 다른 동료의 공격 스킬로 대리 맞불을 연결할 수 있다. 속도 제한을 추가하지 않고 기존 행동칸·손패·불씨 비용을 사용한다. 단일 공격의 맞불에서 패하면 대리자가 맞고, 전체 공격은 패배 시 생존 아군 전체가 피해를 받는다.','',
          '현재 전투는 공용 프로토타입 규칙에 단계별 적 수치·예고선 유형·파티·인간/군체 외형을 적용한다. 보스의 최종 다중 페이즈와 전용 음악은 추가 제작 대상이며, 대본의 음악 큐는 향후 음원 연결용이다.','',
-         '실제 전투는 저장된 보유 캐릭터 4인 편성을 사용한다. 기본 지급은 리안 ★5와 미나토·하이델·카이 ★4이며, 세라·노아는 모집으로 획득한다. 아래의 서사 속 동행과 원본 JSON의 party는 각 장면에서 함께하는 인물의 참고 기록이다. 등장인물의 이야기 합류는 소유 여부와 별개이며, 미보유 인물이 있어도 본편을 읽고 진행할 수 있다. 모집·편성·기존 저장 이관은 08_픽업_모집_보유편성_테스트쿠폰.md를 따른다.','',
+         '실제 전투는 저장된 보유 캐릭터 4인 편성을 사용한다. 기본 지급은 리안 ★5와 미나토·하이델·마레 ★4이며, 세라·노아는 모집으로 획득한다. 카이는 이야기의 등불지기이자 조율자로 남는다. 아래의 서사 속 동행과 원본 JSON의 party는 각 장면에서 함께하는 인물의 참고 기록이다. 등장인물의 이야기 합류는 소유 여부와 별개이며, 미보유 인물이 있어도 본편을 읽고 진행할 수 있다. 모집·편성·기존 저장 이관은 08_픽업_모집_보유편성_테스트쿠폰.md를 따른다.','',
+         '자동 재생은 대사가 완전히 표시된 뒤 기본 2.6초를 기다린다. 원본 행은 `[화자, 대사, 선택 음악 큐, 선택 메타데이터]` 형식이다. 메타데이터는 네 번째 항목 `{autoDelay: 초}`만 허용하고 1~6초 범위로 검증한다. 음악 없이 메타데이터를 넣을 때 세 번째 항목은 빈 문자열이다. 아래의 자동 대기는 완문 표시 뒤의 시간이며, 직접 넘기기는 즉시 가능하다.','',
          '원본: `메인스토리/campaign.json`. `python Tools/compile-campaign.py`로 공용 C# 카탈로그와 이 문서를 갱신한다.','',
          '## 스테이지 목록','', '| 번호 | 스테이지 | 종류 | 함께 움직이는 인물 | 사건과 목적 |', '|---|---|---|---|---|']
     for ci,ch in enumerate(chapters,1):
@@ -51,15 +67,15 @@ def main():
                 code.extend([f'                        {field}=new List<StoryLine> {{'])
                 main='';other=''
                 for line in s[key]:
-                    assert 2<=len(line)<=3 and line[1].strip()
-                    speaker,text=line[:2];cue=line[2] if len(line)==3 else ''
+                    speaker,text,cue,delay=story_line(line)
                     if speaker in IDS:assert IDS[speaker] in s['participants'],(s['number'],speaker)
                     current=ART.get(speaker,'')
                     if current and current!=main:other=main;main=current
                     background='keep' if any(w in s['location'] for w in ('등대','식탁','야영')) else 'ruins'
                     if (ci,ni)==(1,1):background='black'
                     caption=f'제{ci}장 · {FOCUS[focus]} · {s["number"]} · {s["title"]}'
-                    code.append(f'                            new StoryLine({cs(speaker)}, {cs(text)}, {cs(background)}, {cs(main)}, true) {{ Location={cs(s["location"])}, Caption={cs(caption)}, ListenerPortrait={cs(other if other!=main else "")}, MusicCue={cs(cue)} }},')
+                    timing='' if delay is None else f', AutoDelay={float(delay):g}f'
+                    code.append(f'                            new StoryLine({cs(speaker)}, {cs(text)}, {cs(background)}, {cs(main)}, true) {{ Location={cs(s["location"])}, Caption={cs(caption)}, ListenerPortrait={cs(other if other!=main else "")}, MusicCue={cs(cue)}{timing} }},')
                     lines_total+=1
                 code.append('                        },')
             code.append('                    },')
@@ -76,7 +92,9 @@ def main():
                 if not s[key]:continue
                 doc.extend([f'**{label}**',''])
                 for line in s[key]:
-                    if len(line)==3:doc.extend([f'음악 큐: `{line[2]}`',''])
+                    _,_,cue,delay=story_line(line)
+                    if cue:doc.extend([f'음악 큐: `{cue}`',''])
+                    if delay is not None:doc.extend([f'자동 대기: **{delay:g}초** (대사 완문 표시 뒤)',''])
                     doc.extend([f'**{line[0] or "서술"}**: {line[1]}',''])
             if s['kind']!='Story':doc.extend([f'**전투:** 적 {s["enemyCount"]}명 · {s["enemyName"]} / {"인간" if s["humanEnemy"] else "군체"} · 프로필 `{s["battleProfile"]}` · {"보스" if s["isBoss"] else "일반/중간 전투"}.', '', f'**서사 속 동행 ({len(s["party"])}명):** {" · ".join(FOCUS[id] for id in s["party"])}.',''])
     doc.insert(4,f'규모: {len(chapters)}장 · {len(ids)}스테이지 · 대사/서술 {lines_total}행. 스토리 {counts["Story"]}, 전투 {counts["Battle"]}, 스토리+전투 {counts["StoryBattle"]}.')

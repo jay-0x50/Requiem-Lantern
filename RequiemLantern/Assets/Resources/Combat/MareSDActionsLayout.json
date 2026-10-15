@@ -1,0 +1,13 @@
+{
+  "atlasWidth": 1536,
+  "atlasHeight": 1024,
+  "bodyHeight": 490,
+  "frames": [
+    {"x":0,"y":0,"width":512,"height":512,"footX":237,"footY":506,"contactX":103,"contactY":455},
+    {"x":512,"y":0,"width":512,"height":512,"footX":749,"footY":506,"contactX":589,"contactY":71},
+    {"x":1024,"y":0,"width":512,"height":512,"footX":1220,"footY":506,"contactX":1516,"contactY":250},
+    {"x":0,"y":512,"width":576,"height":512,"footX":243,"footY":987,"contactX":566,"contactY":903},
+    {"x":576,"y":512,"width":448,"height":512,"footX":795,"footY":991,"contactX":967,"contactY":879},
+    {"x":1024,"y":512,"width":512,"height":512,"footX":1294,"footY":991,"contactX":1395,"contactY":696}
+  ]
+}

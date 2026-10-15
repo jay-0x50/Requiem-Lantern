@@ -58,6 +58,7 @@ function environment(storage = 'null') {
   };
   const context = {
     document: {
+      addEventListener:(name,handler)=>{events[name]=handler;},hidden:false,
       querySelector: selector => selector === '#game' ? game : { style: {}, textContent: '' },
       elementFromPoint: () => hit ? { closest: () => hit } : null
     },
@@ -97,6 +98,56 @@ function environment(storage = 'null') {
 }
 
 function pass(name) { passed++; console.log('PASS ' + name); }
+async function storyUxChecks(){
+ let env=environment();env.run(`data.story.prologue=[{speaker:'세라',text:'가나다라마바사',portrait:'Sera',listenerPortrait:'Lian',autoDelay:4.4},{speaker:'리안',text:'다음 줄 비밀',portrait:'Lian',listenerPortrait:'Sera'}];startStory('prologue');storyAuto=true;`);
+ const originalTyping=[...env.intervals.values()][0];originalTyping();originalTyping();
+ assert.equal(env.words.textContent,'가나');await env.click('storylog');
+ assert.ok(env.modalHtml.includes('가나'));assert.ok(!env.modalHtml.includes('다라'));assert.ok(!env.modalHtml.includes('다음 줄 비밀'));assert.equal(env.intervals.size,0);assert.equal(env.timers.size,0);
+ originalTyping();assert.equal(env.words.textContent,'가나');
+ env.events.keydown({code:'Space',preventDefault(){}});assert.equal(env.run('storyIndex'),0);
+ await env.click('close');assert.equal(env.intervals.size,1);assert.equal(env.words.textContent,'가나');
+ env.context.nextStory();assert.equal(env.words.textContent,'가나다라마바사');assert.equal([...env.timers.values()][0].delay,4400);
+ const staleAuto=[...env.timers.values()][0].handler;await env.click('storylog');staleAuto();assert.equal(env.run('storyIndex'),0);assert.equal(env.timers.size,0);
+ await env.click('close');assert.equal(env.timers.size,1);staleAuto();assert.equal(env.run('storyIndex'),0);env.flush();assert.equal(env.run('storyIndex'),1);
+ pass('story history contains only revealed text, pauses typing and Auto, resumes the same prefix, and rejects stale Auto callbacks');
+
+ env=environment();env.run(`startStory('prologue');storyAuto=true;`);const pendingTyping=[...env.intervals.values()][0];pendingTyping();env.events.blur();assert.equal(env.intervals.size,0);pendingTyping();assert.equal(env.words.textContent,'첫');env.events.focus();assert.equal(env.intervals.size,1);env.context.nextStory();const oldAuto=[...env.timers.values()][0].handler;env.context.document.hidden=true;env.events.visibilitychange();assert.equal(env.timers.size,0);oldAuto();assert.equal(env.run('storyIndex'),0);env.context.document.hidden=false;env.events.visibilitychange();assert.equal([...env.timers.values()][0].delay,2600);oldAuto();assert.equal(env.run('storyIndex'),0);
+ pass('window blur and hidden tabs pause both typing and Auto; returning preserves text and starts a fresh full wait');
+
+ env=environment();env.run(`startStory('prologue');storyAuto=true;`);
+ for(const [delay,expected] of [[undefined,2600],[0,1000],[-5,1000],[.2,1000],[6,6000],[99,6000],['invalid',2600]]){env.context.delay=delay;env.run('story[storyIndex].autoDelay=delay');assert.equal(env.context.storyAutoDelay(),expected);}
+ env.run(`story=Array.from({length:80},(_,i)=>({speaker:'리안',text:'읽은 줄 '+i}));storyIndex=79;storyLog=story.map((l,i)=>i<79?'리안  '+l.text:'');storyVisibleCount=2;updateStoryWords();`);await env.click('storylog');assert.ok(env.modalHtml.includes('읽은 줄 0'));assert.ok(env.modalHtml.includes('읽은 줄 78'));assert.ok(!env.modalHtml.includes('읽은 줄 79'));assert.ok(env.modalHtml.includes('tabindex="0"'));
+ pass('per-line Auto delay is clamped to one through six seconds and scrollable history retains every read line');
+
+ env=environment();env.run(`data.story.prologue=[{speaker:'세라',text:'첫 줄',portrait:'Sera',listenerPortrait:'Lian'},{speaker:'리안',text:'응답',portrait:'Lian',listenerPortrait:'Sera'},{text:'잠시 말이 없다.',portrait:'Noa'},{speaker:'미나토',text:'괜찮아요?',portrait:'Minato',listenerPortrait:'Lian'}];startStory('prologue');`);
+ const seats=()=>Array.from(env.run('storyPortraitSlots'));assert.deepEqual(seats(),['Sera','Lian']);
+ env.context.nextStory();env.context.nextStory();assert.deepEqual(seats(),['Sera','Lian']);assert.ok(env.game.innerHTML.includes('story-position-right is-speaking'));assert.ok(env.game.innerHTML.includes('story-position-left story-listener is-listening'));
+ env.context.nextStory();env.context.nextStory();assert.deepEqual(seats(),['Sera','Lian']);
+ env.context.nextStory();env.context.nextStory();assert.deepEqual(seats(),['Minato','Lian']);
+ env.run(`storyPortraits({speaker:'노아',portrait:'Noa',location:'새 장소'})`);env.run(`storyPortraits({speaker:'세라',portrait:'Sera',listenerPortrait:'Mare',location:'다른 장소'})`);assert.deepEqual(seats(),['Sera','Mare']);
+ pass('speakers keep their left or right seat, narration preserves the cast, and a third participant replaces only the omitted seat');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='BeforeStory';data.campaign.currentStory=[{speaker:'리안',text:'가자.',portrait:'Lian'}];routeCampaign();`);assert.ok(env.game.innerHTML.includes('전투 시작'));
+ env.run(`data.campaign.replay=true;routeCampaign();`);assert.ok(env.game.innerHTML.includes('항로로 돌아가기'));assert.ok(!env.game.innerHTML.includes('전투 시작'));
+ env.run(`data.campaign.activeStage.before=[{}];data.campaign.activeStage.after=[{}];data.campaign.currentStory=[{text:'진입'},{text:'마무리'}];routeCampaign();`);assert.ok(env.game.innerHTML.includes('이어서 읽기'));env.context.nextStory();env.context.nextStory();assert.ok(env.game.innerHTML.includes('항로로 돌아가기'));
+ env.run(`data.campaign.replay=false;data.campaign.phase='AfterStory';data.campaign.currentStory=[{text:'마무리'}];routeCampaign();`);assert.ok(env.game.innerHTML.includes('항로로 돌아가기'));
+ env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[0];data.campaign.phase='BeforeStory';routeCampaign();`);assert.ok(env.game.innerHTML.includes('항로로 돌아가기'));
+ pass('the final dialogue prompt matches battle entry, story completion and replay return paths');
+
+ env=environment();campaignFixture(env);env.run(`for(const s of data.campaign.chapters[0].stages.slice(0,3)){s.cleared=true;s.unlocked=true;}data.campaign.chapters[0].stages[3].unlocked=true;showHub();`);
+ assert.ok(env.game.innerHTML.includes('이어보기 · 1-4'));assert.ok(env.game.innerHTML.includes('data-action="stage-enter:c1s04"'));assert.ok(env.game.innerHTML.includes('낯선 불꽃'));assert.ok(env.game.innerHTML.includes('data-action="go:stages"'));
+ env.context.showStages();assert.ok(env.game.innerHTML.includes('<small>등장인물</small>'));
+ pass('the hub continues the exact unlocked story while retaining the route, whose cast is explicitly labeled');
+
+ env=environment();recruitmentFixture(env);env.run(`data.recruitment.characters.find(c=>c.id==='kai').recruitable=false;data.recruitment.characters.push({id:'mare',name:'마레',rarity:4,portrait:'Mare',role:'화염 · 인양꾼',recruitable:true});data.recruitment.ownedCharacters.push('mare');showRecruitment();showRecruitRates();`);
+ assert.ok(env.modalHtml.includes('마레'));assert.ok(!env.modalHtml.includes('<td>카이</td>'));assert.ok(env.modalHtml.includes('33.0667%'));env.context.closeModal();env.run(`showRoster(chars.findIndex(c=>c[0]==='Mare'));`);assert.ok(env.game.innerHTML.includes('/art/Mare.png'));assert.ok(env.game.innerHTML.includes('파티 편성'));env.run(`showRoster(chars.findIndex(c=>c[0]==='Kai'));`);assert.ok(env.game.innerHTML.includes('보유'));assert.ok(env.game.innerHTML.includes('party-picker:kai'));
+ assert.equal(env.run("LanternCombatAtlasNames.mare"),'Mare');
+ pass('Mare has her own portrait and SD atlas, recruitment excludes legacy Kai, and already-owned Kai remains usable');
+
+ env=environment();env.run(`data.battle.links=[{actorId:'lian',slot:0,targetId:'intent1',kind:'Clash'}];data.previews=[{actorId:'lian',slot:0,grade:'Advantage',allyPower:12,enemyPower:8.4,summary:'우세'}];showBattle();`);assert.ok(env.game.innerHTML.includes('리안 → 예고 01'));assert.ok(env.game.innerHTML.includes('▲ 우세 · 기대 위력 아군 12 : 적 8.4'));
+ env.run(`data.battle.intents[0].kind='Illusion';data.previews[0].summary='허상 — 피해 없이 행동만 소모합니다.';showBattle();`);assert.ok(env.game.innerHTML.includes('리안 → 예고 01'));assert.ok(env.game.innerHTML.includes('허상 — 피해 없이 행동만 소모합니다.'));assert.ok(!env.game.innerHTML.includes('기대 위력 아군 12'));
+ pass('clash predictions identify the actor, the same enemy-owned forecast number and labeled faction powers while illusion keeps its harmless summary');
+}
 function fourParty(env){env.run(`
  const seed=data.battle.allies[0];
  const companion=(id,name,element)=>({...JSON.parse(JSON.stringify(seed)),id,name,portrait:id[0].toUpperCase()+id.slice(1),element,skills:seed.skills.map(k=>({...k,id:k.id.replace('lian',id)})),skillHand:seed.skillHand.map(c=>({...c,id:c.id.replace('lian',id),skillId:c.skillId.replace('lian',id)}))});
@@ -948,6 +999,7 @@ async function main() {
   pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
 
   await recruitmentChecks();
+  await storyUxChecks();
   await titleInputChecks();
   candidateActionStatusChecks();
   await intentDockChecks();

@@ -1,0 +1,22 @@
+{
+  "recordPausedPrefix": "거기, 길 좀 물어보",
+  "recordHeldMs": 9191,
+  "speakers": [
+    {
+      "speaker": "리안",
+      "seats": [
+        "세라:left:.6",
+        "리안:right:1"
+      ]
+    },
+    {
+      "speaker": "세라",
+      "seats": [
+        "세라:left:1",
+        "리안:right:.6"
+      ]
+    }
+  ],
+  "battleRoundAfterExecution": "ROUND 02   /   ② 연결",
+  "consoleErrors": []
+}

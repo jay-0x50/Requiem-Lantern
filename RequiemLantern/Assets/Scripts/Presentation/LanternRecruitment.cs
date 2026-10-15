@@ -94,7 +94,8 @@ namespace RequiemLantern.Presentation
         {
             if(page!="recruitment"||overlay)return;
             var modal=RecruitmentModal("Recruitment rates","잔영 소환 확률과 보장",290,193,1340,680);
-            Label(modal,"Rate details","기본 확률  ·  5성 0.8% / 4성 99.2%\n5성 등장 시  ·  선택한 픽업 50% / 나머지 5성 각 25%\n4성 등장 시  ·  미나토 · 하이델 · 카이 중 균등 추첨\n\n80회 이내 5성 확정  ·  5성이 나오면 천장 횟수가 초기화됩니다.\n픽업 외 5성 획득 후, 다음 5성은 선택한 배너의 픽업 잔영입니다.\n배너를 바꾸어도 천장과 다음 픽업 확정은 유지됩니다.\n\n중복 보상  ·  4성 공용 조각 20개 / 5성 공용 조각 100개\n10회 소환은 같은 규칙의 개별 추첨을 10번 진행합니다.",338,300,1240,432,25,Ivory);
+            string fourStars=string.Join(" · ",RecruitmentCatalog.Characters.Where(character=>character.Recruitable&&character.Rarity==4).Select(character=>character.Name));
+            Label(modal,"Rate details","기본 확률  ·  5성 0.8% / 4성 99.2%\n5성 등장 시  ·  선택한 픽업 50% / 나머지 5성 각 25%\n4성 등장 시  ·  "+fourStars+" 중 균등 추첨\n\n80회 이내 5성 확정  ·  5성이 나오면 천장 횟수가 초기화됩니다.\n픽업 외 5성 획득 후, 다음 5성은 선택한 배너의 픽업 잔영입니다.\n배너를 바꾸어도 천장과 다음 픽업 확정은 유지됩니다.\n\n중복 보상  ·  4성 공용 조각 20개 / 5성 공용 조각 100개\n10회 소환은 같은 규칙의 개별 추첨을 10번 진행합니다.",338,300,1240,432,25,Ivory);
             Button(modal,"Close recruitment rates","닫기",1275,770,290,62,CloseRecruitmentOverlay);
         }
         void ShowPartyAssignment(string id,Action after)

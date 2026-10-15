@@ -100,6 +100,14 @@ namespace RequiemLantern.Presentation
             float x=point.x>=960?point.x-width-20:point.x+20;
             intentTooltip.anchoredPosition=ToMesh(new Vector2(Mathf.Clamp(x,20,1900-width),Mathf.Clamp(point.y+18,126,1060-height)));
         }
+        string NamedClashPrediction(LinkCommand link)
+        {
+            var intent=battle.Intent(link.TargetId);var actor=battle.Unit(link.ActorId);
+            if(intent==null||actor==null)return battle.Preview(link).Summary;
+            var owner=battle.Unit(intent.ActorId);int index=battle.State.Intents.Where(value=>value.ActorId==intent.ActorId).ToList().IndexOf(intent)+1;
+            string summary=battle.Preview(link).Summary.Replace("기대 위력 ","기대 위력 아군 ").Replace(" : "," : 적 ");
+            return actor.Name+" → 적 "+(battle.State.Enemies.IndexOf(owner)+1)+" 예고 "+index+"\n"+summary;
+        }
         string IntentTooltipDetails(IntentState intent,UnitState enemy)
         {
             var part=enemy.Parts.FirstOrDefault(value=>value.Id==intent.PartId);var clash=IntentClash(intent);
@@ -108,12 +116,12 @@ namespace RequiemLantern.Presentation
                 "일반 수비의 피해 감소·회피·반격을 적용하지 않습니다.":intent.Kind==IntentKind.Illusion?
                 "미연결 시 피해 없음. 연결하면 행동을 소모하고 피해 없이 끝납니다.":"한 명 공격. 맞불하지 않으면 수비 행동으로 대응할 수 있습니다.";
             string assigned=clash==null?"없음":battle.Unit(clash.ActorId).Name+" · "+(intent.Kind==IntentKind.Illusion?"허상 연결":intent.Kind==IntentKind.Area?"전체 공격 맞불":clash.ActorId==intent.TargetId?"맞불":"동료 대신 가로막기");
-            string preview=intent.Kind==IntentKind.Illusion?"\n허상: 맞불 연결 시 행동만 소모하고 피해 없이 종료":clash==null?"":"\n배정 상성  "+battle.Preview(clash).Summary;
+            string preview=intent.Kind==IntentKind.Illusion?"\n허상: 맞불 연결 시 행동만 소모하고 피해 없이 종료":clash==null?"":"\n배정 상성  "+NamedClashPrediction(clash);
             var selected=battle.Unit(selectedActor);var skill=battle.Skill(selectedActor,selectedSkill);
             if(selected!=null&&selected.Alive&&skill!=null&&skill.Kind==SkillKind.Attack){
                 var candidate=new LinkCommand{ActorId=selected.Id,SkillId=skill.Id,CardId=selectedCard,Slot=selectedSlot,TargetId=intent.Id,Kind=LinkKind.Clash};
                 preview+="\n선택 후보  "+selected.Name+" · "+skill.Name;
-                if(intent.Kind!=IntentKind.Illusion)preview+="\n후보 상성  "+battle.Preview(candidate).Summary;
+                if(intent.Kind!=IntentKind.Illusion)preview+="\n후보 상성  "+NamedClashPrediction(candidate);
             }else if(intent.Kind!=IntentKind.Illusion)preview+="\n공격 후보를 선택하면 맞불 상성을 확인할 수 있습니다.";
             return $"기본 위력(상성·어둠도 적용 전)\n{baseline}~{baseline+flame*count}  =  기본 {baseline} + 어둠 {flame} × {count}\n"+
                 $"어둠 {count}개 · 정신력 {enemy.Sanity:+0;-0;0} · 점등 {BattleRules.FlameChance(enemy.Sanity):P0}\n"+

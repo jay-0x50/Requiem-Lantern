@@ -23,10 +23,10 @@ namespace RequiemLantern.Presentation
         bool assisted=true,reducedMotion=false,sound=true,autoMode=false;
         List<StoryLine> story; int storyIndex; Action storyDone; Text dialogue; string lineText; float revealed; bool storyAuto;
         List<string> storyLog=new List<string>();
-        static readonly string[] CharacterIds={"Lian","Sera","Minato","Heidel","Noa","Kai","Orphe"};
-        static readonly string[] CharacterNames={"리안","세라","미나토","하이델","노아","카이","오르페"};
-        static readonly string[] CharacterRoles={"광휘 · 수호자","화염 · 돌격수","물결 · 치유사","서리 · 사수","그림자 · 조율사","등불지기","철종 교단 · 종지기"};
-        static readonly string[] CharacterQuotes={"…살아 있으면, 그걸로 됐어.","괜찮아 괜찮아! 어둠 따위, 내가 태워버릴 테니까!","잃어버린 이름을, 잊지 않으려고.","꺼진 장치에도 쓸 만한 부품은 남아 있어.","그림자도 가끔은 이야기를 해.","손에 남은 것은, 꺼져가는 등불 하나.","온화한 미소로 ‘안식’을 설파하는 자."};
+        static readonly string[] CharacterIds={"Lian","Sera","Minato","Heidel","Noa","Kai","Mare","Orphe"};
+        static readonly string[] CharacterNames={"리안","세라","미나토","하이델","노아","카이","마레","오르페"};
+        static readonly string[] CharacterRoles={"광휘 · 수호자","화염 · 돌격수","물결 · 치유사","서리 · 사수","그림자 · 조율사","등불지기","화염 · 인양꾼","철종 교단 · 종지기"};
+        static readonly string[] CharacterQuotes={"…살아 있으면, 그걸로 됐어.","괜찮아 괜찮아! 어둠 따위, 내가 태워버릴 테니까!","잃어버린 이름을, 잊지 않으려고.","꺼진 장치에도 쓸 만한 부품은 남아 있어.","그림자도 가끔은 이야기를 해.","손에 남은 것은, 꺼져가는 등불 하나.","줄은 내가 잡을게. 넌 앞으로 가.","온화한 미소로 ‘안식’을 설파하는 자."};
 
         void Awake()
         {
@@ -48,22 +48,16 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"||argument=="--recruitment-smoke"||argument=="--coupon-smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"||argument=="--recruitment-smoke"||argument=="--coupon-smoke"||argument=="--mare-smoke"||argument=="--story-reading-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
             combatAudio?.Update(sound);
             if(toast)toast.gameObject.SetActive(Time.unscaledTime<toastUntil);
             if(page=="title"){TickTitleInput();return;}
-            if(dialogue&&page=="story"&&!overlay)
-            {
-                revealed+=Time.unscaledDeltaTime*36;
-                dialogue.text=lineText.Substring(0,Mathf.Min(lineText.Length,(int)revealed));
-                if(storyAuto&&revealed>lineText.Length+90)NextStory();
-                if(Input.GetKeyDown(KeyCode.Space))NextStory();
-            }
+            ProcessStoryInput(Time.unscaledDeltaTime,Input.GetKeyDown(KeyCode.Space));
             if(Input.GetKeyDown(KeyCode.Escape)&&page!="title"&&page!="resolve"){
-                if(overlay){if(page=="recruitment")DismissRecruitmentOverlay();else CloseRecruitmentOverlay();}else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
+                if(overlay){if(page=="recruitment")DismissRecruitmentOverlay();else if(page=="story")CloseStoryLog();else CloseRecruitmentOverlay();}else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
             }
         }
         bool Persist() { try { save.Save(progress.Data); return true; } catch(Exception e) { Notify("저장하지 못했습니다. 저장 공간을 확인해 주세요."); Debug.LogException(e); return false; } }

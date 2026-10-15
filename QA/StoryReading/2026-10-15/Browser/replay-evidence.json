@@ -1,0 +1,24 @@
+{
+  "recordAutoPauseMs": 32772,
+  "criticalPage": "13 / 20",
+  "criticalAutoDelay": 4.8,
+  "logScroll": {
+    "scrollHeight": 786,
+    "clientHeight": 540,
+    "endScrollTop": 246
+  },
+  "replayBoundary": "12 / 20 이어서 읽기",
+  "finalPrompt": "20 / 20항로로 돌아가기",
+  "hiddenAttempt": {
+    "elapsedMs": 18313,
+    "page": "17 / 20",
+    "visibility": "visible",
+    "words": "내가 돌아가던 길이기도 해. 네가 끝났다고 하지 마."
+  },
+  "hiddenAttemptNote": "Creating a helper tab left the game visible; this did not simulate hiding. Blur/hidden handlers are covered by deterministic JS regression, not claimed as a live hidden-tab test.",
+  "manualOverride": {
+    "elapsedMs": 1410,
+    "page": "18 / 20"
+  },
+  "consoleErrors": []
+}

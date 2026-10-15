@@ -1,0 +1,1 @@
+PASS: actual Unity TextGenerator; bundled NotoSansKRRegular; fontSize=32; width=1550; height=128; canonical rows=690; maxLines=2; maxPreferredHeight=92.

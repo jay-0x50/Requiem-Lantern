@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parent.parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--host',type=Path,default=ROOT/'PreviewHost/bin/recruitment-qa/PreviewHost.dll')
 args=parser.parse_args()
-QA=ROOT/'QA/Recruitment/2026-10-15/API'
+QA=ROOT/'QA/MareCompanion/2026-10-15/API'
 QA.mkdir(parents=True,exist_ok=True)
 SAVE=QA/('progress-'+str(time.time_ns())+'.xml')
 PORT=8130
@@ -47,10 +47,12 @@ def unchanged(before,action,**fields):
     return result
 
 try:
-    data=start();assert data['runtimeRevision']=='recruitment-v12'
-    starter=['lian','minato','heidel','kai']
+    data=start();assert data['runtimeRevision']=='story-reading-v13'
+    starter=['lian','minato','heidel','mare']
     assert data['progress']['activeParty']==data['progress']['ownedCharacters']==starter
     rarity={character['id']:character['rarity'] for character in data['recruitment']['characters']}
+    assert [character['id'] for character in data['recruitment']['characters'] if character['rarity']==4 and character['recruitable']]==['minato','heidel','mare']
+    assert not next(character for character in data['recruitment']['characters'] if character['id']=='kai')['recruitable']
     assert sorted(rarity[id] for id in starter)==[4,4,4,5]
     assert [ally['id'] for ally in data['battle']['allies']]==starter
     for action,fields in [('recruit',dict(bannerId='sera',count=1)),('recruit',dict(bannerId='bad',count=10)),('recruit',dict(bannerId='sera',count=2)),('equip-character',dict(actorId='sera',slot=1)),('synchronize',dict(actorId='noa')),('redeem-code',dict(code='UNKNOWN'))]:
@@ -89,16 +91,16 @@ try:
     assert pull['characterId']=='noa' and pull['rarity']==5 and pull['isPickup']
     assert data['progress']['recruitPity']==0 and not data['progress']['pickupGuaranteed']
     data=call('equip-character',actorId='noa',slot=1)
-    assert data['recruitment']['party']==['lian','noa','heidel','kai']
+    assert data['recruitment']['party']==['lian','noa','heidel','mare']
     saved=data['progress'];stop();data=start();assert data['progress']==saved
     checks.append('The 80th guaranteed five-star honors the newly selected banner and persists the acquired/edited party.')
 
     call('stage-enter',stageId='c1s01');call('stage-story',stageId='c1s01',expectedPhase='BeforeStory');call('stage-exit')
     call('stage-enter',stageId='c1s02');data=call('stage-story',stageId='c1s02',expectedPhase='BeforeStory')
-    assert [ally['id'] for ally in data['battle']['allies']]==['lian','noa','heidel','kai']
+    assert [ally['id'] for ally in data['battle']['allies']]==['lian','noa','heidel','mare']
     for action,fields in [('recruit',dict(bannerId='sera',count=1)),('redeem-code',dict(code='UNKNOWN')),('equip-character',dict(actorId='minato',slot=1))]:unchanged(data,action,**fields)
     checks.append('The actual campaign uses the saved owned party; inventory changes are rejected during an active expedition.')
-    report={'status':'PASS','runtimeRevision':'recruitment-v12','port':PORT,'checks':checks,'playerSaveModified':False,'processStopped':True}
+    report={'status':'PASS','runtimeRevision':'story-reading-v13','port':PORT,'checks':checks,'playerSaveModified':False,'processStopped':True}
     (QA/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     for check in checks:print('PASS:',check)
 finally:

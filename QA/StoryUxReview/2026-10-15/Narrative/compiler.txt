@@ -1,0 +1,2 @@
+PASS: 5 chapters, 50 stages, 690 lines; kinds={'Story': 25, 'Battle': 7, 'StoryBattle': 18}.
+Idempotent generated outputs: PASS

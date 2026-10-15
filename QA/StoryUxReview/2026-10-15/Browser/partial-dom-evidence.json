@@ -1,0 +1,39 @@
+{
+  "hubNavigation": [
+    "항로실",
+    "잔영 기록",
+    "함께 남긴 이야기",
+    "잔영 소환",
+    "기록실",
+    "등대 복구",
+    "설정"
+  ],
+  "visibleMapNodes": [
+    "c1s01",
+    "c1s02",
+    "c1s03",
+    "c1s04"
+  ],
+  "cleared": [
+    "c1s01",
+    "c1s02",
+    "c1s03"
+  ],
+  "next": "c1s04",
+  "dialogue": {
+    "speaker": "세라",
+    "text": "아, 그럼 돌아가면 되지! 얼마나 돌아가야 하는데?",
+    "page": "03 / 08",
+    "portraits": [
+      {
+        "name": "리안",
+        "opacity": "0.35"
+      },
+      {
+        "name": "세라",
+        "opacity": "1"
+      }
+    ]
+  },
+  "errors": []
+}

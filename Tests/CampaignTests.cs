@@ -44,7 +44,13 @@ internal static class CampaignTests
                         foreach(string part in new[]{"before","after"}){
                             var lines=sourceStage.GetProperty(part).EnumerateArray().ToList();var compiled=part=="before"?stage.Before:stage.After;
                             Equal(lines.Count,compiled.Count);authoredLines+=lines.Count;compiledLines+=compiled.Count;
-                            for(int i=0;i<lines.Count;i++){Equal(lines[i][0].GetString(),compiled[i].Speaker);Equal(lines[i][1].GetString(),compiled[i].Text);}
+                            for(int i=0;i<lines.Count;i++){
+                                var row=lines[i];True(row.GetArrayLength()>=2&&row.GetArrayLength()<=4);
+                                Equal(row[0].GetString(),compiled[i].Speaker);Equal(row[1].GetString(),compiled[i].Text);
+                                Equal(row.GetArrayLength()>=3?row[2].GetString():"",compiled[i].MusicCue);
+                                float delay=row.GetArrayLength()==4?row[3].GetProperty("autoDelay").GetSingle():2.6f;
+                                Equal(delay,compiled[i].AutoDelay);True(delay>=1f&&delay<=6f);
+                            }
                         }
                     }
                 }
@@ -55,6 +61,36 @@ internal static class CampaignTests
                 True(chapter.Stages.SelectMany(s=>Speakers(s)).Distinct().Count()>=4);
             }
             True(Stages.SelectMany(s=>s.Before.Concat(s.After)).Any(line=>!string.IsNullOrEmpty(line.ListenerPortrait)));
+        });
+        Test("story timing keeps legacy defaults, deliberate pauses and the nine music cues",()=>{
+            Equal(2.6f,new StoryLine("","Legacy row").AutoDelay);
+            var all=Stages.SelectMany(s=>s.Before.Concat(s.After)).ToList();
+            int longPauses=all.Count(line=>line.AutoDelay>=4f);True(longPauses>=10&&longPauses<=20);
+            Equal(4.8f,CampaignCatalog.Get("c2s06").After[0].AutoDelay);
+            Equal(5.2f,CampaignCatalog.Get("c5s09").After.Single(line=>line.Text.Contains("같은 이름을 다시 읽어도")).AutoDelay);
+            Equal(string.Join(",",new[]{"bgm_lian_last_watch_phase1","bgm_lian_last_watch_phase2","bgm_lian_last_watch_afterglow",
+                "bgm_sera_sealed_route_phase1","bgm_sera_sealed_route_phase2","bgm_sera_sealed_route_afterglow",
+                "bgm_noa_answering_eve_phase1","bgm_noa_answering_eve_phase2","bgm_noa_answering_eve_afterglow"}),
+                string.Join(",",all.Where(line=>!string.IsNullOrEmpty(line.MusicCue)).Select(line=>line.MusicCue)));
+        });
+        Test("personal loss callbacks have named setups and Mare does not move established joins earlier",()=>{
+            Func<string,string> text=id=>string.Join("\n",CampaignCatalog.Get(id).Before.Concat(CampaignCatalog.Get(id).After).Select(line=>line.Text));
+            True(text("c1s06").Contains("네 이름은?"));True(text("c1s06").Contains("미나토예요"));
+            True(text("c5s09").Contains("그 문에서 이름을 물어 줬고"));
+            foreach(string id in new[]{"c2s01","c2s06","c2s08","c2s10"}){
+                True(text(id).Contains("토리"),id);True(text(id).Contains("루"),id);
+            }
+            True(text("c1s06").Contains("단우"));True(text("c5s01").Contains("하품으로 기침 숨김"));
+            True(text("c5s09").Contains("단우"));True(text("c5s09").Contains("그를 알아보던 느낌은 돌아오지 않는다"));
+            True(text("c5s03").Contains("노래로 세던 간격은 돌아오지 않아"));
+            True(text("c3s05").Contains("손은 늦게 아네"));True(text("c3s10").Contains("두 번 치다 쉬는"));
+            True(text("c4s01").Contains("닳은 홈"));True(text("c4s10").Contains("지금의 손에 맞춘다"));
+            foreach(string id in new[]{"c1s01","c1s02"})False(CampaignCatalog.Get(id).Participants.Contains("mare"));
+            Equal(3,Stages.Count(stage=>stage.Participants.Contains("mare")));
+            True(CampaignCatalog.Get("c1s03").Before.Any(line=>line.Speaker=="마레"&&line.Portrait=="Mare"));
+            False(CampaignCatalog.Get("c1s03").Participants.Contains("minato"));False(CampaignCatalog.Get("c1s03").Participants.Contains("heidel"));
+            True(CampaignCatalog.Get("c3s02").After.Any(line=>line.Speaker=="노아"));
+            False(CampaignCatalog.Get("c3s05").Party.Contains("noa"));True(CampaignCatalog.Get("c3s06").Party.Contains("noa"));
         });
         Test("four-person campaign parties preserve staged joins and focal character roles",()=>{
             Equal(4,PrototypeData.PartyCapacity);var established=Stages.Where(s=>s.HasBattle&&(s.Chapter>2||(s.Chapter==2&&int.Parse(s.Number.Split('-')[1])>=4))).ToList();

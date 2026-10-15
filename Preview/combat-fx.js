@@ -13,7 +13,7 @@ const LanternBattleGeometry={
  allyBodyHeight:183.33333333333334,enemyBodyHeight:258.33333333333337,humanBodyHeight:258.33333333333337,
  slotPoint:(index,slot)=>({x:104.5+305*index+148.5*slot,y:821})
 };
-const LanternCombatAtlasNames={lian:'Lian',sera:'Sera',minato:'Minato',noa:'Noa',heidel:'Heidel',kai:'Kai',anger:'Anger'};
+const LanternCombatAtlasNames={lian:'Lian',sera:'Sera',minato:'Minato',noa:'Noa',heidel:'Heidel',kai:'Kai',mare:'Mare',anger:'Anger'};
 const LanternCombatAtlasStem=id=>LanternCombatAtlasNames[id]+(id==='anger'?'Actions':'SDActions');
 
 // Presentation owns a copy of the pre-round state. Only server events change it;

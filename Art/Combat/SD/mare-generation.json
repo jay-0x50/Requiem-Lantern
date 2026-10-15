@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-15",
+  "character": "Mare / 마레",
+  "method": "built-in image_gen, transparent_background=true",
+  "outputs": [
+    {
+      "path": "RequiemLantern/Assets/Resources/Art/Mare.png",
+      "source": "exec-fdb7a29a-c452-445a-869c-3a4822498890.png",
+      "size": [1024,1536],
+      "prompt": "Use case: stylized-concept. Asset type: production character illustration for the original dark nautical fantasy 2D RPG Requiem Lantern. Create ONE original adult woman called Mare, a veteran coastal salvager and rescuer, for dialogue/main-menu art. Full body head-to-boots entirely visible and centered with clear margins, tall portrait composition, transparent background with true alpha. Hand-painted anime illustration, confident clean silhouette, restrained painterly shading, slightly rough dark fantasy ink textures. Adult late twenties, short windblown auburn hair with a small braid tucked behind one ear, amber eyes, a dry little sideways smile, weathered navy short deck coat with ochre lining and brass fasteners, dark practical trousers, calf-high work boots, thick rescue rope coiled across her hip, heavy rescue hook held pointing down beside her leg. A small amber signal lantern secured at her belt, no loose flames. Slim athletic sturdy build, relaxed three-quarter pose facing slightly right, one gloved hand rests on rope, readable practical seafarer personality. Palette midnight navy, old brass, rust red, warm amber. Small scuffs and repaired seams, expressive human face, professional elegant original game character. Single figure only. No scenery, no UI, no frames, no letters, no labels, no logo, no watermark, no copied franchise character, no laser or energy weapon. Keep every part of the hook, rope and boots inside canvas."
+    },
+    {
+      "path": "RequiemLantern/Assets/Resources/Combat/MareSDActions.png",
+      "source": "exec-504eb349-18e8-4456-ac62-35e133365ddc.png",
+      "size": [1536,1024],
+      "references": ["RequiemLantern/Assets/Resources/Art/Mare.png","RequiemLantern/Assets/Resources/Combat/LianSDActions.png"],
+      "prompt": "Use case: stylized-concept. Asset type: transparent six-frame combat sprite atlas for an original 2D dark nautical fantasy RPG. Image 1 is the identity/reference of Mare, an ADULT auburn short-haired female salvager in navy/ochre work coat, rescue rope, iron rescue hook, brass amber belt lantern, trousers and boots. Image 2 is the STYLE and ATLAS LAYOUT reference ONLY, do NOT draw that silver-haired knight. Transform Mare from Image 1 into a compact super-deformed combat character about 2.8 heads tall, matching Image 2 painterly ink/large expressive face/small readable body. Create exactly SIX full-body poses of the SAME Mare, in exactly a THREE COLUMNS by TWO ROWS grid, landscape 1536x1024 overall. Equal 512x512 cells, each figure and all hook/rope fully contained in its own cell with clear transparent gutters, all feet near the bottom edge of their own cell and same body scale. Row1 left idle rescue hook down; row1 middle windup turning torso drawing hook back; row1 right contact sweeping hook horizontally toward RIGHT. Row2 left follow-through lunging low RIGHT after the hook strike; row2 middle recovery pulling rope back; row2 right evade/recoil leaning back with hook close to body. All generally facing right in 3/4 view. Preserve auburn braid, amber eyes, navy repaired deck coat with ochre collar, practical trousers, rescue rope, iron hook and small lantern. Real physical hooks/rope movements, no energy beams, no extra magical effects, no blood. Genuinely transparent alpha background, no painted scene, no gradient, no ground shadow beyond figure, no frame/border/text/labels/numbers/watermark. Six distinct strong readable poses, consistent clothes and face, no duplicate poses. Please strictly keep the three-by-two layout and cell boundaries."
+    }
+  ],
+  "verification": "RGBA alpha range 0..254 for both original outputs. No pixel editing; the atlas layout expands the bottom-left crop to 576px to retain the hook. Six pose changes plus movement are used; continuous joint rigging is not implied.",
+  "layout": "RequiemLantern/Assets/Resources/Combat/MareSDActionsLayout.json"
+}

@@ -1,0 +1,50 @@
+{
+  "round": "ROUND 03   /   ② 연결",
+  "party": [
+    "1리안",
+    "2미나토",
+    "3하이델",
+    "4카이"
+  ],
+  "intentCount": 6,
+  "intents": [
+    {
+      "id": "3:anger_arm",
+      "interceptor": "lian",
+      "original": "minato",
+      "text": "01✧ 단일×2연속 공격표적 · 미나토대신 맞불 · 리안"
+    },
+    {
+      "id": "3:anger_core",
+      "interceptor": "lian",
+      "original": "all",
+      "text": "02✦ 광역×3번지는 어둠표적 · 아군 전체맞불 · 리안"
+    },
+    {
+      "id": "3:anger_arm_2",
+      "interceptor": "",
+      "original": "lian",
+      "text": "03✧ 단일×2추격 난타표적 · 리안맞불 미지정"
+    },
+    {
+      "id": "3:anger_core_2",
+      "interceptor": "heidel",
+      "original": "heidel",
+      "text": "04✧ 단일×2응축된 어둠표적 · 하이델맞불 · 하이델"
+    },
+    {
+      "id": "3:anger_arm_3",
+      "interceptor": "",
+      "original": "kai",
+      "text": "05✧ 단일×2추격 난타표적 · 카이맞불 미지정"
+    },
+    {
+      "id": "3:anger_core_3",
+      "interceptor": "",
+      "original": "minato",
+      "text": "06✧ 단일×2응축된 어둠표적 · 미나토맞불 미지정"
+    }
+  ],
+  "prediction": "우세  ·  기대 위력 12 : 8.4  ·  2연승 시 공격우세  ·  기대 위력 18 : 10.8  ·  2연승 시 공격우세  ·  기대 위력 9 : 8  ·  2연승 시 공격",
+  "planned": "빛실 연결6 / 6행동 예약 · 불씨 2 / 6리안 · 행동 1빛의 호위 → 대상 클릭 또는 드래그연결 해제빛실 실행 →6개 행동으로 전투 시작"
+}

@@ -1,12 +1,15 @@
 {
   "date": "2026-10-15",
   "conversationUrl": "https://claude.ai/chat/f32279b0-d232-45c1-ab31-9140f5cbf851",
-  "status": "awaiting_user_approval_after_auto_review_rejection",
+  "status": "resolved_by_explicit_user_authorization_and_completed_review",
   "referenceImageAttached": "C:/Users/Mirim/Pictures/Screenshots/스크린샷 2026-10-14 085517.png",
-  "newReviewRequested": false,
+  "newReviewRequested": true,
   "blockedAction": "새 보스 행동 규칙과 미구현 UI 설계를 포함한 검토 질문을 Claude 입력창에 전달",
   "reviewReason": "자동 승인 검토가 미공개 전투 규칙과 UI 설계의 외부 전송에 대한 구체적인 사용자 승인을 요구했다.",
   "userQuestion": "보스 행동 수, 부위 파괴에 따른 행동 감소, 가로 불 타일의 표적·맞불·상세 설명 설계를 Claude에 전달해도 되는지 질문했다.",
   "developmentContinued": true,
-  "note": "새 Claude 의견을 받은 것으로 보고하지 않는다. 게임 구현과 내부 검수는 독립적으로 진행한다."
+  "note": "이전 자동 검토 거절은 이력으로 보존한다. 이후 실제 문서·화면 첨부 검토 두 건의 요청과 답변을 확보했다.",
+  "historicalStatus": "awaiting_user_approval_after_auto_review_rejection",
+  "resolvedBy": "사용자가 이미지 첨부 허용을 켰으며 실제 메인·스테이지·스토리·전투 화면을 첨부해 Claude에게 물어보라고 명시적으로 요청함.",
+  "latestEvidence": "QA/StoryUxReview/2026-10-15/Claude/review.json"
 }

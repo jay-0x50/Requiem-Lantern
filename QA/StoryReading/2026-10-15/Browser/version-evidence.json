@@ -1,0 +1,39 @@
+{
+  "baseCommit": "5b281bc261aa96e8d9cc5460acb24eafd698575f",
+  "workingTreeSnapshot": true,
+  "runtimeRevision": "story-reading-v13",
+  "port": 8128,
+  "buildOutput": "PreviewHost/bin/story-reading-browser-qa",
+  "hashes": {
+    "Preview/app.js": "bc1a8119b835cf8dfe0d7684643a56e55e04985cf035077f53416d9fd0efa0a7",
+    "Preview/story-view.js": "7758488ff6fc0b8ef6e4972eb5c84e25ba1e53752fad7e2ff044fc24c35e565e",
+    "Preview/theme.css": "98281dda5df9bfe2a3e26ed2db09f388f99cdcb155fd3e1e4666d8367321d270",
+    "Preview/combat-fx.js": "7b9fb9e812f3337e2e8f96acc04433aa792187f4517286e200787e5bb3caed8c",
+    "PreviewHost/Program.cs": "d3b978c4702bfeb913783a2dc9669bd03bb69017476172fdf9475d32b78cb306",
+    "RequiemLantern/Assets/Scripts/Core/CampaignCatalog.cs": "61bfdeedbb50187dfaf16c6a06ffacde3bc4ff3906e6658dd543d60f1c3fabaf",
+    "기획서/메인스토리/campaign.json": "4f0be695ae6316f898913d982b32f4da3ce8531a4eceb81c513285fe10e00ebe",
+    "RequiemLantern/Assets/Resources/Art/Mare.png": "db667202ea5c227a3c0f4d6701da7ba0c740ceee0f38d6734a4e53e122180a76",
+    "RequiemLantern/Assets/Resources/Combat/MareSDActions.png": "6a548aedfbe99a7351a14c2579e2695870e1981bfcfe41806581fefec43f0b36",
+    "RequiemLantern/Assets/Resources/Combat/MareSDActionsLayout.json": "a276535cf4754bb2ec3af2c6433df173f55fc39612149a17e46da9ad5fefedc6"
+  },
+  "user8127Untouched": true,
+  "initialCompiledCanonicalLines": 688,
+  "finalCompiledCanonicalLines": 690,
+  "initialCaptureNote": "Images 01-06 use the identical 1-4 lines and final UI on the initial 688-line build; later captures and remaining tests use the rebuilt final 690-line catalog.",
+  "finalHashesUnchanged": true,
+  "qaTabsClosed": true,
+  "qaServerStopped": true,
+  "consoleErrors": [],
+  "screenshots": [
+    "01-hub-continue.jpg",
+    "02-route-cast-and-party.jpg",
+    "03-record-paused-prefix.jpg",
+    "04-lian-speaks-right.jpg",
+    "05-sera-speaks-left.jpg",
+    "06-mare-planning-prediction.jpg",
+    "07-final-before-battle-label.jpg",
+    "08-final-after-return-label.jpg",
+    "09-read-history-start.jpg",
+    "10-read-history-end.jpg"
+  ]
+}

@@ -386,8 +386,14 @@
 .archive-stage-list h2{font-size:19px;font-weight:500;color:#d4b883;margin:0 0 15px}
 .archive-stage-list button{display:flex;align-items:center;gap:18px;width:100%;height:47px;text-align:left;padding:9px 18px;margin:8px 0}
 .archive-stage-list button span{color:#d4b883;font-size:13px;min-width:32px}.archive-stage-list button strong{font-size:16px;font-weight:400}.archive-stage-list button small{margin-left:auto;font-size:11px;color:#95a7bd}
-.story .story-listener{right:55px;left:auto;top:110px;width:590px;height:695px;opacity:.35;filter:brightness(.7) saturate(.6) drop-shadow(0 8px 25px #000);z-index:1}
+.story .story-listener{right:55px;left:auto;top:110px;width:590px;height:695px;opacity:.6;filter:brightness(.9) saturate(.85) drop-shadow(0 8px 25px #000);z-index:1}
 .story .story-hero{z-index:2}
+.story .story-hero.story-position-left{left:94px;right:auto;top:56px;width:730px;height:818px}
+.story .story-hero.story-position-right{right:55px;left:auto;top:56px;width:730px;height:818px}
+.story .story-hero.is-listening{opacity:.6;filter:brightness(.9) saturate(.85) drop-shadow(0 6px 35px #020813b8)}
+.story .story-hero.is-speaking{opacity:1}
+.stage-cast>small{display:inline-block;margin-right:9px;color:#a2b0c1;font-size:12px;letter-spacing:.08em}
+.modal .story-log{max-height:540px;overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#ac8b58 #101925;padding:0 22px}
 .character-growth{display:flex;align-items:center;gap:16px;margin-top:15px;border-top:1px solid #7b674e55;padding-top:13px;font-size:15px;color:#d2ba93;flex-wrap:wrap}
 .character-growth small{font-size:12px;color:#a8b7ca}.character-growth button{height:43px;padding:0 17px;font-size:13px}
 .roster-info{top:137px}.roster-info h1{margin-top:20px;margin-bottom:8px;font-size:59px}.roster-info .bio{font-size:19px;padding-top:20px;margin-top:20px}.roster-info blockquote{font-size:21px;margin:20px 0}.roster-tabs{margin-top:18px;gap:9px}.roster-tabs button{min-width:140px;height:43px}
@@ -499,7 +505,8 @@
 .battle .fighter-cards{height:78px}
 #game .fighter-cards .skill-card{height:78px;padding:6px 9px 4px;gap:1px}
 .battle .fighter-identity{height:48px}.battle .dock-portrait{width:46px;height:46px}
-.battle .battle-prediction{top:275px}
+.battle .battle-prediction{top:275px;max-height:120px;font-size:12px}
+.battle-prediction .prediction-owner{color:#e6c48a}
 
 /* A chart of known coastal memories, carried aboard the lantern vessel. */
 .stages{background:linear-gradient(90deg,#06121b55,transparent 66%,#060c15b3)}

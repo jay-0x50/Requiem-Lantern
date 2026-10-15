@@ -8,6 +8,7 @@ namespace RequiemLantern.Core
     {
         public string Id, Name, Portrait, Role;
         public int Rarity;
+        public bool Recruitable = true;
     }
     [Serializable] public sealed class RecruitBanner
     {
@@ -32,7 +33,7 @@ namespace RequiemLantern.Core
     }
     public static class RecruitmentCatalog
     {
-        public const int CollectionVersion = 1, SingleCost = 160, TenCost = 1600, HardPity = 80;
+        public const int CollectionVersion = 2, SingleCost = 160, TenCost = 1600, HardPity = 80;
         public const int DuplicateFourStarShards = 20, DuplicateFiveStarShards = 100, TestAmount = 9999999;
         public const double FiveStarRate = .008;
         public const string TestCurrencyCode = "LANTERN-TEST-9999999", TestMaterialsCode = "LANTERN-MATERIALS";
@@ -42,14 +43,15 @@ namespace RequiemLantern.Core
             new RecruitCharacter{Id="noa",Name="노아",Rarity=5,Portrait="Noa",Role="그림자 · 조율사"},
             new RecruitCharacter{Id="minato",Name="미나토",Rarity=4,Portrait="Minato",Role="물결 · 치유사"},
             new RecruitCharacter{Id="heidel",Name="하이델",Rarity=4,Portrait="Heidel",Role="서리 · 사수"},
-            new RecruitCharacter{Id="kai",Name="카이",Rarity=4,Portrait="Kai",Role="광휘 · 등불지기"}
+            new RecruitCharacter{Id="kai",Name="카이",Rarity=4,Portrait="Kai",Role="광휘 · 등불지기",Recruitable=false},
+            new RecruitCharacter{Id="mare",Name="마레",Rarity=4,Portrait="Mare",Role="화염 · 인양꾼"}
         }.AsReadOnly();
         public static readonly IReadOnlyList<RecruitBanner> Banners = new List<RecruitBanner> {
             new RecruitBanner{Id="lian",Name="마지막 파수꾼",FeaturedCharacterId="lian"},
             new RecruitBanner{Id="sera",Name="꺼지지 않는 약속",FeaturedCharacterId="sera"},
             new RecruitBanner{Id="noa",Name="되찾은 이름",FeaturedCharacterId="noa"}
         }.AsReadOnly();
-        public static readonly IReadOnlyList<string> StarterParty = Array.AsReadOnly(new[]{"lian","minato","heidel","kai"});
+        public static readonly IReadOnlyList<string> StarterParty = Array.AsReadOnly(new[]{"lian","minato","heidel","mare"});
         public static RecruitCharacter Character(string id) { return Characters.FirstOrDefault(character=>character.Id==id); }
         public static RecruitBanner Banner(string id) { return Banners.FirstOrDefault(banner=>banner.Id==id); }
         internal static void InitializeCollection(ProgressData data)
@@ -65,6 +67,13 @@ namespace RequiemLantern.Core
             }
             data.OwnedCharacters=data.OwnedCharacters??new List<string>();
             data.ActiveParty=data.ActiveParty??new List<string>();data.RedeemedCodes=data.RedeemedCodes??new List<string>();
+            if(data.CollectionVersion==1){
+                // The provisional starter used the protagonist. Grant the new
+                // companion once; preserve every existing ownership and party
+                // slot, including Kai, as well as all progress and random state.
+                if(!data.OwnedCharacters.Contains("mare"))data.OwnedCharacters.Add("mare");
+                data.CollectionVersion=CollectionVersion;
+            }
         }
         public static string NormalizeCode(string code)
         { return string.IsNullOrEmpty(code)?"":new string(code.Where(character=>!char.IsWhiteSpace(character)).ToArray()).ToUpperInvariant(); }
@@ -113,11 +122,11 @@ namespace RequiemLantern.Core
                     RecruitCharacter character;
                     if(fiveStar){
                         bool featured=guaranteed||pickup<.5;
-                        var pool=RecruitmentCatalog.Characters.Where(value=>value.Rarity==5&&value.Id!=banner.FeaturedCharacterId).ToList();
+                        var pool=RecruitmentCatalog.Characters.Where(value=>value.Recruitable&&value.Rarity==5&&value.Id!=banner.FeaturedCharacterId).ToList();
                         character=featured?RecruitmentCatalog.Character(banner.FeaturedCharacterId):pool[(int)(member*pool.Count)];
                         guaranteed=!featured;pity=0;
                     }else{
-                        var pool=RecruitmentCatalog.Characters.Where(value=>value.Rarity==4).ToList();character=pool[(int)(member*pool.Count)];pity++;
+                        var pool=RecruitmentCatalog.Characters.Where(value=>value.Recruitable&&value.Rarity==4).ToList();character=pool[(int)(member*pool.Count)];pity++;
                     }
                     bool isNew=!owned.Contains(character.Id);int duplicate=isNew?0:fiveStar?RecruitmentCatalog.DuplicateFiveStarShards:RecruitmentCatalog.DuplicateFourStarShards;
                     if(shards>int.MaxValue-duplicate){error="캐릭터 조각 보관 한도를 초과합니다.";return false;}

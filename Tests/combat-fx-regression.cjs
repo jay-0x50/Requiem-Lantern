@@ -367,14 +367,14 @@ async function main() {
   }
   pass('measured atlas crops preserve one foot anchor across all six poses and use decoded dimensions before metadata');
 
-  const realLayouts = Object.fromEntries(['Lian', 'Sera', 'Minato', 'Noa', 'Heidel', 'Kai', 'Anger'].map(name => [
+  const realLayouts = Object.fromEntries(['Lian', 'Sera', 'Minato', 'Noa', 'Heidel', 'Kai', 'Mare', 'Anger'].map(name => [
     name.toLowerCase(), JSON.parse(fs.readFileSync(path.join(__dirname,
       '../RequiemLantern/Assets/Resources/Combat/' + name + (name==='Anger'?'ActionsLayout.json':'SDActionsLayout.json')), 'utf8').replace(/^\uFEFF/, ''))
   ]));
-  for (const allyId of ['lian', 'sera', 'minato', 'noa', 'heidel', 'kai']) for (const reverse of [false, true]) {
+  for (const allyId of ['lian', 'sera', 'minato', 'noa', 'heidel', 'kai', 'mare']) for (const reverse of [false, true]) {
     const snapshot = battle();
     snapshot.allies.splice(1, 0, { id: 'sera', name: '세라', hp: 90, maxHp: 100, element: 'Flame', parts: [] });
-    if(['noa','heidel','kai'].includes(allyId))snapshot.allies.push({id:allyId,name:allyId,hp:90,maxHp:100,element:'Shadow',parts:[]});
+    if(['noa','heidel','kai','mare'].includes(allyId))snapshot.allies.push({id:allyId,name:allyId,hp:90,maxHp:100,element:allyId==='mare'?'Flame':'Shadow',parts:[]});
     env = environment(true, false, snapshot); env.fx.options.layouts = realLayouts;
     const actorId = reverse ? 'anger' : allyId, targetId = reverse ? allyId : 'anger';
     const label = actorId + ' vs ' + targetId;
@@ -410,11 +410,11 @@ async function main() {
     assert.equal(createdEffects.some(classes => classes.split(/\s+/).includes('fx-beam')), false,
       label + ' must not generate a travelling beam in any phase');
   }
-  pass('all six real SD allies and the larger boss meet at a shared weapon contact in twelve directed clashes without travelling beams');
+  pass('all seven real SD allies, including Mare, and the larger boss meet at a shared weapon contact in fourteen directed clashes without travelling beams');
 
   env = environment(true, true);
   assert.deepEqual(env.images.map(image => image.src), [
-    '/combat/LianSDActions.png', '/combat/SeraSDActions.png', '/combat/MinatoSDActions.png', '/combat/NoaSDActions.png', '/combat/HeidelSDActions.png', '/combat/KaiSDActions.png', '/combat/AngerActions.png'
+    '/combat/LianSDActions.png', '/combat/SeraSDActions.png', '/combat/MinatoSDActions.png', '/combat/NoaSDActions.png', '/combat/HeidelSDActions.png', '/combat/KaiSDActions.png', '/combat/MareSDActions.png', '/combat/AngerActions.png'
   ]);
   const fallback = env.fx.createFighter('lian', 'ally-side'); env.fx.meleePair = [fallback];
   assert.equal(fallback.atlas, true);

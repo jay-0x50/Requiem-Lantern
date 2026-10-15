@@ -1,0 +1,31 @@
+{
+  "commit": "5b281bc261aa96e8d9cc5460acb24eafd698575f",
+  "runtimeRevision": "recruitment-v12",
+  "port": 8128,
+  "buildOutput": "PreviewHost/bin/story-ux-browser-qa",
+  "hashes": {
+    "Preview/app.js": "9fd9da77797c3816c620b8ac60e156786c68a51e044d3202fc1387eae732d809",
+    "Preview/theme.css": "959010079b0d211dba00f8aa2d93d71bbb157b36a5a3adb4a4b3c89b58bd4280",
+    "Preview/style.css": "14a391849b49160b5888811d648b38f3782a05589c19a34afc47cd2c63beecb3",
+    "Preview/story-view.js": "6ca9e14c64aeccba47883a751b0f4b1846cc0f60d228498c491b1d5f20f58062",
+    "Preview/combat-fx.js": "55b6af0589ea58cfe91b161f9197203a5482b30f53f8b0b49852a360a0d929c8",
+    "PreviewHost/Program.cs": "21fb441123fc1cf25e587f8bd0f9f5f1b0ec4d144c1d5f0a6cb01374e9962fe5",
+    "기획서/메인스토리/campaign.json": "f471076e7c2b809a4acff5479ee99900b0c7257a30d491097603628e181534e0"
+  },
+  "captureSource": "fresh Chrome CUA screenshots; no reused images",
+  "user8127Untouched": true,
+  "finalCommit": "5b281bc261aa96e8d9cc5460acb24eafd698575f",
+  "sourceHashesUnchanged": true,
+  "qaTabsClosed": true,
+  "qaServerStopped": true,
+  "consoleErrors": [],
+  "captureNotes": "Screens06 is a fresh Round 3 enemy strike against Kai, not a two-sided clash number comparison.",
+  "screenshotFiles": [
+    "Screens01-title.jpg",
+    "Screens02-main-hub.jpg",
+    "Screens03-stage-route.jpg",
+    "Screens04-dialogue-two-characters.jpg",
+    "Screens05-combat-planning-six-intents.jpg",
+    "Screens06-combat-clash.jpg"
+  ]
+}

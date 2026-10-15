@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-15",
+  "status": "PASS",
+  "baseCommit": "5b281bc261aa96e8d9cc5460acb24eafd698575f",
+  "runtimeRevision": "story-reading-v13",
+  "changes": {
+    "chapters": 5,
+    "stages": 50,
+    "baselineLines": 616,
+    "finalLines": 690,
+    "netAddedLines": 74,
+    "revisedStages": 28,
+    "autoDelayRows": 21,
+    "longPauses": 18,
+    "starter": [
+      "lian",
+      "minato",
+      "heidel",
+      "mare"
+    ]
+  },
+  "externalReview": {
+    "status": "two_completed_requests_with_attachments",
+    "evidence": "Claude/review.json",
+    "story": "Claude/story-response.txt",
+    "screens": "Claude/ui-response.txt"
+  },
+  "checks": {
+    "core": {
+      "passed": 87,
+      "failed": 0,
+      "includes": "25 actual starter-party battles and v1 migration/ownership/RNG/guarantee preservation"
+    },
+    "campaign": {
+      "passed": 23,
+      "failed": 0,
+      "authoredBattlesPassed": 75
+    },
+    "compilerRegression": {
+      "groupsPassed": 4
+    },
+    "previewRegression": {
+      "passed": 108
+    },
+    "combatFx": {
+      "passed": 49,
+      "actualAtlasContactCases": 14
+    },
+    "realHttp": {
+      "recruitment": "QA/MareCompanion/2026-10-15/API/result.json",
+      "previewCampaign": "PASS: isolated 8129 save; v13 story/replay/victory gates, Mare art routes and unchanged action rules"
+    },
+    "windowsBuild": {
+      "result": "Success",
+      "assembly": "Builds/Windows/RequiemLantern_Data/Managed/Assembly-CSharp.dll"
+    },
+    "unityStory": {
+      "result": "PASS",
+      "canonicalRows": 690,
+      "fontSize": 32,
+      "bodyWidth": 1550,
+      "bodyHeight": 128,
+      "maxLines": 2,
+      "maxPreferredHeight": 92,
+      "captures": 4,
+      "evidence": "Unity/smoke-result.txt"
+    },
+    "unityMare": {
+      "result": "PASS",
+      "captures": 3,
+      "evidence": "QA/MareCompanion/2026-10-15/Unity/smoke-result.txt"
+    },
+    "chrome": {
+      "result": "PASS",
+      "evidence": "QA/StoryReading/2026-10-15/Browser/검증결과.md"
+    },
+    "independentCodeReview": "No actionable defects found in reading timers/log/replay and collection migration."
+  },
+  "liveUpdate": "QA/StoryReading/2026-10-15/live-update.json",
+  "limits": [
+    "Story quality was editorially reviewed; audience emotional response is not proven by tests.",
+    "The first six browser reading captures use the unchanged 1-4 scene on the initial 688-line build; later captures and final catalog/build use 690 lines.",
+    "Actual browser hidden-tab state could not be induced with the helper tab; blur/hidden behavior is covered by deterministic JS tests.",
+    "Mare combat uses six pose images plus movement; continuous joint rigging and new voice/BGM production are outside this change."
+  ],
+  "sha256": {
+    "기획서/메인스토리/campaign.json": "4f0be695ae6316f898913d982b32f4da3ce8531a4eceb81c513285fe10e00ebe",
+    "RequiemLantern/Assets/Scripts/Core/CampaignCatalog.cs": "61bfdeedbb50187dfaf16c6a06ffacde3bc4ff3906e6658dd543d60f1c3fabaf",
+    "RequiemLantern/Assets/Scripts/Core/PrototypeData.cs": "d422bd9c441c4fccb87b72ac8bb1c1495c71fc39d0d76bd069d1b77e6882df78",
+    "RequiemLantern/Assets/Scripts/Core/Recruitment.cs": "278e087cd64f93dec0bc1251c085bf09a537ed3e0e624b8dc01f2ae4092c9cf2",
+    "RequiemLantern/Assets/Scripts/Presentation/LanternApp.cs": "6fd1dd0cdb7a0bace05d234037710f9831b0f5374b88a9f7f42a591f8be04053",
+    "RequiemLantern/Assets/Scripts/Presentation/LanternViews.cs": "bff2ac0dc5b3552f6d85e0c07154af8c53fa14b97ed3ac13c1199151d0249ba6",
+    "RequiemLantern/Assets/Scripts/Presentation/LanternStoryReading.cs": "3acd4039c693e002c3f1fd514196b780fa3e84cca6d18ccbfb3112459973dc89",
+    "RequiemLantern/Assets/Scripts/Presentation/LanternIntentDock.cs": "d177ed4c7ca425587be4bd27fd04aa9093c57abb4086fb62cf02174632089f83",
+    "Preview/app.js": "bc1a8119b835cf8dfe0d7684643a56e55e04985cf035077f53416d9fd0efa0a7",
+    "Preview/story-view.js": "7758488ff6fc0b8ef6e4972eb5c84e25ba1e53752fad7e2ff044fc24c35e565e",
+    "Preview/theme.css": "98281dda5df9bfe2a3e26ed2db09f388f99cdcb155fd3e1e4666d8367321d270",
+    "Preview/combat-fx.js": "7b9fb9e812f3337e2e8f96acc04433aa792187f4517286e200787e5bb3caed8c",
+    "PreviewHost/Program.cs": "d3b978c4702bfeb913783a2dc9669bd03bb69017476172fdf9475d32b78cb306",
+    "RequiemLantern/Assets/Resources/Art/Mare.png": "db667202ea5c227a3c0f4d6701da7ba0c740ceee0f38d6734a4e53e122180a76",
+    "RequiemLantern/Assets/Resources/Combat/MareSDActions.png": "6a548aedfbe99a7351a14c2579e2695870e1981bfcfe41806581fefec43f0b36",
+    "RequiemLantern/Assets/Resources/Combat/MareSDActionsLayout.json": "a276535cf4754bb2ec3af2c6433df173f55fc39612149a17e46da9ad5fefedc6"
+  }
+}

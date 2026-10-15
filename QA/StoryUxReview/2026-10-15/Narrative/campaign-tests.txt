@@ -1,0 +1,24 @@
+PASS catalog has five chapters, ten sequential stages and all stage kinds
+PASS compiled campaign matches source and every chapter includes ensemble conversations
+PASS story timing keeps legacy defaults, deliberate pauses and the nine music cues
+PASS personal loss callbacks have named setups and Mare does not move established joins earlier
+PASS four-person campaign parties preserve staged joins and focal character roles
+PASS campaign rejects oversized and repeated parties before mutating player growth
+PASS authored encounter counts distinguish groups, tutorial and single bosses
+PASS group restarts rebuild every enemy, target, part and cost without changing rewards
+PASS invalid encounter sizes are rejected before player growth changes
+PASS the five main chapters carry character arcs and human friend encounters
+PASS old prologue and isolated legacy victory do not bypass intervening stages
+PASS story-only completion is free, saved and sequentially unlocks the next stage
+PASS mixed before-story cannot clear the stage or claim a victory
+PASS mixed victory grants rewards once and defers completion until after-story
+PASS winning then exiting resumes saved after-story without replaying the fight
+PASS replay combines before and after stories and changes no progress or rewards
+PASS invalid and locked entry preserve the current session
+PASS defeat grants no reward and restart retains stage identity without advancing
+PASS battle-only stage completes on victory without a dialogue gate
+PASS character synchronization persists separately from level and survives factory restart
+PASS old version-one XML initializes new campaign and growth fields
+PASS all authored human bosses and story portraits have matching art resources
+PASS all twenty-five campaign battles win under AI at Good for seeds zero, one and two
+Campaign tests: 23 passed, 0 failed.

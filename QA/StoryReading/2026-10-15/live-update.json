@@ -1,0 +1,32 @@
+{
+  "originalSaveFileUnchanged": true,
+  "mareOwned": true,
+  "legacyVersion": 0,
+  "party": [
+    "lian",
+    "minato",
+    "heidel",
+    "mare"
+  ],
+  "collectionVersion": 2,
+  "runtimeRevision": "story-reading-v13",
+  "status": "PASS",
+  "preservedExistingFields": [
+    "Coins",
+    "LanternFragments",
+    "MemoryFragments",
+    "KeepLevel"
+  ],
+  "backupDirectory": "UserBackup (Git ignored)",
+  "introducedPreviouslyAbsentFields": [
+    "Stardust",
+    "CharacterShards",
+    "RecruitPity",
+    "PickupGuaranteed",
+    "RecruitRandomState"
+  ],
+  "preservedExistingLists": [
+    "ClearedStages",
+    "ClaimedBattles"
+  ]
+}

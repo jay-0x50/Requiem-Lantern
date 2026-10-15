@@ -1,0 +1,9 @@
+{
+  "runtimeRevision": "story-reading-v13",
+  "phase": "BeforeStory",
+  "replay": true,
+  "autoDelay": 4.8,
+  "text": "군체가 흩어진 자리에는 작은 이름표가 남는다. 아이들은 살아서 돌아오지 않는다.",
+  "coins": 320,
+  "cleared": 20
+}

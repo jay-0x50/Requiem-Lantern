@@ -199,7 +199,7 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "recruitment-v12",
+                application = "RequiemLantern", runtimeRevision = "story-reading-v13",
                 recruitment = new {
                     characters = RecruitmentCatalog.Characters, banners = RecruitmentCatalog.Banners,
                     costPerPull = RecruitmentCatalog.SingleCost, fiveStarRate = RecruitmentCatalog.FiveStarRate,

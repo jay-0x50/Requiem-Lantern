@@ -78,12 +78,19 @@ namespace RequiemLantern.Core
                     unit.Skills.Add(Attack("kai_crescendo", "길을 여는 빛", unit.Element, 3, 2, 1, 12, 13, 4, 3));
                     unit.Skills.Add(Defense("kai_guard", "등불 울타리", unit.Element, SkillKind.Guard, 18, 6, 4, 2));
                     break;
+                case "mare":
+                    unit = Ally(id, "마레", "인양꾼", Element.Flame, 125, 12);
+                    unit.Skills.Add(Attack("mare_line", "당김줄", unit.Element, 1, 0, 1, 12, 5, 3, 2));
+                    unit.Skills.Add(Attack("mare_hook", "닻걸이", unit.Element, 2, 1, 1, 12, 8, 4, 2));
+                    unit.Skills.Add(Attack("mare_return", "돌아오는 불", unit.Element, 3, 2, 1, 12, 12, 4, 3));
+                    unit.Skills.Add(Defense("mare_evade", "줄넘김", unit.Element, SkillKind.Evade, 18, 6, 4, 2));
+                    break;
                 default: throw new ArgumentException("Unknown character: " + id, "id");
             }
             unit.SyncLevel = Math.Max(0, syncLevel); return unit;
         }
 
-        public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel" || id == "kai"; }
+        public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel" || id == "kai" || id == "mare"; }
         private static UnitState Ally(string id, string name, string role, Element element, int hp, int speed)
         { return new UnitState { Id = id, Name = name, Role = role, Portrait = id, Element = element, Hp = hp, MaxHp = hp, Speed = speed, Sanity = 0 }; }
         private static SkillData Attack(string id, string name, Element element, int number, int cost, int slots, int speed, int basePower, int flamePower, int flames)
@@ -106,6 +113,7 @@ namespace RequiemLantern.Core
         public string Speaker, Text, Background, Portrait;
         public string Location, Caption, MusicCue, ListenerPortrait;
         public bool IsPrototype;
+        public float AutoDelay = 2.6f;
         public StoryLine(string speaker, string text, string background = "ruins", string portrait = "", bool prototype = false)
         { Speaker = speaker; Text = text; Background = background; Portrait = portrait; IsPrototype = prototype; }
     }

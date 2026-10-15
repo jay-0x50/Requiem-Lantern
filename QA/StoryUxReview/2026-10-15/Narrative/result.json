@@ -1,0 +1,341 @@
+{
+  "status": "PASS",
+  "date": "2026-10-15",
+  "source": "기획서/메인스토리/campaign.json",
+  "revision": "v0.3_ensemble_memory_costs",
+  "baselineLines": 616,
+  "finalLines": 690,
+  "netAddedLines": 74,
+  "chapterLines": {
+    "1": 152,
+    "2": 144,
+    "3": 134,
+    "4": 114,
+    "5": 146
+  },
+  "stageCount": 50,
+  "stageKinds": {
+    "Story": 25,
+    "StoryBattle": 18,
+    "Battle": 7
+  },
+  "unchangedStageMetadata": true,
+  "unchangedChapterFocusAndSummaries": true,
+  "unchangedAuthoredBattleParties": true,
+  "participantAdditions": {
+    "1-3": [
+      "mare"
+    ],
+    "2-1": [
+      "mare"
+    ],
+    "5-3": [
+      "mare"
+    ]
+  },
+  "musicCuesPreserved": [
+    "bgm_lian_last_watch_phase1",
+    "bgm_lian_last_watch_phase2",
+    "bgm_lian_last_watch_afterglow",
+    "bgm_sera_sealed_route_phase1",
+    "bgm_sera_sealed_route_phase2",
+    "bgm_sera_sealed_route_afterglow",
+    "bgm_noa_answering_eve_phase1",
+    "bgm_noa_answering_eve_phase2",
+    "bgm_noa_answering_eve_afterglow"
+  ],
+  "generatedOutputsIdempotent": true,
+  "changedStages": [
+    {
+      "stage": "1-3",
+      "before": 19,
+      "after": 28
+    },
+    {
+      "stage": "1-6",
+      "before": 10,
+      "after": 17
+    },
+    {
+      "stage": "1-8",
+      "before": 18,
+      "after": 21
+    },
+    {
+      "stage": "1-9",
+      "before": 18,
+      "after": 18
+    },
+    {
+      "stage": "1-10",
+      "before": 13,
+      "after": 15
+    },
+    {
+      "stage": "2-1",
+      "before": 16,
+      "after": 21
+    },
+    {
+      "stage": "2-3",
+      "before": 9,
+      "after": 13
+    },
+    {
+      "stage": "2-6",
+      "before": 16,
+      "after": 20
+    },
+    {
+      "stage": "2-7",
+      "before": 13,
+      "after": 13
+    },
+    {
+      "stage": "2-8",
+      "before": 14,
+      "after": 15
+    },
+    {
+      "stage": "2-10",
+      "before": 15,
+      "after": 19
+    },
+    {
+      "stage": "3-5",
+      "before": 17,
+      "after": 20
+    },
+    {
+      "stage": "3-7",
+      "before": 13,
+      "after": 13
+    },
+    {
+      "stage": "3-9",
+      "before": 20,
+      "after": 23
+    },
+    {
+      "stage": "3-10",
+      "before": 14,
+      "after": 18
+    },
+    {
+      "stage": "4-1",
+      "before": 11,
+      "after": 15
+    },
+    {
+      "stage": "4-3",
+      "before": 13,
+      "after": 14
+    },
+    {
+      "stage": "4-5",
+      "before": 11,
+      "after": 12
+    },
+    {
+      "stage": "4-7",
+      "before": 14,
+      "after": 14
+    },
+    {
+      "stage": "4-9",
+      "before": 17,
+      "after": 17
+    },
+    {
+      "stage": "4-10",
+      "before": 12,
+      "after": 15
+    },
+    {
+      "stage": "5-1",
+      "before": 17,
+      "after": 19
+    },
+    {
+      "stage": "5-3",
+      "before": 16,
+      "after": 20
+    },
+    {
+      "stage": "5-4",
+      "before": 16,
+      "after": 18
+    },
+    {
+      "stage": "5-5",
+      "before": 12,
+      "after": 12
+    },
+    {
+      "stage": "5-8",
+      "before": 14,
+      "after": 14
+    },
+    {
+      "stage": "5-9",
+      "before": 22,
+      "after": 25
+    },
+    {
+      "stage": "5-10",
+      "before": 14,
+      "after": 19
+    }
+  ],
+  "readingLength": {
+    "maxCharacters": 81,
+    "maxChangedStageCharacters": 81,
+    "rowsOver100Characters": 0
+  },
+  "timing": {
+    "defaultAfterFullTextSeconds": 2.6,
+    "metadataRows": 21,
+    "pausesAtLeast4Seconds": 18,
+    "values": [
+      {
+        "stage": "1-3",
+        "part": "before",
+        "index": 14,
+        "seconds": 4.2
+      },
+      {
+        "stage": "1-6",
+        "part": "before",
+        "index": 13,
+        "seconds": 3.8
+      },
+      {
+        "stage": "1-9",
+        "part": "before",
+        "index": 3,
+        "seconds": 4.4
+      },
+      {
+        "stage": "1-10",
+        "part": "before",
+        "index": 1,
+        "seconds": 4.2
+      },
+      {
+        "stage": "2-3",
+        "part": "before",
+        "index": 10,
+        "seconds": 1.6
+      },
+      {
+        "stage": "2-6",
+        "part": "after",
+        "index": 0,
+        "seconds": 4.8
+      },
+      {
+        "stage": "2-6",
+        "part": "after",
+        "index": 4,
+        "seconds": 4.4
+      },
+      {
+        "stage": "2-7",
+        "part": "before",
+        "index": 4,
+        "seconds": 5.0
+      },
+      {
+        "stage": "2-8",
+        "part": "after",
+        "index": 2,
+        "seconds": 4.4
+      },
+      {
+        "stage": "2-10",
+        "part": "before",
+        "index": 9,
+        "seconds": 4.2
+      },
+      {
+        "stage": "3-5",
+        "part": "before",
+        "index": 19,
+        "seconds": 4.0
+      },
+      {
+        "stage": "3-9",
+        "part": "after",
+        "index": 2,
+        "seconds": 4.4
+      },
+      {
+        "stage": "3-10",
+        "part": "before",
+        "index": 1,
+        "seconds": 4.2
+      },
+      {
+        "stage": "4-5",
+        "part": "before",
+        "index": 11,
+        "seconds": 4.4
+      },
+      {
+        "stage": "4-7",
+        "part": "before",
+        "index": 2,
+        "seconds": 4.8
+      },
+      {
+        "stage": "4-9",
+        "part": "after",
+        "index": 4,
+        "seconds": 4.6
+      },
+      {
+        "stage": "4-10",
+        "part": "before",
+        "index": 7,
+        "seconds": 1.6
+      },
+      {
+        "stage": "5-3",
+        "part": "before",
+        "index": 4,
+        "seconds": 4.4
+      },
+      {
+        "stage": "5-8",
+        "part": "before",
+        "index": 0,
+        "seconds": 4.0
+      },
+      {
+        "stage": "5-9",
+        "part": "after",
+        "index": 9,
+        "seconds": 5.2
+      },
+      {
+        "stage": "5-10",
+        "part": "before",
+        "index": 7,
+        "seconds": 4.4
+      }
+    ]
+  },
+  "tests": {
+    "campaignPassed": 23,
+    "campaignFailed": 0,
+    "combatRegressionRuns": 75,
+    "combatRegressionDescription": "25 authored encounters, Good ignite, seeds 0/1/2; unchanged battle metadata and story-reference parties. This is not a new equipped-party balance claim.",
+    "compilerRegressionGroups": 4
+  },
+  "scope": "Canonical and generated story, strict per-line reading delay metadata, focused regression. No Core mechanics, rewards, gacha ownership rules or cast factory changed in this task.",
+  "limits": [
+    "Narrative review is editorial, not proof of audience emotional response.",
+    "Real Unity/Preview presentation and Auto playback are verified separately by UI agents.",
+    "Kai identity, source of the numbered ledger system and clock date remain unconfirmed."
+  ]
+}

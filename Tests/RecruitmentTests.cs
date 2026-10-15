@@ -12,6 +12,7 @@ internal static class RecruitmentTests
     {
         Test("starter collection contains exactly one five-star and three four-stars without inventing growth",()=>{
             var p=Player();Equal(string.Join(",",RecruitmentCatalog.StarterParty),string.Join(",",p.Data.OwnedCharacters));
+            Equal("lian,minato,heidel,mare",string.Join(",",p.Data.ActiveParty));False(p.IsOwned("kai"));True(p.IsOwned("mare"));
             Equal(1,p.Data.OwnedCharacters.Count(id=>RecruitmentCatalog.Character(id).Rarity==5));
             Equal(3,p.Data.OwnedCharacters.Count(id=>RecruitmentCatalog.Character(id).Rarity==4));Equal(0,p.Data.Characters.Count);
             string before=Snapshot(p.Data);foreach(var character in RecruitmentCatalog.Characters)p.GetCharacter(character.Id);
@@ -67,7 +68,8 @@ internal static class RecruitmentTests
                 False(pull.CharacterId=="lian");offCounts[pull.CharacterId]=offCounts.TryGetValue(pull.CharacterId,out var value)?value+1:1;
             }
             Equal(2,offCounts.Count);Equal(2,offCounts["sera"]);Equal(2,offCounts["noa"]);
-            var fourIds=RecruitmentCatalog.Characters.Where(character=>character.Rarity==4).Select(character=>character.Id).ToArray();
+            var fourIds=RecruitmentCatalog.Characters.Where(character=>character.Recruitable&&character.Rarity==4).Select(character=>character.Id).ToArray();
+            Equal("minato,heidel,mare",string.Join(",",fourIds));False(RecruitmentCatalog.Character("kai").Recruitable);
             for(int index=0;index<fourIds.Length;index++){
                 var p=Player(new Samples(.99,.99,(index+.5)/fourIds.Length));True(p.Recruit("sera",1,out var result,out var error));Equal(fourIds[index],result.Pulls.Single().CharacterId);
             }
@@ -126,6 +128,40 @@ internal static class RecruitmentTests
                 var isolated=p.Capture();isolated.OwnedCharacters.Clear();True(p.Data.OwnedCharacters.Count>=4);
                 p.Restore(checkpoint);checkpoint.ActiveParty.Clear();Equal(4,p.Data.ActiveParty.Count);
             }finally{Directory.Delete(directory,true);}
+        });
+        Test("version-one collection grants Mare once without removing or reordering any existing record",()=>{
+            string directory=Temp();try{
+                var legacy=Player().Capture();legacy.CollectionVersion=1;legacy.PlayerName="보존";legacy.PrologueCompleted=true;
+                legacy.OwnedCharacters=new List<string>{"lian","minato","heidel","kai","sera"};legacy.ActiveParty=new List<string>{"kai","sera","lian","minato"};
+                legacy.Characters.Add(new CharacterProgress{Id="kai",Level=9,SyncLevel=1});legacy.Characters.Add(new CharacterProgress{Id="sera",Level=7,SyncLevel=1});
+                legacy.Coins=321;legacy.Stardust=4567;legacy.LanternFragments=12;legacy.MemoryFragments=9;legacy.CharacterShards=234;legacy.KeepLevel=2;
+                legacy.RecruitPity=67;legacy.PickupGuaranteed=true;legacy.RecruitRandomState=987654321;legacy.RedeemedCodes.Add(RecruitmentCatalog.TestMaterialsCode);
+                legacy.ClearedStages.Add("c1s01");legacy.ClaimedBattles.Add("saved-battle");legacy.RewardedStages.Add("c1s02");
+                string path=Path.Combine(directory,"v1.xml");using(var writer=File.Create(path))new System.Xml.Serialization.XmlSerializer(typeof(ProgressData)).Serialize(writer,legacy);
+                string originalFile=File.ReadAllText(path);var expected=JsonSerializer.Deserialize<ProgressData>(Snapshot(legacy),new JsonSerializerOptions{IncludeFields=true});
+                expected.CollectionVersion=2;expected.OwnedCharacters.Add("mare");
+                var store=new SaveStore(path);var migrated=new ProgressService(store.Load());
+                Equal(null,store.LastWarning);Equal(originalFile,File.ReadAllText(path));Equal(RecruitmentCatalog.CollectionVersion,migrated.Data.CollectionVersion);
+                Equal("lian,minato,heidel,kai,sera,mare",string.Join(",",migrated.Data.OwnedCharacters));Equal("kai,sera,lian,minato",string.Join(",",migrated.Data.ActiveParty));
+                Equal(Snapshot(expected),Snapshot(migrated.Data));Equal(9,migrated.GetCharacter("kai").Level);Equal(1,migrated.GetCharacter("kai").SyncLevel);
+                var battle=BattleEngine.CreatePrototype(migrated.Data,0);Equal("kai",battle.State.Allies[0].Id);Equal(1,battle.State.Allies[0].SyncLevel);
+                string once=Snapshot(migrated.Data);new ProgressService(migrated.Data);Equal(once,Snapshot(migrated.Data));
+                store.Save(migrated.Data);Equal(once,Snapshot(store.Load()));Equal(1,migrated.Data.OwnedCharacters.Count(id=>id=="mare"));
+            }finally{Directory.Delete(directory,true);}
+        });
+        Test("version-two collection preserves a custom party and never regrants or duplicates Mare",()=>{
+            var p=Player();p.Data.OwnedCharacters.Add("kai");True(p.EquipCharacter(3,"kai",out var error));
+            var before=Snapshot(p.Data);new ProgressService(p.Data);Equal(before,Snapshot(p.Data));
+            p.Data.OwnedCharacters.Remove("mare");before=Snapshot(p.Data);new ProgressService(p.Data);Equal(before,Snapshot(p.Data));False(p.IsOwned("mare"));
+            p.Data.CollectionVersion=1;p.Data.OwnedCharacters.Add("mare");new ProgressService(p.Data);Equal(1,p.Data.OwnedCharacters.Count(id=>id=="mare"));
+        });
+        Test("Mare has an independent one-action skill kit and synchronization leaves the protagonist separate",()=>{
+            var p=Player();var battle=BattleEngine.CreatePrototype(p.Data,123);var mare=battle.Unit("mare");
+            Equal("마레",mare.Name);Equal(Element.Flame,mare.Element);Equal(125,mare.MaxHp);Equal("mare",mare.Portrait);Equal(2,mare.SkillHand.Count);
+            Equal(3,mare.Skills.Count(skill=>skill.Number>0));True(mare.Skills.Where(skill=>skill.Number>0).All(skill=>skill.Slots==1));
+            True(mare.Skills.All(skill=>skill.Id.StartsWith("mare_")));Equal(SkillKind.Evade,mare.Skills.Single(BattleRules.IsDefensive).Kind);
+            var third=mare.Skills.Single(skill=>skill.Number==3);False(BattleRules.IsSkillUnlocked(mare,third));p.Data.LanternFragments=10;
+            True(p.Synchronize("mare",out var error));p.ApplyToBattle(battle.State);True(BattleRules.IsSkillUnlocked(mare,third));False(p.IsOwned("kai"));
         });
         Test("the real starter party clears all twenty-five campaign battles at one fixed seed",()=>{
             var progress=Player().Data;var runs=new List<string>();
