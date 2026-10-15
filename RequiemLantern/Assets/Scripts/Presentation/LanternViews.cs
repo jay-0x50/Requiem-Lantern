@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using RequiemLantern.Core;
@@ -45,7 +46,7 @@ namespace RequiemLantern.Presentation
             HubCard("Sortie","01","귀항호 항해도","등대를 떠나 동료들과 이어 가는 다섯 장의 여정",1008,462,()=>{selectedChapter=next.Chapter;selectedStage=next.Id;ShowStages();},true);
             HubCard("Roster","02","잔영 기록","별의 파편을 품은 동료들",1008,594,()=>ShowRoster(0));
             HubCard("FirstMeal","03","지나온 이야기","스테이지의 대화와 기억을 다시 펼치기",1008,726,ShowArchive);
-            Button(screen,"Archive","기록실",1010,890,245,65,ShowArchive);
+            Button(screen,"Recruitment","잔영 소환",1010,890,245,65,()=>ShowRecruitment(),true);
             Button(screen,"Workshop","등대 복구",1275,890,245,65,()=>{
                 if(progress.RepairKeep(out string error)){bool saved=Persist();ShowHub();if(saved)Notify("등대의 불빛이 조금 더 따뜻해졌습니다.");}else Notify(error);
             });
@@ -129,22 +130,25 @@ namespace RequiemLantern.Presentation
             Box(screen,"Description rule",832,442,940,1,new Color(.4f,.45f,.5f,.6f));
             Label(screen,"Biography",descriptions[selected],830,484,935,172,28,Muted);
             Label(screen,"Character quote","“"+CharacterQuotes[selected]+"”",830,650,920,57,27);
-            if(selected<5){
-                string id=CharacterIds[selected].ToLowerInvariant();var growth=progress.GetCharacter(id);
-                Label(screen,"Character growth",$"레벨 {growth.Level}   ·   동기화 {growth.SyncLevel}",831,404,920,34,21,Gold);
+            if(selected<6){
+                string id=CharacterIds[selected].ToLowerInvariant();bool owned=progress.IsOwned(id);var growth=progress.GetCharacter(id);
+                var catalog=RecruitmentCatalog.Characters.First(value=>value.Id==id);
+                string stars=new string('★',catalog.Rarity);
+                Label(screen,"Character growth",owned?$"{stars} · 보유  /  레벨 {growth.Level} · 동기화 {growth.SyncLevel}":stars+" · 미보유",831,404,920,34,21,owned?Gold:Muted);
                 var chapter=CampaignCatalog.Chapters.Find(c=>c.FocusCharacterId==id);
                 if(chapter!=null){
                     bool available=CampaignRules.IsUnlocked(progress.Data,chapter.Stages[0])||CampaignRules.IsCleared(progress.Data,chapter.Stages[0]);
-                    var mainStory=Button(screen,"Main chapter "+id,$"{chapter.Number}장 · {CharacterNames[selected]}의 본편 이야기"+(available?" →":" · 앞 장 완료 필요"),832,710,938,43,()=>ShowCharacterChapter(id));
+                    var mainStory=Button(screen,"Main chapter "+id,$"{chapter.Number}장 · {CharacterNames[selected]}의 본편 이야기"+(available?" →":" · 앞 장 완료 필요"),832,710,596,43,()=>ShowCharacterChapter(id));
                     mainStory.interactable=available;
                 }
-                var sync=Button(screen,"Synchronize "+id,growth.SyncLevel>0?"동기화 완료 · 3스킬 해금":"동기화 · 등불 조각 10 → 3스킬 해금",832,765,938,41,()=>{
-                    if(progress.Synchronize(id,out string error)){Persist();ShowRoster(selected);Notify("동기화가 완료되어 3스킬이 열렸습니다.");}else Notify(error);
-                },growth.SyncLevel==0);
-                sync.interactable=growth.SyncLevel==0;
+                var equip=Button(screen,"Equip character "+id,owned?"파티 편성":"미보유 · 편성 불가",1444,710,326,43,()=>ShowPartyAssignment(id,()=>ShowRoster(selected)),owned);equip.interactable=owned;
+                var sync=Button(screen,"Synchronize "+id,!owned?"미보유 · 잔영 소환으로 획득하면 동기화할 수 있습니다.":growth.SyncLevel>0?"동기화 완료 · 3스킬 해금":"동기화 · 등불 조각 10 → 3스킬 해금",832,765,938,41,()=>{
+                    var checkpoint=progress.Capture();if(progress.Synchronize(id,out string error)){if(!Persist()){progress.Restore(checkpoint);Notify("저장하지 못해 동기화를 취소했습니다.");return;}ShowRoster(selected);Notify("동기화가 완료되어 3스킬이 열렸습니다.");}else Notify(error);
+                },owned&&growth.SyncLevel==0);
+                sync.interactable=owned&&growth.SyncLevel==0;
             }
-            for(int i=0;i<7;i++){int n=i;Button(screen,"Select "+CharacterIds[i],CharacterNames[i],833+(i%4)*241,817+(i/4)*82,220,65,()=>ShowRoster(n),i==selected);}
-            Footer("원화 기준 캐릭터 기록  ·  후반부 인물의 핵심 반전은 숨겨져 있습니다");
+            for(int i=0;i<7;i++){int n=i;string state=i<6?(progress.IsOwned(CharacterIds[i].ToLowerInvariant())?" · 보유":" · 미보유"):" · 기록";Button(screen,"Select "+CharacterIds[i],CharacterNames[i]+state,833+(i%4)*241,817+(i/4)*82,220,65,()=>ShowRoster(n),i==selected);}
+            Footer("스토리 출연과 보유 여부는 별개입니다 · 보유한 잔영만 동기화와 전투 편성이 가능합니다");
         }
         void ShowSettings()
         {
@@ -153,6 +157,8 @@ namespace RequiemLantern.Presentation
             SettingsRow("점화 타이밍 보조","자동으로 ‘양호’ 판정. 끄면 Space / 클릭으로 점화합니다.",390,assisted,()=>{assisted=!assisted;SaveSettings();ShowSettings();});
             SettingsRow("움직임 줄이기","캐릭터 이동, 화면 흔들림과 빛 파편을 간소화합니다.",550,reducedMotion,()=>{reducedMotion=!reducedMotion;SaveSettings();ShowSettings();});
             SettingsRow("효과음","무기 충돌, 타격, 불씨와 장비 효과음을 재생합니다.",710,sound,()=>{sound=!sound;SaveSettings();ShowSettings();});
+            var coupon=Button(screen,"Test coupons","테스트 쿠폰",133,891,410,65,ShowCouponDialog);coupon.interactable=RecruitmentAllowed()&&settingsReturn!="battle"&&settingsReturn!="resolve";
+            Label(screen,"Test coupon help","별가루 · 코인과 성장 재료를 테스트용으로 지급합니다.",581,899,1186,50,23,Muted);
             Footer("설정과 진행 상황은 이 기기에 저장됩니다");
         }
         void ReturnFromSettings(){if(settingsReturn=="title")ShowTitle();else ShowHub();}

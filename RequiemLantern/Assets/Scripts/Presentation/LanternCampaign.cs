@@ -88,7 +88,8 @@ namespace RequiemLantern.Presentation
             Label(screen,"Selected stage",selected.Number+"  "+selected.Title,1347,489,470,82,31,Gold);
             Label(screen,"Stage summary",selected.Summary,1349,593,468,125,23,Ivory);
             string names=string.Join(" · ",selected.Participants.Select(CampaignCharacterName));
-            Label(screen,"Participants","상륙 동료  "+names+"\n"+selected.KindLabel+(selected.HasBattle?" · 적 "+selected.EnemyCount+"명":"")+(selected.IsBoss?" · 보스":""),1349,732,468,70,18,Muted);
+            string partyNames=string.Join(" · ",progress.Data.ActiveParty.Select(CampaignCharacterName));
+            Label(screen,"Participants",(selected.HasBattle?"출격 편성  "+partyNames:"이야기 출연  "+names)+"\n"+selected.KindLabel+(selected.HasBattle?" · 적 "+selected.EnemyCount+"명":"")+(selected.IsBoss?" · 보스":""),1349,732,468,70,18,Muted);
             string action=archive?hasStory?"이야기 다시 읽기 →":"전투 기록":selected.Kind==StageKind.Story?wasCleared?"이야기 다시 읽기 →":"이야기 시작 →":wasCleared?"다시 출격 →":"스테이지 시작 →";
             var enter=Button(screen,"Enter stage",action,1350,827,470,74,()=>EnterCampaignStage(selected.Id,archive||selected.Kind==StageKind.Story&&wasCleared),true);
             enter.interactable=archive?wasCleared&&hasStory:canEnter;

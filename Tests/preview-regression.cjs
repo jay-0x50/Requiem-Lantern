@@ -43,7 +43,7 @@ const state = {
 
 function environment(storage = 'null') {
   const events = {}, gameEvents = {}, timers = new Map(), intervals = new Map();
-  let id = 0, hasModal = false, hit = null, tooltip=null, elementSlots=[], linkPaths=[], gameBox={ left: 0, top: 0, width: 1600, height: 900 };
+  let id = 0, hasModal = false, modalHtml='', couponCode='', hit = null, tooltip=null, elementSlots=[], linkPaths=[], gameBox={ left: 0, top: 0, width: 1600, height: 900 };
   const words = { textContent: '' };
   const thread = { d: '', setAttribute(key, value) { this[key] = value; } };
   const game = {
@@ -51,9 +51,9 @@ function environment(storage = 'null') {
     addEventListener: (name, handler) => { gameEvents[name] = handler; },
     getBoundingClientRect: () => gameBox,
     querySelector: selector => selector === '.modal'
-      ? (hasModal ? { remove() { hasModal = false; } } : null)
-      : selector === '.intent-tooltip' ? tooltip : selector === '.words' ? words : selector === '#drag-thread' ? thread : null,
-    insertAdjacentHTML(_position,html) { if(html.includes('class="intent-tooltip"'))tooltip={html,style:{},offsetHeight:420,remove(){tooltip=null;}};else hasModal = true; },
+      ? (hasModal ? { remove() { hasModal = false;modalHtml=''; } } : null)
+      : selector === '#coupon-code' ? {value:couponCode} : selector === '.intent-tooltip' ? tooltip : selector === '.words' ? words : selector === '#drag-thread' ? thread : null,
+    insertAdjacentHTML(_position,html) { if(html.includes('class="intent-tooltip"'))tooltip={html,style:{},offsetHeight:420,remove(){tooltip=null;}};else {hasModal = true;modalHtml=html;} },
     querySelectorAll: selector => selector==='.slot'?elementSlots:selector==='[data-link-actor]'?linkPaths:[]
   };
   const context = {
@@ -81,6 +81,7 @@ function environment(storage = 'null') {
   return {
     context, events, gameEvents, game, words, thread, timers, intervals,
     get tooltip(){return tooltip;},
+    get modalHtml(){return modalHtml;},setCouponCode(value){couponCode=value;},
     run: code => vm.runInContext(code, context),
     setGeometry(box,slots=[],paths=[]) { gameBox=box;elementSlots=slots;linkPaths=paths; },
     setHit(targetId, disabled = false) {
@@ -144,6 +145,51 @@ function campaignFixture(e) {
   for (const chapter of chapters) for (const stage of chapter.stages) { stage.unlocked = stage.id === 'c1s01'; stage.cleared = false; }
   e.run('data.campaign=' + JSON.stringify({ chapters, activeStage: null, phase: 'None', replay: false, currentStory: [] }));
   return chapters;
+}
+
+function recruitmentFixture(env){
+ const characters=[['lian','리안',5,'Lian'],['sera','세라',5,'Sera'],['noa','노아',5,'Noa'],['minato','미나토',4,'Minato'],['heidel','하이델',4,'Heidel'],['kai','카이',4,'Kai']].map(([id,name,rarity,portrait])=>({id,name,rarity,portrait,role:'등불의 동료'}));
+ env.run('data.recruitment='+JSON.stringify({characters,banners:characters.filter(c=>c.rarity===5).map(c=>({id:c.id,name:c.name+' 픽업',featuredCharacterId:c.id})),costPerPull:160,fiveStarRate:.008,hardPity:80,pity:0,pickupGuaranteed:false,ownedCharacters:['lian','minato','heidel','kai'],party:['lian','minato','heidel','kai'],stardust:3200,characterShards:0})+';tone=()=>{};');
+}
+async function recruitmentChecks(){
+ let env=environment();recruitmentFixture(env);env.run("page='hub';showRecruitment();");
+ assert.ok(env.game.innerHTML.includes('별가루 160'));assert.ok(env.game.innerHTML.includes('별가루 1,600'));assert.ok(env.game.innerHTML.includes('최대 80회'));assert.ok(env.game.innerHTML.includes('픽업 확률 50%'));
+ env.run('data.recruitment.pity=79;data.recruitment.pickupGuaranteed=true;');await env.click('banner:noa');assert.equal(env.run('selectedBanner'),'noa');assert.ok(env.game.innerHTML.includes('최대 1회'));assert.ok(env.game.innerHTML.includes('다음 ★5는 픽업 확정'));
+ await env.click('recruit-rates');assert.ok(env.modalHtml.includes('0.4%'));assert.ok(env.modalHtml.includes('0.2%'));assert.ok(env.modalHtml.includes('33.0667%'));assert.equal(env.run('data.recruitment.pity'),79);assert.equal(env.run('data.recruitment.pickupGuaranteed'),true);env.run('globalThis.behindModalRequests=0;command=async()=>{behindModalRequests++;return true;};');await env.context.pullRecruitment(1);assert.equal(env.context.behindModalRequests,0);
+ pass('pickup selection exposes the real price, shared hard pity and guarantee without mutating them, and probability details list the full pool');
+
+ env=environment();recruitmentFixture(env);env.run("page='hub';showRecruitment();");const calls=[];let release;
+ env.context.fetch=async(_url,args)=>{calls.push(JSON.parse(args.body));return new Promise(done=>release=done);};
+ const pending=env.context.pullRecruitment(10);await env.click('recruit:10');await env.click('banner:lian');env.events.keydown({code:'Escape',preventDefault(){}});assert.equal(calls.length,1);assert.equal(calls[0].action,'recruit');assert.equal(calls[0].bannerId,'sera');assert.equal(calls[0].count,10);assert.equal(env.run('page'),'recruitment');assert.equal(env.run('selectedBanner'),'sera');assert.equal(env.run('collectionBusy'),true);
+ const payload=JSON.parse(env.run('JSON.stringify(data)'));payload.recruitment.stardust=1600;payload.recruitment.pity=0;payload.recruitment.ownedCharacters.push('sera');payload.recruitmentResult={bannerId:'sera',cost:1600,pulls:Array.from({length:10},(_,n)=>({characterId:n===0?'sera':'minato',name:n===0?'세라':'미나토',rarity:n===0?5:4,isPickup:n===0,isNew:n===0,duplicateShards:n===0?0:20,pityAfter:n,guaranteedAfter:false}))};
+ release({ok:true,json:async()=>payload});await pending;assert.equal(env.run('collectionBusy'),false);assert.equal(env.run('data.recruitment.stardust'),1600);assert.equal((env.modalHtml.match(/data-recruit-result=/g)||[]).length,10);assert.ok(env.modalHtml.includes('NEW · 새 동료'));assert.ok(env.modalHtml.includes('중복 · 공용 조각 +20'));assert.ok(env.modalHtml.includes('★★★★★'));
+ await env.click('recruit-roster');assert.equal(env.run('page'),'roster');assert.ok(env.game.innerHTML.includes('★★★★★ · 보유'));assert.ok(env.game.innerHTML.includes('data-action="party-picker:sera"'));
+ pass('one pending ten-pull request blocks repeats, banner changes and Escape, then renders the authoritative rarity, NEW and duplicate-shard results');
+
+ env=environment();recruitmentFixture(env);env.run("page='hub';showRecruitment();globalThis.recruitRequests=[];command=async(action,args)=>{recruitRequests.push({action,...args});lastCommandError='저장하지 못했습니다.';return false;};recruitmentResult={pulls:[{}]};");await env.context.pullRecruitment(1);assert.equal(env.run('recruitmentResult'),null);assert.equal(env.modalHtml,'');assert.equal(env.run('collectionBusy'),false);assert.equal(env.run('data.recruitment.stardust'),3200);
+ env.run('data.recruitment.stardust=0;');await env.context.pullRecruitment(1);assert.equal(env.context.recruitRequests.length,1);
+ pass('failed or unaffordable recruitment restores input without stale results or optimistic currency deductions');
+
+ env=environment();recruitmentFixture(env);campaignFixture(env);env.run("page='hub';data.progress.lanternFragments=100;showRoster(1);globalThis.denied=[];command=async(action,args)=>{denied.push({action,...args});return true;};");
+ assert.ok(env.game.innerHTML.includes('★★★★★ · 미보유'));assert.ok(env.game.innerHTML.includes('data-action="focus-chapter:sera"'));assert.ok(/data-action="synchronize:sera"[^>]*disabled/.test(env.game.innerHTML));assert.ok(/data-action="party-picker:sera"[^>]*disabled/.test(env.game.innerHTML));
+ await env.click('synchronize:sera');await env.click('party-picker:sera');await env.click('equip:sera:0');assert.equal(env.context.denied.length,0);assert.equal(env.modalHtml,'');
+ env.run("data.campaign.activeStage=data.campaign.chapters[0].stages[0];showRoster(0);");await env.click('party-picker:lian');await env.click('equip:lian:2');assert.equal(env.context.denied.length,0);
+ pass('unowned characters keep their story and portrait records but forged sync/equip inputs and active-stage edits never reach the API');
+
+ env=environment();recruitmentFixture(env);env.run("data.recruitment.ownedCharacters.push('sera');page='hub';showRoster(1);");await env.click('party-picker:sera');assert.equal((env.modalHtml.match(/data-action="equip:sera:/g)||[]).length,4);assert.ok(env.modalHtml.includes('이 자리로 교체'));
+ let equipRelease;const equipCalls=[];env.context.fetch=async(_url,args)=>{equipCalls.push(JSON.parse(args.body));return new Promise(done=>equipRelease=done);};const equipping=env.click('equip:sera:1');await env.click('equip:sera:2');assert.equal(equipCalls.length,1);assert.deepEqual(equipCalls[0],{action:'equip-character',actorId:'sera',slot:1});
+ const equipped=JSON.parse(env.run('JSON.stringify(data)'));equipped.recruitment.party[1]='sera';equipRelease({ok:true,json:async()=>equipped});await equipping;assert.equal(env.run('data.recruitment.party[1]'),'sera');assert.ok(env.game.innerHTML.includes('보유 · 파티 2번'));await env.click('party-picker:sera');assert.ok(env.modalHtml.includes('두 동료의 순서가 교환됩니다.'));assert.ok(/data-action="equip:sera:1"[^>]*disabled/.test(env.modalHtml));env.context.closeModal();campaignFixture(env);env.run("data.campaign.chapters[0].stages[1].unlocked=true;showStages(1,'c1s02');");assert.ok(env.game.innerHTML.includes('출격 리안 · 세라 · 하이델 · 카이'));
+ pass('an acquired character selects one of four actual slots, sends its exact ID once, displays the returned party and offers clear swap semantics');
+
+ env=environment();recruitmentFixture(env);env.run("page='battle';settingsReturn='battle';showSettings();globalThis.couponCalls=[];command=async(action,args)=>{couponCalls.push({action,...args});return true;};");env.setCouponCode('WELCOME');await env.context.redeemCoupon();assert.equal(env.context.couponCalls.length,0);assert.ok(/id="coupon-code"[^>]*disabled/.test(env.game.innerHTML));
+ env.run("page='hub';settingsReturn='hub';showSettings();");assert.ok(!/id="coupon-code"[^>]*disabled/.test(env.game.innerHTML));env.setCouponCode('');await env.context.redeemCoupon();assert.ok(env.game.innerHTML.includes('쿠폰 코드를 입력해 주세요.'));assert.equal(env.context.couponCalls.length,0);
+ env=environment();recruitmentFixture(env);env.run("page='hub';settingsReturn='hub';showSettings();");
+ let couponRelease;const couponCalls=[];env.context.fetch=async(_url,args)=>{couponCalls.push(JSON.parse(args.body));return new Promise(done=>couponRelease=done);};env.setCouponCode('  WELCOME  ');const redeeming=env.context.redeemCoupon();await env.click('redeem-code');env.events.keydown({code:'Enter',target:{id:'coupon-code'},preventDefault(){}});assert.equal(couponCalls.length,1);assert.equal(couponCalls[0].code,'WELCOME');
+ const rewarded=JSON.parse(env.run('JSON.stringify(data)'));rewarded.recruitment.stardust+=1600;rewarded.couponReward={code:'WELCOME',stardust:1600,coins:200,lanternFragments:10,memoryFragments:0,characterShards:0};couponRelease({ok:true,json:async()=>rewarded});await redeeming;assert.equal(env.run('collectionBusy'),false);assert.ok(env.game.innerHTML.includes('쿠폰 보상을 받았습니다.'));assert.ok(env.game.innerHTML.includes('별가루 +1,600'));assert.equal(env.run('couponDraft'),'');
+ pass('coupons are enabled only from keep settings, reject empty input, block duplicate Enter/click requests and render returned rewards');
+
+ env.context.fetch=async()=>({ok:false,json:async()=>({error:'이미 사용한 쿠폰입니다.'})});env.setCouponCode('WELCOME');await env.context.redeemCoupon();assert.equal(env.run('couponReward'),null);assert.ok(env.game.innerHTML.includes('이미 사용한 쿠폰입니다.'));assert.ok(!env.game.innerHTML.includes('별가루 +1,600'));assert.equal(env.run('data.recruitment.stardust'),4800);
+ pass('a rejected coupon keeps the server balance and shows its actual error instead of the previous success rewards');
 }
 
 async function titleInputChecks(){
@@ -235,6 +281,7 @@ async function intentDockChecks(){
 }
 
 async function main() {
+  if(process.argv.includes('--recruitment-only')){await recruitmentChecks();console.log('TOTAL '+passed+' recruitment UI cases passed');return;}
   if(process.argv.includes('--title-only')){await titleInputChecks();console.log('TOTAL '+passed+' title input cases passed');return;}
   if(process.argv.includes('--intent-dock-only')){await intentDockChecks();console.log('TOTAL '+passed+' intent-dock cases passed');return;}
   if(process.argv.includes('--action-status-only')){candidateActionStatusChecks();console.log('TOTAL '+passed+' candidate/action status cases passed');return;}
@@ -900,6 +947,7 @@ async function main() {
   assert.equal(env.context.cancelDraws,1);assert.equal(env.run('busy'),false);assert.deepEqual(Array.from(env.context.executionModes),[true,false]);
   pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
 
+  await recruitmentChecks();
   await titleInputChecks();
   candidateActionStatusChecks();
   await intentDockChecks();

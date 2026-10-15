@@ -16,7 +16,7 @@ namespace RequiemLantern.Presentation
     public static class BattleAvatar
     {
         public const float AllyBodyHeight=220, EnemyBodyHeight=310, GroundY=700;
-        public static readonly string[] AllyArtIds={"Lian","Sera","Minato","Noa","Heidel"};
+        public static readonly string[] AllyArtIds={"Lian","Sera","Minato","Noa","Heidel","Kai"};
 
         public static Vector2 EnemyFoot(int index,int count)
         {return new Vector2(count<=1?1595:count==2?1310+350*index:1130+320*index,702);}

@@ -26,6 +26,9 @@ namespace RequiemLantern.Preview
         public string TargetId { get; set; }
         public string StageId { get; set; }
         public string ExpectedPhase { get; set; }
+        public string BannerId { get; set; }
+        public int Count { get; set; }
+        public string Code { get; set; }
         public Dictionary<string, IgniteGrade> Grades { get; set; }
     }
 
@@ -111,7 +114,13 @@ namespace RequiemLantern.Preview
                 try { action = JsonSerializer.Deserialize<ActionRequest>(body, Json); }
                 catch (JsonException) { await RespondJson(context, Snapshot("요청 형식을 확인해 주세요.", null), 400); return; }
                 string error = null; RewardData reward = null; bool persist = false;
+                RecruitmentResult recruitmentResult = null; CouponReward couponReward = null;
                 string actionName = action == null ? "" : action.Action;
+                bool collectionAction = new[] { "recruit", "redeem-code", "equip-character" }.Contains(actionName);
+                if (collectionAction && campaign.Active != null) {
+                    await RespondJson(context, Snapshot("원정을 마친 뒤 등대 요새에서 이용해 주세요.", null), 400); return;
+                }
+                var checkpoint = collectionAction || actionName == "synchronize" ? progress.Capture() : null;
                 bool battleAction = new[] { "recommend", "link", "remove", "clear", "reuse", "resolve", "next", "lantern", "restart" }.Contains(actionName);
                 if (battleAction && campaign.Active != null && (campaign.Replay || campaign.Phase != CampaignPhase.Battle)) {
                     await RespondJson(context, Snapshot("전투 스테이지의 전투 단계에서 실행해 주세요.", null), 400); return;
@@ -152,10 +161,25 @@ namespace RequiemLantern.Preview
                         else if (progress.Synchronize(action.ActorId, out error)) { persist = true; progress.ApplyToBattle(battle.State); }
                         break;
                     case "repair": if (progress.RepairKeep(out error)) persist = true; break;
+                    case "recruit":
+                        persist = progress.Recruit(action.BannerId, action.Count, out recruitmentResult, out error);
+                        break;
+                    case "redeem-code":
+                        persist = progress.RedeemCode(action.Code, out couponReward, out error);
+                        break;
+                    case "equip-character":
+                        persist = progress.EquipCharacter(action.Slot, action.ActorId, out error);
+                        break;
                     default: error = "알 수 없는 동작입니다."; break;
                 }
-                if (persist) saves.Save(progress.Data);
-                await RespondJson(context, Snapshot(error, reward), error == null ? 200 : 400); return;
+                if (persist) {
+                    try { saves.Save(progress.Data); }
+                    catch (Exception ex) when (checkpoint != null && (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)) {
+                        progress.Restore(checkpoint); progress.ApplyToBattle(battle.State); recruitmentResult = null; couponReward = null;
+                        error = "저장하지 못해 이번 요청을 취소했습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.";
+                    }
+                }
+                await RespondJson(context, Snapshot(error, reward, recruitmentResult, couponReward), error == null ? 200 : 400); return;
             }
             if (request.Method != "GET" && request.Method != "HEAD")
             { await RespondJson(context, new { error = "Method not allowed." }, 405); return; }
@@ -170,12 +194,20 @@ namespace RequiemLantern.Preview
             await ServeFile(context, System.IO.Path.Combine(root, "Preview"), path == "/" ? "index.html" : path.TrimStart('/'), new[] { ".html", ".css", ".js", ".json", ".svg", ".png", ".webp", ".ico" }, true);
         }
 
-        private static object Snapshot(string error, RewardData reward)
+        private static object Snapshot(string error, RewardData reward, RecruitmentResult recruitmentResult = null, CouponReward couponReward = null)
         {
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "click-to-start-v11",
+                application = "RequiemLantern", runtimeRevision = "recruitment-v12",
+                recruitment = new {
+                    characters = RecruitmentCatalog.Characters, banners = RecruitmentCatalog.Banners,
+                    costPerPull = RecruitmentCatalog.SingleCost, fiveStarRate = RecruitmentCatalog.FiveStarRate,
+                    hardPity = RecruitmentCatalog.HardPity, pity = progress.Data.RecruitPity,
+                    pickupGuaranteed = progress.Data.PickupGuaranteed, ownedCharacters = progress.Data.OwnedCharacters,
+                    party = progress.Data.ActiveParty, stardust = progress.Data.Stardust, characterShards = progress.Data.CharacterShards
+                },
+                recruitmentResult, couponReward,
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 campaign = new {

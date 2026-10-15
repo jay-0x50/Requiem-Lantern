@@ -209,6 +209,10 @@ internal static class CampaignTests
         });
         Test("character synchronization persists separately from level and survives factory restart",()=>{
             var progress=new ProgressService(new ProgressData{LanternFragments=50});
+            // This growth fixture explicitly owns the authored cast. Viewing a
+            // legacy growth record no longer grants ownership in production.
+            progress.Data.OwnedCharacters=RecruitmentCatalog.Characters.Select(character=>character.Id).ToList();
+            progress.Data.ActiveParty=new[]{"lian","sera","minato","noa"}.ToList();
             foreach(string id in new[]{"lian","sera","minato","heidel","noa"}){
                 True(progress.Synchronize(id,out var error));Equal(1,progress.GetCharacter(id).SyncLevel);Equal(1,progress.GetCharacter(id).Level);
             }
@@ -242,7 +246,9 @@ internal static class CampaignTests
             var failures=new List<string>();var runs=new List<string>();
             var bossRounds=new List<string>{"stage\tseed\tround\tforecasts\tallyActions\tbossDamage\tremainingBossHp\tremainingPartyHp\tsurvivors\tbrokenParts"};
             foreach(var stage in Stages.Where(s=>s.HasBattle))foreach(int seed in new[]{0,1,2}){
-                var battle=CampaignBattleFactory.Create(stage,new ProgressData(),seed);int stalemates=0;
+                // Null progress exercises the authored encounter fixtures; the
+                // real equipped starter roster is verified by RecruitmentTests.
+                var battle=CampaignBattleFactory.Create(stage,seed:seed);int stalemates=0;
                 var offeredIds=new HashSet<string>();
                 Equal(string.Join(",",stage.Party),string.Join(",",battle.State.Allies.Select(u=>u.Id)));True(battle.State.Allies.All(u=>u.SyncLevel==0&&u.Sanity==0));
                 while(battle.State.Outcome==BattleOutcome.Ongoing&&battle.State.Round<=40){

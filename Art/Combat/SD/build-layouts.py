@@ -36,6 +36,13 @@ LAYOUTS = {
         (0,512,512,512,300,998,460,849),
         (512,512,512,512,806,1005,850,735),
         (1024,512,512,512,1370,999,1260,720)]),
+    'Kai': (359, [
+        (0,0,512,512,266,462,165,385),
+        (512,0,512,512,790,462,632,210),
+        (1024,0,512,512,1260,461,1440,300),
+        (0,512,512,512,277,952,440,820),
+        (512,512,512,512,804,950,790,860),
+        (1024,512,512,512,1333,949,1270,815)]),
     'Heidel': (364, [
         (0,0,512,512,254,479,373,329),
         (512,0,512,512,763,470,626,287),
@@ -74,7 +81,7 @@ def main():
                        'alphaRange':[int(alpha.min()),int(alpha.max())],
                        'transparentFraction':round(float((alpha==0).mean()),6),'frames':checks})
     (Path(__file__).parent/'validation.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-    print('PASS: 5 transparent SD atlases, 30 unclipped frame regions, registered feet/contact points')
+    print(f'PASS: {len(LAYOUTS)} transparent SD atlases, {len(LAYOUTS)*6} unclipped frame regions, registered feet/contact points')
 
 if __name__ == '__main__':
     main()

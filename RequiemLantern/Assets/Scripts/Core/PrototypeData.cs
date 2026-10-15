@@ -11,7 +11,14 @@ namespace RequiemLantern.Core
         public static BattleState CreateBattle(ProgressData progress = null, int? seed = null)
         {
             var state = new BattleState { BattleId = Guid.NewGuid().ToString("N"), RandomSeed = seed ?? Guid.NewGuid().GetHashCode(), IsBoss = true };
-            foreach (string id in new[] { "lian", "sera", "minato", "noa" })
+            IEnumerable<string> party=new[] { "lian", "sera", "minato", "noa" };
+            if(progress!=null){
+                var collection=new ProgressService(progress);
+                if(progress.ActiveParty.Count!=PartyCapacity||new HashSet<string>(progress.ActiveParty).Count!=PartyCapacity||progress.ActiveParty.Exists(id=>!collection.IsOwned(id)))
+                    throw new InvalidOperationException("Battle party must contain four distinct owned allies.");
+                party=progress.ActiveParty;
+            }
+            foreach (string id in party)
             {
                 var growth = progress == null || progress.Characters == null ? null : progress.Characters.Find(x => x.Id == id);
                 state.Allies.Add(CreateCharacter(id, growth == null ? 0 : growth.SyncLevel));
@@ -64,12 +71,19 @@ namespace RequiemLantern.Core
                     unit.Skills.Add(Attack("heidel_crescendo", "관측의 끝", unit.Element, 3, 3, 1, 11, 15, 5, 4));
                     unit.Skills.Add(Defense("heidel_counter", "역상 보정", unit.Element, SkillKind.Counter, 18, 6, 4, 2));
                     break;
+                case "kai":
+                    unit = Ally(id, "카이", "등불지기", Element.Radiance, 115, 12);
+                    unit.Skills.Add(Attack("kai_glimmer", "등불의 흔적", unit.Element, 1, 0, 1, 12, 5, 3, 2));
+                    unit.Skills.Add(Attack("kai_signal", "귀항 신호", unit.Element, 2, 1, 1, 12, 8, 3, 2));
+                    unit.Skills.Add(Attack("kai_crescendo", "길을 여는 빛", unit.Element, 3, 2, 1, 12, 13, 4, 3));
+                    unit.Skills.Add(Defense("kai_guard", "등불 울타리", unit.Element, SkillKind.Guard, 18, 6, 4, 2));
+                    break;
                 default: throw new ArgumentException("Unknown character: " + id, "id");
             }
             unit.SyncLevel = Math.Max(0, syncLevel); return unit;
         }
 
-        public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel"; }
+        public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel" || id == "kai"; }
         private static UnitState Ally(string id, string name, string role, Element element, int hp, int speed)
         { return new UnitState { Id = id, Name = name, Role = role, Portrait = id, Element = element, Hp = hp, MaxHp = hp, Speed = speed, Sanity = 0 }; }
         private static SkillData Attack(string id, string name, Element element, int number, int cost, int slots, int speed, int basePower, int flamePower, int flames)

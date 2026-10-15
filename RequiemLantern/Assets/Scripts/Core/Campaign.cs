@@ -107,7 +107,9 @@ namespace RequiemLantern.Core
             var state = PrototypeData.CreateBattle(progress, seed);
             state.StageId = stage.Id; state.StageName = stage.Number + "  " + stage.Title;
             state.IsBoss = stage.IsBoss;
-            state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
+            // Authored parties describe story participation. Explicit player
+            // progress supplies the owned/equipped roster used by real battles.
+            if(progress==null)state.Allies = stage.Party.Select(id => PrototypeData.CreateCharacter(id)).ToList();
             BattleRules.ApplyActionProgression(state);
             if(progress != null)new ProgressService(progress).ApplyToBattle(state);
             var enemy=state.Enemies[0];enemy.Name=stage.EnemyName;enemy.Portrait=stage.EnemyArt;enemy.IsHuman=stage.HumanEnemy;
@@ -121,8 +123,8 @@ namespace RequiemLantern.Core
                 foe.IntentProfile=foe==enemy?stage.BattleProfile:"skirmish";
                 foe.Element=stage.HumanEnemy?Element.Frost:Element.Shadow;
                 int hp=stage.IsBoss?260+stage.Chapter*20:stage.EnemyCount>1?48+stage.Chapter*7:105+stage.Chapter*22;
-                if(state.Allies.Count==1)hp=65;
-                else if(state.Allies.Count==2)hp=Math.Min(hp,55);
+                if(stage.Party.Length==1)hp=65;
+                else if(stage.Party.Length==2)hp=Math.Min(hp,55);
                 foe.Hp=foe.MaxHp=hp;foe.Attack=stage.EnemyCount>1?7:9;foe.Defense=1;foe.Speed=11;
                 foe.Rift=foe.MaxRift=stage.IsBoss?100:stage.EnemyCount>1?32+stage.Chapter*3:55+stage.Chapter*5;
                 foe.Parts[0].Hp=foe.Parts[0].MaxHp=stage.IsBoss?48:26;

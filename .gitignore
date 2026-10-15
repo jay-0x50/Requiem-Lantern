@@ -29,6 +29,8 @@ QA/**/*.xml
 QA/**/*.xml.bak
 QA/**/*.log
 QA/**/*.pid
+QA/**/*.tmp
+QA/**/UserBackup/
 QA/**/preview-before.json
 QA/**/audio-resource-inventory.json
 # Suno Free trial downloads are local listening candidates.

@@ -48,7 +48,7 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"||argument=="--recruitment-smoke"||argument=="--coupon-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
@@ -63,7 +63,7 @@ namespace RequiemLantern.Presentation
                 if(Input.GetKeyDown(KeyCode.Space))NextStory();
             }
             if(Input.GetKeyDown(KeyCode.Escape)&&page!="title"&&page!="resolve"){
-                if(overlay)Destroy(overlay.gameObject);else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
+                if(overlay){if(page=="recruitment")DismissRecruitmentOverlay();else CloseRecruitmentOverlay();}else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
             }
         }
         bool Persist() { try { save.Save(progress.Data); return true; } catch(Exception e) { Notify("저장하지 못했습니다. 저장 공간을 확인해 주세요."); Debug.LogException(e); return false; } }

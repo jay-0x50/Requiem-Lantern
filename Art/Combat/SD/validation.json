@@ -180,6 +180,51 @@
     ]
   },
   {
+    "id": "Kai",
+    "png": "RequiemLantern\\Assets\\Resources\\Combat\\KaiSDActions.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.696171,
+    "frames": [
+      {
+        "pose": 0,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 61589
+      },
+      {
+        "pose": 1,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 73740
+      },
+      {
+        "pose": 2,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 72132
+      },
+      {
+        "pose": 3,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 71212
+      },
+      {
+        "pose": 4,
+        "edgeAlphaMax": 1,
+        "visiblePixels": 62788
+      },
+      {
+        "pose": 5,
+        "edgeAlphaMax": 0,
+        "visiblePixels": 60272
+      }
+    ]
+  },
+  {
     "id": "Heidel",
     "png": "RequiemLantern\\Assets\\Resources\\Combat\\HeidelSDActions.png",
     "size": [

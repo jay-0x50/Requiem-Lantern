@@ -10,5 +10,6 @@
   <ItemGroup>
     <Compile Include="../RequiemLantern/Assets/Scripts/Core/*.cs" Link="Core/%(Filename)%(Extension)" />
     <Compile Include="CoreTests.cs" />
+    <Compile Include="RecruitmentTests.cs" />
   </ItemGroup>
 </Project>

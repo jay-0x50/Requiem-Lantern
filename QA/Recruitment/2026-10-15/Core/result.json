@@ -1,0 +1,40 @@
+{
+  "date":"2026-10-15",
+  "status":"PASS",
+  "core":{"tests":84,"existingTests":69,"recruitmentTests":15,"command":"dotnet run --project Tests/CoreTests.csproj --configuration Release"},
+  "campaign":{"tests":21,"command":"dotnet run --project Tests/CampaignTests.csproj --configuration Release"},
+  "starterParty":["lian","minato","heidel","kai"],
+  "starterRarities":[5,4,4,4],
+  "actualPlayerBattleValidation":{"battles":25,"seed":0,"victories":25,"roundRange":[2,8],"evidence":"starter-balance-runs.txt"},
+  "authoredBattleValidation":{"battles":25,"seeds":[0,1,2],"runs":75,"victories":75,"evidence":"authored-balance-runs.txt"},
+  "factoryContract":{
+    "explicitProgress":"Prototype and campaign battles validate and use exactly four distinct owned characters in ActiveParty. Equipped order survives restart, and newly acquired characters can be equipped and used immediately.",
+    "nullProgress":"Retains the original standalone prototype or authored stage-party fixtures for content and battle-rule checks. This path does not represent a player's collection.",
+    "earlyEnemyBalance":"The authored stage.Party length still controls solo/two-person tutorial enemy HP adjustments, even when a player's actual equipped party contains four characters."
+  },
+  "recruitmentChecks":[
+    "Fresh collections explicitly own one five-star and three four-star starters; growth queries do not add ownership or growth entries.",
+    "Unknown/unowned synchronization and party requests reject atomically; four distinct owned characters are required; selecting an already equipped character swaps positions.",
+    "Both test coupons normalize whitespace and case, redeem once per save, and reject duplicates, unknown codes and overflow without mutation.",
+    "Five-star chance uses the strict 0.008 boundary and featured selection uses the strict 0.5 boundary.",
+    "Pull 79 may remain four-star, pull 80 forces five-star, and an earlier five-star resets pity.",
+    "An off-banner five-star guarantees the next five-star on the currently selected banner, including after a banner switch and intervening four-star pulls.",
+    "Non-featured five-star pool intervals are equal and exclude the featured character; every four-star has an equal pool interval.",
+    "Ten pulls apply pity resets and guarantee consumption after each intermediate result, including two five-stars in one batch.",
+    "Duplicate four-stars grant 20 common shards, duplicate five-stars grant 100, and duplicates do not synchronize characters automatically.",
+    "Invalid requests, insufficient funds, shard overflow and invalid injected RNG samples leave all persisted fields unchanged.",
+    "The recruitment-only persisted RNG survives save/reload and is unchanged by battle creation/restart or banner queries.",
+    "Old XML growth, levels, synchronization, currencies and campaign clears survive migration; old auto-created growth records do not imply ownership; the collection migration runs once.",
+    "Capture/Restore deep-clones the entire save. A real filesystem save failure rolls back currency, collection, pity, guarantee and RNG; retrying produces the same result.",
+    "The actual starter party clears every authored battle at fixed seed zero."
+  ],
+  "integrationAudit":{
+    "mode":"Read-only; no additional integration code changes or broad reruns.",
+    "host":"Reviewed serialized action gate, capture, service calls, save success, and restoration/result removal after storage errors. New snapshots read the authoritative catalog, collection, pity, guarantee and equipped party.",
+    "native":"Reviewed owned-only actions, swap behavior, result overlay/busy duplicate prevention, save-before-result, rollback, and creation of a new battle from the equipped save roster.",
+    "preview":"Reviewed authoritative DTO use, owned-only controls, duplicate-click guards, save-error result handling, party swaps and new battle flow.",
+    "reportedIssue":"Preview stage detail used authored stage.party for its displayed departure roster. The browser owner changed it to recruitment.party, added a targeted check, and reported PASS; the corrected source was confirmed by this read-only audit. Native already displayed ActiveParty.",
+    "unresolvedOwnershipOrPersistenceIssues":"None found in the reviewed integration paths."
+  },
+  "scope":"No commit, external transmission or user-save modification by this Core task. API HTTP verification is owned by the root and recorded separately."
+}

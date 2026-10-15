@@ -1,0 +1,87 @@
+{
+  "runtimeRevision": "recruitment-v12",
+  "port": 8128,
+  "fixture": {
+    "owned": [
+      "lian",
+      "minato",
+      "heidel",
+      "kai"
+    ],
+    "party": [
+      "lian",
+      "minato",
+      "heidel",
+      "kai"
+    ],
+    "pity": 79,
+    "pickupGuaranteed": true,
+    "stardust": 0,
+    "randomState": 1234567
+  },
+  "checks": {
+    "baseFiveStarRate": "0.8%",
+    "featuredRateBeforeGuarantee": "0.4%",
+    "otherFiveStarRate": "0.2%",
+    "eachFourStarRate": "33.0667%",
+    "bannerSwitchPreservesGuarantee": true,
+    "insufficientCurrencyDisablesBothPulls": true,
+    "unownedSera": {
+      "rarity": 5,
+      "syncEnabled": false,
+      "equipEnabled": false,
+      "mainStoryVisible": true
+    },
+    "currencyCoupon": {
+      "code": "LANTERN-TEST-9999999",
+      "stardust": 9999999,
+      "coins": 9999999,
+      "duplicateError": "이미 사용한 쿠폰입니다."
+    },
+    "guaranteedSingle": {
+      "character": "noa",
+      "rarity": 5,
+      "isNew": true,
+      "cost": 160,
+      "balanceAfter": 9999839,
+      "pityAfter": 0,
+      "guaranteedAfter": false
+    },
+    "tenPull": {
+      "cost": 1600,
+      "fourStarDuplicates": 9,
+      "fiveStarDuplicates": 1,
+      "fiveStarName": "리안",
+      "shardsAwarded": 280,
+      "balanceAfter": 9998239
+    },
+    "equippedPartyAfterReload": [
+      "lian",
+      "noa",
+      "heidel",
+      "kai"
+    ],
+    "sortiePreviewMatchesParty": true,
+    "battlePartyMatchesParty": true,
+    "kaiAtlasDuringMelee": "/combat/KaiSDActions.png",
+    "kaiPoseObserved": "approach / frame 0",
+    "nextPlanningRound": 2,
+    "materialsCoupon": {
+      "code": "LANTERN-MATERIALS",
+      "lanternFragments": 9999999,
+      "memoryFragments": 9999999,
+      "characterShards": 9999999
+    },
+    "couponStatusVisibleAboveFooter": true,
+    "titleCouponInputDisabled": true,
+    "consoleErrors": []
+  },
+  "tests": {
+    "preview": 100,
+    "recruitmentSubset": 7,
+    "combatFx": 49,
+    "realSdActors": 6,
+    "directedPhysicalContacts": 12
+  },
+  "user8127Untouched": true
+}

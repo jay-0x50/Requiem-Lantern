@@ -600,7 +600,7 @@ internal static class CoreTests
             var data=new ProgressData();data.Characters.Add(new CharacterProgress{Id="lian",SyncLevel=1});
             var b=BattleEngine.CreatePrototype(data,99);string initial=BagTrace(b.Unit("lian"));
             b.RecommendLinks();b.ResolveRound();b.Restart();Equal(initial,BagTrace(b.Unit("lian")));Equal(1,b.Unit("lian").SyncLevel);
-            Equal(1,Bag(b.Unit("lian")).Count(x=>x=="lian_crescendo"));Equal(0,Bag(b.Unit("sera")).Count(x=>x=="sera_crescendo"));
+            Equal(1,Bag(b.Unit("lian")).Count(x=>x=="lian_crescendo"));Equal(0,Bag(b.Unit("minato")).Count(x=>x=="minato_care"));
         });
         Test("motion events identify numbered skill and retain actual winning flames", () => {
             var b=Fixture(6,6,1,new ScriptedRandom(0,.99,0,.99));Link(b);b.ResolveRound();
@@ -614,6 +614,7 @@ internal static class CoreTests
             True(CampaignCatalog.Get("c1s02").Before.Any(x => x.IsPrototype)); True(CampaignCatalog.Get("c1s07").Before.Any(x => x.Speaker == "미나토"));
             False(CampaignCatalog.Get("c1s01").Before.Any(x => x.Text.Contains("실험체")));
         });
+        passed+=RecruitmentTests.Run();
         Console.WriteLine("PASS: " + passed + " tests");
     }
 
