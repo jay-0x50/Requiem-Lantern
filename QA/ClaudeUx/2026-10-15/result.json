@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-15",
+  "result": "PASS",
+  "review": "review.json",
+  "unity": {
+    "sourceCompile": "PASS",
+    "windowsBuild": "PASS",
+    "actualExecutionExitCode": 0,
+    "freshScreenshots": 10,
+    "evidence": ["Unity/smoke-result.txt", "Unity/font-layout-check.json"],
+    "checkedStates": [
+      "후보 2장과 행동 1회의 구분",
+      "예약·편집·방어·해제와 남은 행동 갱신",
+      "동기화 3스킬의 행동 1개 소비",
+      "다음 턴 카드 전량 교체와 추가 행동 개방",
+      "이동 이름표와 표시 HP가 배우를 따라감",
+      "피해와 효과음은 접촉 순간 한 번",
+      "진영별 점화 수치와 HP 바가 겹치지 않음",
+      "다음 계획 턴·움직임 간소화·중도 화면 전환 후 복원",
+      "완료한 이야기와 전투의 재감상·재출격 안내"
+    ]
+  },
+  "preview": {
+    "actionStatusChecks": "4 PASS",
+    "existingCombatFxChecks": "43 PASS",
+    "actorLabelChecks": "4 PASS",
+    "actualChrome": "PASS",
+    "evidence": [
+      "Browser/qa-result.json",
+      "Browser/actor-label-qa.json",
+      "Browser/action-status-regression.txt",
+      "Browser/actor-label-regression.txt"
+    ],
+    "checkedStates": [
+      "1라운드 후보 2장·남은 행동 1/1",
+      "예약 후 후보 2장·남은 행동 0/1",
+      "2라운드 리안 남은 행동 2/2",
+      "노아 포함 파티에서 세라의 두 번째 적 맞불",
+      "이동 이름표는 FX의 현재 HP 캐시를 사용",
+      "다음 계획 턴 이동 이름표 제거와 고정 HUD 복원"
+    ]
+  },
+  "userSaveModified": false,
+  "qaServersStopped": true,
+  "priorCampaignEvidence": "../../VoyageCombat/2026-10-15/검증결과.md"
+}

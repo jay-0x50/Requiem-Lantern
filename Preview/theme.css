@@ -494,6 +494,13 @@
 .party-number{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-right:5px;border:1px solid #b99c6766;color:#ddc18b;font-size:10px;font-style:normal;line-height:1;vertical-align:1px}
 .fighter-title strong{white-space:nowrap}.fighter-title .party-number{width:13px;height:13px;font-size:9px;margin-right:3px;vertical-align:0}
 
+/* Offered choices and available actions are distinct; keep both visible. */
+.fighter>.deck-status{display:block;height:14px;margin:0;font-size:11px;line-height:14px;color:#d5c29d;letter-spacing:0;white-space:nowrap}
+.battle .fighter-cards{height:78px}
+#game .fighter-cards .skill-card{height:78px;padding:6px 9px 4px;gap:1px}
+.battle .fighter-identity{height:48px}.battle .dock-portrait{width:46px;height:46px}
+.battle .battle-prediction{top:275px}
+
 /* A chart of known coastal memories, carried aboard the lantern vessel. */
 .stages{background:linear-gradient(90deg,#06121b55,transparent 66%,#060c15b3)}
 .stages .chapter-tabs{z-index:2}.stages .campaign-heading{top:223px}.stages .campaign-heading p{font-size:14px;color:#c6d2cc;margin-top:10px}

@@ -34,7 +34,7 @@ namespace RequiemLantern.Presentation
             };
             Application.logMessageReceived+=onLog;
             var watchdog=StartCoroutine(SmokeWatchdog());
-            var steps=new Stack<IEnumerator>();steps.Push(SmokeSteps());
+            var steps=new Stack<IEnumerator>();steps.Push(Environment.GetCommandLineArgs().Contains("--ux-smoke")?SmokeUxSteps():SmokeSteps());
             try {
                 // Drive nested enumerators ourselves so errors inside Capture/SmokeSteps
                 // produce a failure marker and exit code instead of silently ending a coroutine.
@@ -69,6 +69,164 @@ namespace RequiemLantern.Presentation
             try {if(!string.IsNullOrEmpty(smokeDirectory))File.WriteAllText(Path.Combine(smokeDirectory,"smoke-result.txt"),"FAIL: "+smokePhase+"\n"+error+"\n");}
             catch(Exception){ }
             Debug.LogException(error);Application.Quit(1);
+        }
+        IEnumerator SmokeUxSteps()
+        {
+            var args=Environment.GetCommandLineArgs();int captureIndex=Array.IndexOf(args,"--capture-dir");
+            string directory=captureIndex>=0&&captureIndex+1<args.Length?args[captureIndex+1]:Path.Combine(Application.persistentDataPath,"QA");
+            Directory.CreateDirectory(directory);smokeDirectory=directory;smokePhase="candidate/action balance UX";smokeDeadline=Time.realtimeSinceStartup+60;
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"RUNNING: candidate/action balance UX.\n");
+            save=new SaveStore(Path.Combine(directory,"smoke-progress.xml"));progress=new ProgressService(new ProgressData());
+            assisted=true;autoMode=false;reducedMotion=false;toastText="";toastUntil=0;
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,17);
+            foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))unit.Hp=unit.MaxHp=5000;
+            PrepareBattlePresentation();var actor=battle.Unit("lian");
+            AssertUxActionBalance(actor,1,1);
+            if(!screen.Find("Battle instruction").GetComponent<Text>().text.Contains("매 턴 후보 2장 새로 추첨 · 미사용 카드도 교체")
+                ||battle.State.Allies.Any(unit=>unit.SkillHand.Count!=2))throw new Exception("Fresh two-card choices were not explained independently of actions.");
+            yield return Capture(directory,"01-round1-two-choices-one-action");
+            var first=actor.SkillHand[0];SelectOfferedCard(actor.Id,first.Id,false);Target(battle.State.Enemies[0].Id);
+            AssertUxActionBalance(actor,0,1);
+            if(actor.SkillHand.Count!=2||battle.State.Links.Count!=1)throw new Exception("Reserving one action consumed the other offered choice.");
+            yield return Capture(directory,"02-round1-action-reserved");
+            SelectOfferedCard(actor.Id,actor.SkillHand[1].Id,false);Target(battle.State.Enemies[0].Id);AssertUxActionBalance(actor,0,1);
+            if(battle.State.Links.Count!=1)throw new Exception("Editing a reservation counted a second action.");
+            SelectDefense(actor.Id,false);Target(actor.Id);AssertUxActionBalance(actor,0,1);
+            battle.RemoveLink(actor.Id,0);DrawBattle();AssertUxActionBalance(actor,1,1);
+            // A synchronized S3 occupies the same one-action capacity for every
+            // party member; the display counts reserved actions, not card rank.
+            foreach(var owner in battle.State.Allies){
+                var previous=owner.SkillHand[0];int sync=owner.SyncLevel;owner.SyncLevel=1;
+                var third=owner.Skills.First(skill=>skill.Number==3);string cardId="ux-s3-"+owner.Id;
+                owner.SkillHand[0]=new SkillCard{Id=cardId,SkillId=third.Id};DrawBattle();
+                screen.Find("Skill card "+cardId).GetComponent<Button>().onClick.Invoke();Target(third.Kind==SkillKind.Heal?owner.Id:battle.State.Enemies[0].Id);
+                AssertUxActionBalance(owner,0,1);
+                if(third.Slots!=1||battle.State.Links.Count!=1)throw new Exception("S3 action balance used its skill rank as its action cost.");
+                battle.ClearLinks();owner.SyncLevel=sync;owner.SkillHand[0]=previous;
+            }
+            var oldCards=battle.State.Allies.SelectMany(owner=>owner.SkillHand).Select(card=>card.Id).ToArray();
+            foreach(var owner in battle.State.Allies){SelectDefense(owner.Id);Target(owner.Id);}
+            battle.ResolveRound(IgniteGrade.Good);battle.BeginNextRound();SelectSlot(actor.Id,0);AssertUxActionBalance(actor,2,2);
+            if(battle.State.Allies.Any(owner=>owner.SkillHand.Count!=2||owner.SkillHand.Any(card=>oldCards.Contains(card.Id))))
+                throw new Exception("New-turn action balance was paired with stale candidate CardIds.");
+            var nextCard=actor.SkillHand[0];SelectOfferedCard(actor.Id,nextCard.Id,false);Target(battle.State.Enemies[0].Id);AssertUxActionBalance(actor,1,2);
+            yield return Capture(directory,"03-round2-one-action-remaining");
+            // An unrelated fallen ally has no usable remaining actions, even
+            // though its stored progression capacity still describes this round.
+            var fallen=battle.Unit("noa");fallen.Hp=0;
+            if(RemainingActions(fallen)!=0)throw new Exception("An incapacitated ally still reported usable actions.");
+            fallen.Hp=fallen.MaxHp;
+            yield return SmokeUxCombatAndHistory(directory);
+            foreach(string shot in new[]{"01-round1-two-choices-one-action","02-round1-action-reserved","03-round2-one-action-remaining"})
+                if(!FreshSmokeScreenshot(Path.Combine(directory,shot+".png")))throw new Exception("UX smoke screenshot was stale or missing: "+shot);
+            File.WriteAllText(Path.Combine(directory,"smoke-result.txt"),"PASS: 10 fresh UI screenshots. Round 1 displayed two candidate cards per living ally and selected ally remaining actions 1/current 1; reserving an attack changed the balance to 0/1 while both choices remained visible. Replacing the reservation, selecting defense and removing the link updated the balance without double counting. Every standard-party synchronized S3 reserved one action on round 1. Round 2 replaced all old CardIds, opened Lian's second action, displayed 2/2 before reservation and 1/2 afterward. An incapacitated ally reported zero remaining actions. Direct selection without redraw refreshed the same summary. Header explicitly explained that both candidates are newly drawn each turn and unused cards are replaced. Normal candidate captions identified the assigned numbered slot rather than implying a multi-action cost.\nActual Sera interception/clash/attack: fixed ally name/HP labels faded to 18%; both moving identities and displayed HP followed the exact performer feet through the same foreground transform. Clash kept HP unchanged; damage and its identity label changed together once at contact with one contact sound. The flame panel began below the header and enemy HP bars; gold/purple power values sat on the same local coordinates to the left of their own flame group. Next planning restored the fixed labels, HP bars and dock. Reduced-motion identities remained attached with identity zoom; navigation during melee disposed the old foreground labels and a new planning screen restored full HUD opacity. Selecting a completed story offered replay without claiming another stage would open; completed battle copy described replay without repeated first-clear rewards. Existing input, costs, affinities and progression rules were unchanged.\n");
+            Debug.Log("REQUIEM_LANTERN_UX_SMOKE_PASS");Application.Quit(0);
+        }
+        void AssertUxActionBalance(UnitState actor,int remaining,int capacity)
+        {
+            string expected=actor.Name+" · 남은 행동 "+remaining+" / 현재 "+capacity;
+            var summary=screen.Find("Skill selection").GetComponent<Text>();
+            if(RemainingActions(actor)!=remaining||selectedActor!=actor.Id||summary.text!=expected||summary.fontSize!=19)
+                throw new Exception("Selected ally action balance disagreed with its live reservations: "+expected);
+            if(!screen.Find("Selected skill name").GetComponent<Text>().text.StartsWith("행동 "+(selectedSlot+1)+" · ",StringComparison.Ordinal))
+                throw new Exception("Focused skill no longer identified the action being edited.");
+        }
+        void PrepareUxSeraDuel(bool simple)
+        {
+            campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data,17);
+            foreach(var unit in battle.State.Allies.Concat(battle.State.Enemies))unit.Hp=unit.MaxHp=5000;
+            foreach(var intent in battle.State.Intents){intent.BasePower=1;intent.FlamePower=1;intent.FlameCount=1;}
+            var actor=battle.Unit("sera");foreach(var skill in actor.Skills.Where(skill=>skill.Kind==SkillKind.Attack)){skill.BasePower=20;skill.FlamePower=4;}
+            reducedMotion=simple;PrepareBattlePresentation();
+            SelectOfferedCard(actor.Id,actor.SkillHand[0].Id);Target(battle.State.Intents.First(intent=>intent.Kind==IntentKind.Normal).Id);
+        }
+        void AssertUxMovingIdentity(CombatPhaseMarker marker)
+        {
+            var actor=battle.Unit(marker.ActorId);var target=battle.Unit(marker.TargetId);int facing=actor.IsEnemy?-1:1;
+            if(!marker.ActorIdentity||!marker.TargetIdentity||marker.ActorIdentity.transform.parent!=marker.Attacker.transform.parent
+                ||marker.TargetIdentity.transform.parent!=marker.Defender.transform.parent)throw new Exception("An active identity did not share its moving performer's camera layer.");
+            if(marker.ActorIdentity.rectTransform.anchoredPosition!=ToMesh(marker.ActorFoot+new Vector2(facing>0?-262:12,15))
+                ||marker.TargetIdentity.rectTransform.anchoredPosition!=ToMesh(marker.DefenderFoot+new Vector2(facing>0?12:-262,15)))
+                throw new Exception("A moving name/HP identity drifted from its actual actor's planted foot.");
+            if(marker.ActorIdentity.text!=actor.Name+" · "+visibleHealth[actor.Id]+"/"+actor.MaxHp
+                ||marker.TargetIdentity.text!=target.Name+" · "+visibleHealth[target.Id]+"/"+target.MaxHp)
+                throw new Exception("A moving identity displayed the wrong character or future health.");
+            foreach(var ally in battle.State.Allies)foreach(string suffix in new[]{" battlefield name"," field HP track"," field HP fill"})
+                if(Mathf.Abs(screen.Find(ally.Id+suffix).GetComponent<CanvasGroup>().alpha-.18f)>.001f)throw new Exception("Fixed ally HUD competed with the active moving identities.");
+        }
+        void AssertUxPlanningRestored()
+        {
+            if(page!="battle"||resolving||overlay||battleDockRetracted)throw new Exception("Planning retained the previous resolution foreground or retracted tray.");
+            foreach(var ally in battle.State.Allies)foreach(string suffix in new[]{" battlefield name"," field HP track"," field HP fill"}){
+                var group=screen.Find(ally.Id+suffix).GetComponent<CanvasGroup>();
+                if(group&&group.alpha<.99f)throw new Exception("Planning retained a faded ally name/HP bar.");
+            }
+        }
+        IEnumerator SmokeUxCombatAndHistory(string directory)
+        {
+            smokePhase="moving identities, flame ownership and completed story";smokeDeadline=Time.realtimeSinceStartup+60;
+            PrepareUxSeraDuel(false);
+            foreach(var owner in battle.State.Allies)foreach(var card in owner.SkillHand){
+                var reservation=battle.State.Links.FirstOrDefault(link=>link.CardId==card.Id);var node=screen.Find("Skill card "+card.Id);
+                if(reservation==null&&node.GetComponent<Button>().interactable&&!node.Find("Card reservation").GetComponent<Text>().text.Contains("번 칸 배정"))
+                    throw new Exception("An unreserved card confused its assigned slot number with an action cost.");
+            }
+            int healthBefore=visibleHealth.Values.Sum(),damageBefore=-1,damageAfter=-1;CombatPhaseMarker damageMarker=null;
+            bool rollSeen=false,clashSeen=false,damageSeen=false;StartCoroutine(Resolve());
+            while(resolving||page=="resolve"){
+                if(Time.realtimeSinceStartup>smokeDeadline)throw new TimeoutException("UX duel did not return to planning.");
+                if(activeFlameRoll&&!rollSeen){
+                    var reveal=activeFlameRoll.GetComponent<FlameRevealMarker>();
+                    if(reveal&&reveal.Revealed==reveal.Total){
+                        if(activeFlameRoll.anchoredPosition!=new Vector2(540,-220)||activeFlameRoll.sizeDelta!=new Vector2(840,138))throw new Exception("Flame judgement overlapped the header or enemy health row.");
+                        foreach(var id in new[]{"sera",battle.State.Enemies[0].Id}){
+                            var power=activeFlameRoll.Find("Roll power "+id).GetComponent<Text>();var icon=activeFlameRoll.Find("Flame "+id+" 0").GetComponent<RectTransform>();
+                            if(power.color!=(battle.Unit(id).IsEnemy?Violet:Gold)||power.rectTransform.anchoredPosition.y!=-34
+                                ||power.rectTransform.anchoredPosition.x+power.rectTransform.sizeDelta.x>=icon.anchoredPosition.x)
+                                throw new Exception("A power value was not visibly grouped and colored with its own flames.");
+                        }
+                        if(visibleHealth.Values.Sum()!=healthBefore)throw new Exception("Health changed before the first clash completed.");
+                        yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"04-flame-power-ownership");rollSeen=true;
+                    }
+                }
+                foreach(var marker in overlay?overlay.GetComponentsInChildren<CombatPhaseMarker>():new CombatPhaseMarker[0]){
+                    if(marker.ActorId!="sera")continue;
+                    AssertUxMovingIdentity(marker);
+                    if(marker.Clash&&marker.Phase=="contact"&&!clashSeen){
+                        if(marker.ContactSoundCount!=1||visibleHealth.Values.Sum()!=healthBefore)throw new Exception("A clash damaged health or replayed its contact sound.");
+                        yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"05-clash-moving-identities");clashSeen=true;
+                    }
+                    if(!marker.Clash&&damageMarker==null&&marker.Phase=="windup"){damageMarker=marker;damageBefore=visibleHealth[marker.TargetId];}
+                    if(marker==damageMarker&&marker.Phase=="contact"&&!damageSeen){
+                        int amount=lastPresentedEvents.First(e=>e.Type=="Damage"&&e.ActorId=="sera").Amount;damageAfter=damageBefore-amount;
+                        if(marker.ContactSoundCount!=1||visibleHealth[marker.TargetId]!=damageAfter)throw new Exception("Attack health did not change exactly once at visible contact.");
+                        yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"06-impact-moving-identities");damageSeen=true;
+                    }
+                    if(marker==damageMarker&&damageSeen&&visibleHealth[marker.TargetId]!=damageAfter)throw new Exception("Health changed again during this attack's recoil.");
+                }
+                yield return null;
+            }
+            if(!rollSeen||!clashSeen||!damageSeen)throw new Exception("UX duel missed the roll, clash or impact acceptance point.");
+            AssertUxPlanningRestored();yield return Capture(directory,"07-planning-hud-restored");
+            PrepareUxSeraDuel(true);StartCoroutine(Resolve());bool simpleSeen=false;
+            while(!simpleSeen){
+                if(Time.realtimeSinceStartup>smokeDeadline)throw new TimeoutException("Reduced-motion UX duel never presented its actor.");
+                var marker=overlay?overlay.GetComponentsInChildren<CombatPhaseMarker>().FirstOrDefault(value=>value.ActorId=="sera"):null;
+                if(marker){
+                    AssertUxMovingIdentity(marker);if(marker.FocusScale!=1||marker.FocusOffset!=Vector2.zero)throw new Exception("Reduced-motion identity moved through a camera zoom.");
+                    yield return new WaitForEndOfFrame();WriteSmokeScreenshot(directory,"08-reduced-motion-identities");simpleSeen=true;
+                }else yield return null;
+            }
+            ShowHub();yield return new WaitForSecondsRealtime(.15f);PrepareUxSeraDuel(false);AssertUxPlanningRestored();
+            yield return Capture(directory,"09-cancel-planning-restored");
+            campaign.Exit();progress=new ProgressService(new ProgressData());var chapter=CampaignCatalog.Chapters[0];
+            CampaignRules.Complete(progress.Data,chapter.Stages[0]);selectedChapter=1;selectedStage=chapter.Stages[0].Id;ShowStages();
+            if(!screen.Find("Stage availability").GetComponent<Text>().text.Contains("완료한 항해 기록입니다. 이야기를 다시 읽을 수 있습니다."))throw new Exception("A completed story incorrectly promised to unlock another stage.");
+            yield return Capture(directory,"10-completed-story-replay");
+            CampaignRules.Complete(progress.Data,chapter.Stages[1]);selectedStage=chapter.Stages[1].Id;ShowStages();
+            if(!screen.Find("Stage availability").GetComponent<Text>().text.Contains("최초 보상은 중복 지급되지 않습니다"))throw new Exception("A completed battle replay did not explain its first-clear reward policy.");
+            foreach(string shot in new[]{"04-flame-power-ownership","05-clash-moving-identities","06-impact-moving-identities","07-planning-hud-restored","08-reduced-motion-identities","09-cancel-planning-restored","10-completed-story-replay"})
+                if(!FreshSmokeScreenshot(Path.Combine(directory,shot+".png")))throw new Exception("An additional UX screenshot was missing or stale: "+shot);
         }
         IEnumerator SmokeSteps()
         {

@@ -92,7 +92,7 @@ namespace RequiemLantern.Presentation
             string action=archive?hasStory?"이야기 다시 읽기 →":"전투 기록":selected.Kind==StageKind.Story?wasCleared?"이야기 다시 읽기 →":"이야기 시작 →":wasCleared?"다시 출격 →":"스테이지 시작 →";
             var enter=Button(screen,"Enter stage",action,1350,827,470,74,()=>EnterCampaignStage(selected.Id,archive||selected.Kind==StageKind.Story&&wasCleared),true);
             enter.interactable=archive?wasCleared&&hasStory:canEnter;
-            string detail=archive?hasStory?"완료한 이야기를 다시 펼칩니다.":"대화가 없는 전투 스테이지입니다.":selected.HasBattle?"전투 승리와 후속 대화 후 다음 구간이 열립니다.":"이야기를 읽거나 건너뛰면 다음 구간이 열립니다.";
+            string detail=archive?hasStory?"완료한 이야기를 다시 펼칩니다.":"대화가 없는 전투 스테이지입니다.":wasCleared?selected.HasBattle?"완료한 항해 기록입니다. 다시 출격해도 최초 보상은 중복 지급되지 않습니다.":"완료한 항해 기록입니다. 이야기를 다시 읽을 수 있습니다.":selected.HasBattle?"전투 승리와 후속 대화 후 다음 구간이 열립니다.":"이야기를 읽거나 건너뛰면 다음 구간이 열립니다.";
             Label(screen,"Stage availability",detail,1349,923,468,58,18,Muted,TextAnchor.MiddleCenter);
             Footer(archive?"완료한 기항지의 대화 다시 보기 · 다시 읽기는 보상을 지급하지 않습니다":"귀항호에서 항로·상륙 동선 확인 → 기항지 선택 · 완료한 구간과 다음 기항지만 표시합니다");
         }

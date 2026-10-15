@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-15",
+  "isolatedPort": 8128,
+  "scenario": "3-6 Sera attacks enemy_2 while Noa remains in the fourth original party position",
+  "movingActors": [
+    {
+      "hp": "110 / 110",
+      "name": "세라",
+      "owner": "sera",
+      "x": 842.5352172851562,
+      "y": 585.20947265625
+    },
+    {
+      "hp": "69 / 69",
+      "name": "그림자 군체 1",
+      "owner": "enemy_2",
+      "x": 1148.21875,
+      "y": 498.7137756347656
+    }
+  ],
+  "originalLabelsDuringExchange": [
+    {
+      "name": "1리안",
+      "opacity": "0.18"
+    },
+    {
+      "name": "2세라",
+      "opacity": "0.18"
+    },
+    {
+      "name": "3미나토",
+      "opacity": "0.18"
+    },
+    {
+      "name": "4노아",
+      "opacity": "0.18"
+    }
+  ],
+  "originalLabelsNextPlanning": [
+    {
+      "name": "1리안",
+      "opacity": "1"
+    },
+    {
+      "name": "2세라",
+      "opacity": "1"
+    },
+    {
+      "name": "3미나토",
+      "opacity": "1"
+    },
+    {
+      "name": "4노아",
+      "opacity": "1"
+    }
+  ],
+  "movingLabelsNextPlanning": 0,
+  "flamePanel": {
+    "logicalBounds": {
+      "left": 450,
+      "top": 183.33333333333334,
+      "width": 700
+    },
+    "layout": "Ally left in gold, enemy right in purple. Each power is aligned immediately before its own lamps.",
+    "visualCheck": "04-actor-labels-central-roll-b.jpg shows the central panel clear of the header and visible actor HP."
+  },
+  "automated": {
+    "existingFxCases": 43,
+    "focusedActorLabelCases": 4
+  },
+  "completedStoryStatus": "Already branches to 완료한 이야기 for a cleared stage; unchanged.",
+  "evidence": [
+    "04-actor-labels-central-roll-b.jpg",
+    "05-actor-labels-planning-restored.jpg",
+    "actor-label-regression.txt"
+  ],
+  "consoleErrors": [],
+  "scope": "Presentation labels and flame panel layout only. Rules, animation timing, and single contact damage/sound remain unchanged.",
+  "cleanup": "Agent QA tab closed and verified QA host PID 29392 stopped. User server 8127 and user save unchanged."
+}

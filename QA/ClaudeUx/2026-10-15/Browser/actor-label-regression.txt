@@ -1,0 +1,5 @@
+PASS moving actor labels belong to Sera and the real opponent instead of the idle Noa position and start with pre-contact HP
+PASS the active label receives the single contact HP update and disappears before the original planning labels are restored
+PASS normal and reduced-motion cancellation remove moving labels, restore idle visibility and suppress the pending contact
+PASS flame rolls keep faction-owned power immediately before its own lamps and the panel in fixed central screen space
+TOTAL 4 actor-label/roll cases passed

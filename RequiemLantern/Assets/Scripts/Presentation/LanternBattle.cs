@@ -33,7 +33,7 @@ namespace RequiemLantern.Presentation
             Label(screen,"Battle stage",s.StageName,121,23,690,44,30);
             Label(screen,"Phase",$"ROUND {s.Round:00}   /   ② 연결",124,74,720,27,19,Gold);
             Label(screen,"Resources",$"불씨  {s.Ember} / 6    예약  {battle.PlannedCost}       등불  {s.Lantern} / 100       어둠도  {s.Gloom}",865,24,1010,48,23,Gold,TextAnchor.MiddleRight);
-            Label(screen,"Battle instruction","적의 표적을 확인하세요 · 동료의 스킬 → 적 예고에 연결하면 대신 맞불합니다.",805,78,1066,28,18,Muted,TextAnchor.MiddleRight);
+            Label(screen,"Battle instruction","매 턴 후보 2장 새로 추첨 · 미사용 카드도 교체",805,78,1066,28,18,Muted,TextAnchor.MiddleRight);
             var lineLayer=MakeRect(screen,"Thread layer",0,0,1920,1080);
             for(int i=0;i<s.Allies.Count;i++){
                 var u=s.Allies[i];float footX=165+(4-s.Allies.Count)*117.5f+i*235;
@@ -64,7 +64,7 @@ namespace RequiemLantern.Presentation
                     var skillCaption=Label(b.transform,"Skill name",sk.Name,8,34,150,30,20,Ivory,TextAnchor.MiddleCenter);
                     skillCaption.resizeTextForBestFit=true;skillCaption.resizeTextMinSize=16;skillCaption.resizeTextMaxSize=20;
                     Label(b.transform,"Skill power",$"불 {BattleRules.Flames(sk)}개 · {BattleRules.Base(sk)}~{BattleRules.Base(sk)+BattleRules.Flame(sk)*BattleRules.Flames(sk)}",8,68,150,24,14,Gold,TextAnchor.MiddleCenter);
-                    string state=reserved!=null?(sk.Slots==2?"행동 1·2 예약 · 편집":"행동 "+(reserved.Slot+1)+" 예약 · 편집"):sk.Slots>u.SlotCount?"행동 두 칸이 필요합니다":!available?"사용 불가":"비용 "+sk.Cost+" · "+(sk.Slots==2?"행동 두 칸":"행동 "+(cardSlot+1));
+                    string state=reserved!=null?(sk.Slots==2?"행동 1·2 예약 · 편집":"행동 "+(reserved.Slot+1)+" 예약 · 편집"):sk.Slots>u.SlotCount?"행동 두 칸이 필요합니다":!available?"사용 불가":"비용 "+sk.Cost+" · "+(sk.Slots==2?"행동 두 칸":(cardSlot+1)+"번 칸 배정");
                     Label(b.transform,"Card reservation",state,7,99,152,22,13,reserved!=null?Teal:Muted,TextAnchor.MiddleCenter);
                     var cardDrag=b.gameObject.AddComponent<LinkDrag>();
                     cardDrag.Begin=e=>{if(SelectOfferedCard(u.Id,card.Id,false))BeginLinkDrag(e,u.Id,selectedSlot,sk.Id,true);};
@@ -103,8 +103,8 @@ namespace RequiemLantern.Presentation
             }
             var selected=battle.Unit(selectedActor);
             var focusedSkill=battle.Skill(selectedActor,selectedSkill);
-            Label(screen,"Skill selection",$"{selected.Name} · 행동 {selectedSlot+1}",1570,769,314,26,19,Gold);
-            Label(screen,"Selected skill name",focusedSkill?.Name??"스킬을 선택하세요",1570,801,314,30,22,Ivory);
+            Label(screen,"Skill selection",ActionBalanceCaption(selected),1570,769,314,26,19,Gold);
+            Label(screen,"Selected skill name",FocusedSkillCaption(focusedSkill),1570,801,314,30,22,Ivory);
             Label(screen,"Selected skill detail",focusedSkill==null?"":$"{BattleRules.Base(focusedSkill)} + {BattleRules.Flame(focusedSkill)} × 점등 · 불 {BattleRules.Flames(focusedSkill)}개\n비용 {focusedSkill.Cost} · 속도 {focusedSkill.Speed} · 행동 {focusedSkill.Slots}칸",1570,834,314,47,16,Muted);
             Label(screen,"Skill bag","1스킬 ×3 · 2스킬 ×2"+(selected.SyncLevel>0?" · 3스킬 ×1":"")+" · 덱 "+selected.DrawPile.Count,1570,884,314,22,13,Muted);
             foreach(var l in s.Links){
@@ -206,6 +206,16 @@ namespace RequiemLantern.Presentation
         string TargetName(string id){var intent=battle.Intent(id);if(intent!=null)return "맞불 · "+EnemyNumber(battle.Unit(intent.ActorId))+intent.Name;var unit=battle.Unit(id);if(unit!=null)return unit.IsEnemy?EnemyNumber(unit)+unit.Name:unit.Name;var owner=battle.State.Enemies.FirstOrDefault(e=>e.Parts.Any(p=>p.Id==id));return owner==null?id:EnemyNumber(owner)+owner.Parts.First(p=>p.Id==id).Name;}
         LinkCommand ActionAt(UnitState actor,int slot)
         {return battle.State.Links.FirstOrDefault(link=>link.ActorId==actor.Id&&(link.Slot==slot||battle.Skill(actor.Id,link.SkillId).Slots==2));}
+        int RemainingActions(UnitState actor)
+        {
+            if(actor==null||!actor.Alive)return 0;
+            int reserved=battle.State.Links.Where(link=>link.ActorId==actor.Id).Sum(link=>battle.Skill(link.ActorId,link.SkillId).Slots);
+            return Mathf.Max(0,actor.SlotCount-reserved);
+        }
+        string ActionBalanceCaption(UnitState actor)
+        {return actor.Name+" · 남은 행동 "+RemainingActions(actor)+" / 현재 "+(actor.Alive?actor.SlotCount:0);}
+        string FocusedSkillCaption(SkillData skill)
+        {return skill==null?"스킬을 선택하세요":"행동 "+(selectedSlot+1)+" · "+skill.Name;}
         string ActionProgressionCaption()
         {
             var state=battle.State;
@@ -269,8 +279,8 @@ namespace RequiemLantern.Presentation
                 var defense=actor.Skills.FirstOrDefault(BattleRules.IsDefensive);var defenseNode=defense==null?null:screen.Find("Defense skill "+defense.Id);
                 if(defenseNode){var frame=defenseNode.GetComponent<OrnateButton>().Frame;frame.Primary=selectedActor==actor.Id&&selectedSkill==defense.Id&&string.IsNullOrEmpty(selectedCard);frame.SetVerticesDirty();}
             }
-            var actorName=screen.Find("Skill selection");if(actorName)actorName.GetComponent<Text>().text=battle.Unit(selectedActor).Name+" · 행동 "+(selectedSlot+1);
-            var skill=battle.Skill(selectedActor,selectedSkill);var skillName=screen.Find("Selected skill name");if(skillName)skillName.GetComponent<Text>().text=skill?.Name??"";
+            var actorName=screen.Find("Skill selection");if(actorName)actorName.GetComponent<Text>().text=ActionBalanceCaption(battle.Unit(selectedActor));
+            var skill=battle.Skill(selectedActor,selectedSkill);var skillName=screen.Find("Selected skill name");if(skillName)skillName.GetComponent<Text>().text=FocusedSkillCaption(skill);
             var detail=screen.Find("Selected skill detail");if(detail&&skill!=null)detail.GetComponent<Text>().text=$"{BattleRules.Base(skill)} + {BattleRules.Flame(skill)} × 점등 · 불 {BattleRules.Flames(skill)}개\n비용 {skill.Cost} · 속도 {skill.Speed} · 행동 {skill.Slots}칸";
             var selected=battle.Unit(selectedActor);var bag=screen.Find("Skill bag");if(bag)bag.GetComponent<Text>().text="1스킬 ×3 · 2스킬 ×2"+(selected.SyncLevel>0?" · 3스킬 ×1":"")+" · 덱 "+selected.DrawPile.Count;
         }

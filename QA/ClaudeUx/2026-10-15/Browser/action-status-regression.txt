@@ -1,0 +1,5 @@
+PASS candidate labels use the actual hand size separately from the first-round one-action capacity
+PASS a reservation leaves both candidates visible while consuming one actual action, and duplicates never subtract twice
+PASS round-two capacity, defense reservations and shared two-action skills count distinct open slots with the boss cap intact
+PASS an incapacitated fighter reports zero available and total actions even when an old reservation remains
+TOTAL 4 candidate/action status cases passed

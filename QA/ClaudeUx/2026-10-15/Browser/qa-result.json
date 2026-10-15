@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-15",
+  "isolatedPort": 8128,
+  "isolatedSave": "QA/ClaudeUx/2026-10-15/Browser/progress.xml",
+  "focusedChecks": 4,
+  "round1": [
+    {
+      "actor": "lian",
+      "bounds": {
+        "bottom": 706.6500244140625,
+        "top": 691.949951171875
+      },
+      "display": "block",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "sera",
+      "bounds": {
+        "bottom": 706.6500244140625,
+        "top": 691.949951171875
+      },
+      "display": "block",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "minato",
+      "bounds": {
+        "bottom": 706.6500244140625,
+        "top": 691.949951171875
+      },
+      "display": "block",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "heidel",
+      "bounds": {
+        "bottom": 706.6500244140625,
+        "top": 691.949951171875
+      },
+      "display": "block",
+      "text": "후보 2장 · 남은 행동 1/1"
+    }
+  ],
+  "reserved": [
+    {
+      "actor": "lian",
+      "text": "후보 2장 · 남은 행동 0/1"
+    },
+    {
+      "actor": "sera",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "minato",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "heidel",
+      "text": "후보 2장 · 남은 행동 1/1"
+    }
+  ],
+  "round2": [
+    {
+      "actor": "lian",
+      "text": "후보 2장 · 남은 행동 2/2"
+    },
+    {
+      "actor": "sera",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "minato",
+      "text": "후보 2장 · 남은 행동 1/1"
+    },
+    {
+      "actor": "heidel",
+      "text": "후보 2장 · 남은 행동 1/1"
+    }
+  ],
+  "layout": [
+    {
+      "cardOverflow": [
+        0,
+        0
+      ],
+      "cardTop": 706.6500244140625,
+      "fighterBottom": 892.5,
+      "label": "후보 2장 · 남은 행동 2/2",
+      "labelBottom": 706.6500244140625,
+      "slotsBottom": 889.3499755859375
+    },
+    {
+      "cardOverflow": [
+        0,
+        0
+      ],
+      "cardTop": 706.6500244140625,
+      "fighterBottom": 892.5,
+      "label": "후보 2장 · 남은 행동 1/1",
+      "labelBottom": 706.6500244140625,
+      "slotsBottom": 889.3499755859375
+    },
+    {
+      "cardOverflow": [
+        0,
+        0
+      ],
+      "cardTop": 706.6500244140625,
+      "fighterBottom": 892.5,
+      "label": "후보 2장 · 남은 행동 1/1",
+      "labelBottom": 706.6500244140625,
+      "slotsBottom": 889.3499755859375
+    },
+    {
+      "cardOverflow": [
+        0,
+        0
+      ],
+      "cardTop": 706.6500244140625,
+      "fighterBottom": 892.5,
+      "label": "후보 2장 · 남은 행동 1/1",
+      "labelBottom": 706.6500244140625,
+      "slotsBottom": 889.3499755859375
+    }
+  ],
+  "consoleErrors": [],
+  "scope": "Candidate count and remaining action label only. Combat rules and user save unchanged.",
+  "cleanup": "Agent-created QA tab closed and verified QA host PID 20032 stopped. User server 8127 and user save unchanged."
+}

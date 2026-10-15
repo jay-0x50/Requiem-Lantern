@@ -108,7 +108,37 @@ function threeEnemies(env){fourParty(env);env.run(`
  showBattle();
  `);}
 
+function candidateActionStatusChecks(){
+ const label=(env,id)=>env.game.innerHTML.match(new RegExp('data-action-status="'+id+'"[^>]*>([^<]*)'))?.[1];
+ let env=environment();fourParty(env);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 1/1');
+ assert.ok(env.game.innerHTML.includes('매 턴 후보 2장 새로 추첨 · 미사용 카드도 교체'));
+ env.run(`data.battle.allies[0].skillHand.pop();showBattle();`);
+ assert.equal(label(env,'lian'),'후보 1장 · 남은 행동 1/1');
+ pass('candidate labels use the actual hand size separately from the first-round one-action capacity');
+
+ env=environment();fourParty(env);
+ env.run(`data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',cardId:'lian-card-1',kind:'Strike',targetId:'anger'}];showBattle();`);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 0/1');assert.equal(label(env,'sera'),'후보 2장 · 남은 행동 1/1');
+ env.run(`data.battle.links.push({...data.battle.links[0]});showBattle();`);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 0/1');
+ pass('a reservation leaves both candidates visible while consuming one actual action, and duplicates never subtract twice');
+
+ env=environment();fourParty(env);lateRound(env,2,true);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 2/2');assert.equal(label(env,'noa'),'후보 2장 · 남은 행동 1/1');
+ env.run(`data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_guard',kind:'Guard',targetId:'lian'}];showBattle();`);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 1/2');
+ env.run(`data.battle.allies[0].skills.push({id:'custom_two',kind:'Attack',slots:2});data.battle.links=[{actorId:'lian',slot:0,skillId:'custom_two',kind:'Strike',targetId:'anger'},{actorId:'lian',slot:1,skillId:'lian_glimmer',kind:'Strike',targetId:'anger'},{actorId:'lian',slot:4,skillId:'lian_glimmer',kind:'Strike',targetId:'anger'}];showBattle();`);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 0/2');
+ pass('round-two capacity, defense reservations and shared two-action skills count distinct open slots with the boss cap intact');
+
+ env.run(`data.battle.allies[0].hp=0;showBattle();`);
+ assert.equal(label(env,'lian'),'후보 2장 · 남은 행동 0/0');
+ pass('an incapacitated fighter reports zero available and total actions even when an old reservation remains');
+}
+
 async function main() {
+  if(process.argv.includes('--action-status-only')){candidateActionStatusChecks();console.log('TOTAL '+passed+' candidate/action status cases passed');return;}
   let env = environment('{broken');
   assert.equal(env.run('settings.assisted'), true);
   assert.equal(env.run('settings.motion'), true);
@@ -777,6 +807,7 @@ async function main() {
   assert.equal(env.context.cancelDraws,1);assert.equal(env.run('busy'),false);assert.deepEqual(Array.from(env.context.executionModes),[true,false]);
   pass('same-screen playback cancellation redraws and restores the planning dock without advancing the round');
 
+  candidateActionStatusChecks();
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 

@@ -7,7 +7,9 @@
 .melee-fighter:after{content:'';position:absolute;left:37%;right:37%;bottom:5%;height:12px;background:#05060b8a;border-radius:50%;filter:blur(6px);z-index:-1}
 .melee-active .field-hero,.melee-active .enemy{opacity:.22;filter:saturate(.4)}
 .melee-active .threads,.melee-active .intent,.melee-active .parts,.melee-active .body-target,.melee-active .ally-target{opacity:0!important;pointer-events:none}
-.melee-active .field-name{opacity:.25}
+.melee-active .field-name{opacity:.18}
+.melee-name{position:absolute;left:240px;top:449px;min-width:98px;max-width:190px;padding:3px 10px 4px;transform:translateX(-50%);background:#09121de8;border-bottom:1px solid var(--fx-color);text-align:center;line-height:1.2;white-space:nowrap;z-index:5}
+.melee-name strong{display:block;font-size:13px;font-weight:500;color:var(--fx-color);overflow:hidden;text-overflow:ellipsis}.melee-name>span{display:block;margin-top:3px;font-size:10px;color:#e5e9ee;font-variant-numeric:tabular-nums}
 .melee-active .combat-fx:before{content:'';position:absolute;inset:140px 0 225px;background:radial-gradient(ellipse at 66% 70%,transparent 12%,#090c1340 68%);pointer-events:none}
 .combat-fx>.weapon-cut{z-index:3;width:166px;height:218px;border-radius:50%;border-right:9px solid #ffe8be;border-top:3px solid #ffd08b;border-bottom:0;box-shadow:7px 0 6px -5px var(--fx-color);transform:translate(-50%,-50%) rotate(35deg);animation:weapon-sweep .22s ease-out both}
 .weapon-cut.reverse{scale:-1 1}
@@ -78,11 +80,11 @@
 .reduce-motion .fx-number,.reduce-motion .fx-link-label,.reduce-motion .fx-verdict{transform:translate(-50%,-100%)}
 .reduce-motion .field-hero.fx-lunge,.reduce-motion .enemy.fx-lunge,.reduce-motion .field-hero.fx-hit,.reduce-motion .enemy.fx-hit,.reduce-motion .fx-shake{animation:none!important}
 
-.flame-roll{position:absolute;width:555px;padding:14px 22px;background:#0a1421f3;border:1px solid #c2a47780;transform:translateX(-50%);z-index:16;box-shadow:0 9px 24px #0007;pointer-events:none}
-.flame-roll-title{color:#c7b48f;font-size:12px;letter-spacing:.08em;margin-bottom:9px}
-.flame-roll-side{display:flex;align-items:center;gap:14px;min-height:39px;border-top:1px solid #c7b28d30;padding:7px 0}
-.flame-roll-side small{font-size:12px;line-height:1.35;color:#c3cbd5;flex:0 0 240px}.flame-roll-side strong{color:#f7d498;font-size:28px;margin-left:auto;font-family:Georgia,serif;line-height:1}
-.flame-roll-side.darkness strong{color:#cbb5f0}.rolled-flames{display:flex;gap:9px}.rolled-flames .flame{width:17px;height:23px}.flame-roll .flame.off{opacity:.65}
+.flame-roll{position:absolute;display:grid;grid-template-columns:1fr 1fr;column-gap:22px;width:700px;padding:12px 18px;background:#0a1421f3;border:1px solid #c2a47780;transform:translateX(-50%);z-index:16;box-shadow:0 9px 24px #0007;pointer-events:none}
+.flame-roll-title{grid-column:1/-1;grid-row:1;color:#c7b48f;font-size:12px;line-height:18px;letter-spacing:.08em;margin-bottom:9px}
+.flame-roll-side{grid-column:1;grid-row:2;display:grid;grid-template-columns:58px 1fr;column-gap:12px;row-gap:6px;align-items:center;border-top:1px solid #c7b28d30;padding:6px 0}
+.flame-roll-side small{grid-column:1/-1;font-size:12px;line-height:16px;color:#c3cbd5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.flame-roll-side strong{grid-column:1;grid-row:2;color:#f7d498;font-size:28px;margin:0;text-align:right;font-family:Georgia,serif;font-variant-numeric:tabular-nums;line-height:30px}
+.flame-roll-side.darkness{grid-column:2}.flame-roll-side.darkness strong{color:#cbb5f0}.rolled-flames{grid-column:2;grid-row:2;display:flex;justify-content:flex-start;gap:9px}.rolled-flames .flame{width:17px;height:23px}.flame-roll .flame.off{opacity:.65}
 
 .resolving .enemy-stats{opacity:0}
 

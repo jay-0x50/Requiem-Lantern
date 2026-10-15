@@ -29,7 +29,8 @@ namespace RequiemLantern.Presentation
     {
         public string Phase;
         public RawImage Attacker, Defender;
-        public Vector2 ActorFoot, ContactPoint;
+        public Vector2 ActorFoot, DefenderFoot, ContactPoint;
+        public Text ActorIdentity, TargetIdentity;
         public bool AtlasActive, FrameLayoutActive, SDActive, Clash;
         public float BodyHeight;
         public float FocusScale=1;

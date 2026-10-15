@@ -1,0 +1,140 @@
+{
+  "result": "PASS",
+  "measurement": "Pillow FreeType advances using the exact bundled NotoSansKRRegular.ttf; native planning captures also reviewed at 1600x900.",
+  "skillCaptions": [
+    {
+      "caption": "행동 2 · 고조",
+      "fontSize": 22,
+      "preferredWidth": 120.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 관측의 끝",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 균열 조율",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 그림자 자국",
+      "fontSize": 22,
+      "preferredWidth": 185.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 그림자 접기",
+      "fontSize": 22,
+      "preferredWidth": 185.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 되찾은 이름",
+      "fontSize": 22,
+      "preferredWidth": 185.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 물결 방벽",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 방벽 돌파",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 불꽃 걸음",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 빛의 호위",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 생명의 파도",
+      "fontSize": 22,
+      "preferredWidth": 185.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 서리 측정",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 역상 보정",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 잔광",
+      "fontSize": 22,
+      "preferredWidth": 120.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 지워진 기록",
+      "fontSize": 22,
+      "preferredWidth": 185.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 치유 등불",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "행동 2 · 화염 베기",
+      "fontSize": 22,
+      "preferredWidth": 165.0,
+      "availableWidth": 314
+    }
+  ],
+  "actionBalances": [
+    {
+      "caption": "리안 · 남은 행동 2 / 현재 2",
+      "fontSize": 19,
+      "preferredWidth": 204.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "세라 · 남은 행동 2 / 현재 2",
+      "fontSize": 19,
+      "preferredWidth": 204.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "미나토 · 남은 행동 2 / 현재 2",
+      "fontSize": 19,
+      "preferredWidth": 221.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "노아 · 남은 행동 2 / 현재 2",
+      "fontSize": 19,
+      "preferredWidth": 204.0,
+      "availableWidth": 314
+    },
+    {
+      "caption": "하이델 · 남은 행동 2 / 현재 2",
+      "fontSize": 19,
+      "preferredWidth": 221.0,
+      "availableWidth": 314
+    }
+  ]
+}

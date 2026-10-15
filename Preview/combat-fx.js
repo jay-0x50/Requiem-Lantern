@@ -124,6 +124,9 @@ class LanternCombatFX {
   const bodyHeight=allyIndex>=0?LanternBattleGeometry.allyBodyHeight:LanternBattleGeometry.enemyHeight(this.battle.enemies.length);
   if(!atlas){sprite.style.inset='auto';sprite.style.width=bodyHeight*.8+'px';sprite.style.height=bodyHeight+'px';sprite.style.left=240-bodyHeight*.4+'px';sprite.style.top=440-bodyHeight+'px';sprite.style.backgroundSize='contain';}
   wrapper.appendChild(sprite);
+  const nameplate=document.createElement('div');nameplate.className='melee-name';nameplate.dataset.poseOwner=id;
+  const actorName=document.createElement('strong');actorName.textContent=unit?.name||id;nameplate.appendChild(actorName);
+  const health=document.createElement('span');health.dataset.poseHp=id;health.textContent=`${unit?.hp||0} / ${unit?.maxHp||0}`;nameplate.appendChild(health);wrapper.appendChild(nameplate);
   const layout=atlas?this.options.layouts?.[atlasId]:null;
   const atlasImage=this.atlases.get(atlasId)?.image;
   const fighter={id,side,wrapper,sprite,original,atlas,layout,
@@ -277,6 +280,7 @@ class LanternCombatFX {
   for(const u of this.units.values()){
    this.root.querySelectorAll('[data-hp-bar]').forEach(n=>{if(n.dataset.hpBar===u.id)n.style.width=u.hp/u.maxHp*100+'%';});
    this.root.querySelectorAll('[data-hp-text]').forEach(n=>{if(n.dataset.hpText===u.id)n.textContent=u.hp+' / '+u.maxHp+(u.isEnemy?' · 균열 '+u.rift+' / '+u.maxRift:'');});
+   this.root.querySelectorAll('[data-pose-hp]').forEach(n=>{if(n.dataset.poseHp===u.id)n.textContent=u.hp+' / '+u.maxHp;});
    this.portrait(u.id)?.classList.toggle('dead',u.hp<=0);
    this.root.querySelectorAll('[data-sanity]').forEach(n=>{if(n.dataset.sanity===u.id)n.textContent='정신력 '+((u.sanity||0)>0?'+':'')+(u.sanity||0);});
   }
@@ -287,18 +291,19 @@ class LanternCombatFX {
  showFlameRoll(e){
   this.rollActors=new Set([e.actorId,...(e.enemyFlameStates?.length?[e.targetId]:[])]);
   this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());
-  const card=this.node('flame-roll',{x:1055,y:150});if(!card)return null;
+  const card=this.node('flame-roll',{x:800,y:183.33333333333334});if(!card)return null;
   // Rolls stay in screen space even while the paired fighters are framed.
   this.root.querySelector('.battle')?.appendChild(card);
   card.dataset.clashIndex=String(e.clashIndex||0);
   const title=document.createElement('div');title.className='flame-roll-title';title.textContent=e.clashIndex?`맞불 ${e.clashIndex}회 · 2연속 우세를 겨룹니다`:'스킬 점등';card.appendChild(title);
   const sides=[];
   const make=(states,power,sanity,enemy,id,base,flamePower)=>{
-   const side=document.createElement('div');side.className='flame-roll-side'+(enemy?' darkness':'');
+   const side=document.createElement('div');side.className='flame-roll-side'+(enemy?' darkness':'');side.dataset.rollOwner=id;side.dataset.faction=enemy?'enemy':'ally';
    const label=document.createElement('small');label.textContent=(this.units.get(id)?.name||'')+' · 정신력 '+((sanity||0)>0?'+':'')+(sanity||0);side.appendChild(label);
+   const value=document.createElement('strong');value.textContent='—';side.appendChild(value);
    const flames=document.createElement('div');flames.className='rolled-flames';const lamps=[];
    for(const state of states||[]){const lamp=document.createElement('i');lamp.className='flame unknown';lamp.dataset.flame='unknown';flames.appendChild(lamp);lamps.push(lamp);}side.appendChild(flames);
-   const value=document.createElement('strong');value.textContent='—';side.appendChild(value);card.appendChild(side);
+   card.appendChild(side);
    sides.push({states:states||[],lamps,value,power:power||0,base:base||0,flamePower:flamePower||0,lit:0,enemy});
   };
   make(e.flameStates,e.actorPower,e.actorSanity,this.units.get(e.actorId)?.isEnemy,e.actorId,e.basePower,e.flamePower);

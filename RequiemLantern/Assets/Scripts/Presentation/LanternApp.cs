@@ -48,7 +48,7 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Contains("--smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {

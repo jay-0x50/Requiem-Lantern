@@ -137,7 +137,41 @@ let passed = 0;
 function pass(name) { passed++; console.log('PASS ' + name); }
 const event = (type, targetId, amount = 0, actorId = 'lian') => ({ type, targetId, amount, actorId, message: type, round: 1 });
 
+async function actorLabelChecks(){
+ const cast=battle();cast.allies[0]={...cast.allies[0],id:'sera',name:'세라',element:'Flame'};cast.allies[1]={...cast.allies[1],id:'noa',name:'노아',element:'Shadow'};
+ let env=environment(true,false,cast),applications=0,baseApply=env.fx.applyEvent.bind(env.fx);
+ env.fx.applyEvent=e=>{if(e.type==='Damage')applications++;baseApply(e);};
+ const final=copy(cast);final.enemies[0].hp=170;
+ const attacking=env.fx.play([event('Damage','anger',20,'sera')],final);
+ await env.until(()=>env.stage.dataset.combatPhase==='windup');
+ const labels=env.root.querySelectorAll('[data-pose-owner]');
+ assert.deepEqual(labels.map(n=>n.dataset.poseOwner),['sera','anger']);assert.equal(labels[0].querySelector('strong').textContent,'세라');
+ assert.equal(labels[1].querySelector('[data-pose-hp]').textContent,'190 / 300');assert.equal(applications,0);
+ pass('moving actor labels belong to Sera and the real opponent instead of the idle Noa position and start with pre-contact HP');
+ await env.until(()=>env.stage.dataset.combatPhase==='contact');
+ assert.equal(labels[1].querySelector('[data-pose-hp]').textContent,'170 / 300');assert.equal(applications,1);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,1);
+ await env.drain();assert.equal(await attacking,true);assert.equal(env.root.querySelectorAll('[data-pose-owner]').length,0);assert.equal(env.stage.classList.contains('melee-active'),false);
+ pass('the active label receives the single contact HP update and disappears before the original planning labels are restored');
+
+ for(const motion of [true,false]){
+  env=environment(motion,false,cast);const cancelled=env.fx.play([event('Damage','anger',20,'sera')],final);
+  await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(env.root.querySelectorAll('[data-pose-owner]').length,2);
+  env.fx.clear();await env.drain();assert.equal(await cancelled,false);assert.equal(env.root.querySelectorAll('[data-pose-owner]').length,0);assert.equal(env.stage.classList.contains('melee-active'),false);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,0);assert.equal(env.fx.portrait('sera').style.visibility,'');
+ }
+ pass('normal and reduced-motion cancellation remove moving labels, restore idle visibility and suppress the pending contact');
+
+ env=environment();
+ const roll=env.fx.showFlameRoll({...event('FlameRoll','lian',0,'anger'),flameStates:[true,false],enemyFlameStates:[false,true,true],actorPower:9,targetPower:12});
+ assert.equal(roll.card.style.left,'800px');assert.equal(roll.card.style.top,'183.33333333333334px');
+ const enemy=roll.card.querySelectorAll('.flame-roll-side').find(n=>n.dataset.faction==='enemy'),ally=roll.card.querySelectorAll('.flame-roll-side').find(n=>n.dataset.faction==='ally');
+ assert.equal(enemy.dataset.rollOwner,'anger');assert.equal(ally.dataset.rollOwner,'lian');assert.equal(enemy.classList.contains('darkness'),true);assert.equal(ally.classList.contains('darkness'),false);
+ for(const side of [ally,enemy]){assert.equal(side.children[1].tagName,'strong');assert.equal(side.children[2].classList.contains('rolled-flames'),true);}
+ assert.equal(env.fx.units.get('anger').hp,190);assert.equal(env.fx.units.get('lian').hp,80);
+ pass('flame rolls keep faction-owned power immediately before its own lamps and the panel in fixed central screen space');
+}
+
 async function main() {
+  if(process.argv.includes('--actor-label-only')){await actorLabelChecks();console.log('TOTAL '+passed+' actor-label/roll cases passed');return;}
   let env = environment();
   assert.deepEqual(copy(env.fx.point('lian')), { x: 333.33333333333337, y: 495.83333333333337 });
   assert.deepEqual(copy(env.fx.point('minato')), { x: 529.1666666666667, y: 495.83333333333337 });
@@ -716,6 +750,7 @@ async function main() {
   await env.drain();assert.equal(await fastFocus,true);
   pass('reduced motion omits camera movement and fast combat softens strike framing while retaining contact and dock restoration');
 
+  await actorLabelChecks();
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }
 
