@@ -18,7 +18,7 @@ namespace RequiemLantern.Presentation
         void ShowStages() { ShowCampaign(false); }
         void ShowCampaign(bool archive)
         {
-            campaign.Exit();ExitWeeklyDungeon();campaignArchive=archive;
+            campaign.Exit();ExitWeeklyDungeon();ExitMaterialDungeon();campaignArchive=archive;
             var chapters=CampaignCatalog.Chapters.Where(c=>archive?c.Stages.Any(s=>CampaignRules.IsCleared(progress.Data,s)):
                 CampaignRules.IsUnlocked(progress.Data,c.Stages[0])||CampaignRules.IsCleared(progress.Data,c.Stages[0])).ToList();
             Clear("stages");Header(archive?"MEMORY ARCHIVE / 지나온 항로":"VOYAGE OF THE LANTERN / 귀항호 항해도",archive?"항해 기록실":"항해 준비",ShowHub);
@@ -141,7 +141,7 @@ namespace RequiemLantern.Presentation
         void EnterCampaignStage(string id,bool replay=false)
         {
             if(!campaign.Enter(id,progress.Data,replay,out string error)){Notify(error);return;}
-            ExitWeeklyDungeon();
+            ExitWeeklyDungeon();ExitMaterialDungeon();
             selectedStage=campaign.Active.Id;selectedChapter=campaign.Active.Chapter;
             ContinueCampaign();
         }
@@ -175,6 +175,7 @@ namespace RequiemLantern.Presentation
         }
         void LeaveCampaignBattle()
         {
+            if(materialDungeon.Active!=null){ExitMaterialDungeon();Clear("materialDungeon");ShowMaterialDungeons();return;}
             if(weeklyDungeon.Active!=null){ExitWeeklyDungeon();Clear("weeklyDungeon");ShowWeeklyDungeons();return;}
             if(campaign.Active!=null)ShowCampaign(false);else ShowHub();
         }

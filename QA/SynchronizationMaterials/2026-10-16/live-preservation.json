@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "sync-material-v15",
+  "backedUpFiles": 2,
+  "originalSaveBytesUnchanged": true,
+  "existingSavedFieldsCompared": [
+    "Coins",
+    "LanternFragments",
+    "MemoryFragments",
+    "KeepLevel",
+    "ClearedStages",
+    "ClaimedBattles"
+  ],
+  "existingSavedGrowthCompared": true,
+  "materialDefinitions": 7,
+  "newMaterialInventoryEmpty": true,
+  "playerRewardActionsPerformed": false
+}

@@ -161,6 +161,7 @@ internal static class RecruitmentTests
             Equal(3,mare.Skills.Count(skill=>skill.Number>0));True(mare.Skills.Where(skill=>skill.Number>0).All(skill=>skill.Slots==1));
             True(mare.Skills.All(skill=>skill.Id.StartsWith("mare_")));Equal(SkillKind.Evade,mare.Skills.Single(BattleRules.IsDefensive).Kind);
             var third=mare.Skills.Single(skill=>skill.Number==3);False(BattleRules.IsSkillUnlocked(mare,third));p.Data.LanternFragments=10;
+            p.Data.SyncMaterials.Add(new SyncMaterialStack { CharacterId="mare",Count=6 });
             True(p.Synchronize("mare",out var error));p.ApplyToBattle(battle.State);True(BattleRules.IsSkillUnlocked(mare,third));False(p.IsOwned("kai"));
         });
         Test("the real starter party clears all twenty-five campaign battles at one fixed seed",()=>{

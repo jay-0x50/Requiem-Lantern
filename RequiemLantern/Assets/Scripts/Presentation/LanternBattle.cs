@@ -20,7 +20,7 @@ namespace RequiemLantern.Presentation
         bool battleRewardSavePending;
         string presentedRewardBattleId;
         RewardData presentedBattleReward;
-        void StartBattle(){campaign.Exit();ExitWeeklyDungeon();battle=BattleEngine.CreatePrototype(progress.Data);PrepareBattlePresentation();}
+        void StartBattle(){campaign.Exit();ExitWeeklyDungeon();ExitMaterialDungeon();battle=BattleEngine.CreatePrototype(progress.Data);PrepareBattlePresentation();}
         string ArtId(string id){return CharacterIds.FirstOrDefault(x=>x.Equals(id,StringComparison.OrdinalIgnoreCase))??id;}
         Color ElementColor(Element e){switch(e){case Element.Flame:return Hex("E77A5D");case Element.Tide:return Teal;case Element.Frost:return Hex("A7D4E9");case Element.Shadow:return Violet;default:return Gold;}}
         Image Gauge(Transform p,string name,float x,float y,float w,int value,int max,Color color)
@@ -312,8 +312,8 @@ namespace RequiemLantern.Presentation
             HideIntentTooltip();
             if(overlay)return;
             overlay=MakeRect(stage,"Retreat prompt",0,0,1920,1080);Box(overlay,"Scrim",0,0,1920,1080,new Color(0,0,0,.84f)).raycastTarget=true;
-            Label(overlay,"Retreat question",weeklyDungeon.Active!=null?"원정을 중단하고 귀항할까요?\n주간 보상 횟수는 차감되지 않습니다.":"이 전투를 중단하고 작전실로 돌아갈까요?",370,350,1180,140,38,Ivory,TextAnchor.MiddleCenter);
-            Button(overlay,"Stay","전투 계속",530,540,390,76,()=>Destroy(overlay.gameObject),true);Button(overlay,"Leave",weeklyDungeon.Active!=null?"원정 선택으로":"작전실로 돌아가기",1000,540,390,76,LeaveCampaignBattle);
+            Label(overlay,"Retreat question",materialDungeon.Active!=null?"기억 잠항을 중단하고 귀항할까요?\n재화나 출격 횟수는 차감되지 않습니다.":weeklyDungeon.Active!=null?"원정을 중단하고 귀항할까요?\n주간 보상 횟수는 차감되지 않습니다.":"이 전투를 중단하고 작전실로 돌아갈까요?",370,350,1180,140,38,Ivory,TextAnchor.MiddleCenter);
+            Button(overlay,"Stay","전투 계속",530,540,390,76,()=>Destroy(overlay.gameObject),true);Button(overlay,"Leave",materialDungeon.Active!=null?"잠항 선택으로":weeklyDungeon.Active!=null?"원정 선택으로":"작전실로 돌아가기",1000,540,390,76,LeaveCampaignBattle);
         }
         void ShowBattleLog()
         {
@@ -400,6 +400,7 @@ namespace RequiemLantern.Presentation
         }
         void ShowResult()
         {
+            if(materialDungeon.Active!=null&&materialDungeon.Battle==battle){ShowMaterialDungeonResult();return;}
             if(weeklyDungeon.Active!=null&&weeklyDungeon.Battle==battle){ShowWeeklyDungeonResult();return;}
             bool victory=battle.State.Outcome==BattleOutcome.Victory;RewardData reward=null;
             bool inCampaign=campaign.Active!=null;

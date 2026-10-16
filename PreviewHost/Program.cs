@@ -48,6 +48,7 @@ namespace RequiemLantern.Preview
         private static string root;
         private static readonly CampaignSession campaign = new CampaignSession();
         private static readonly WeeklyDungeonSession dungeon = new WeeklyDungeonSession();
+        private static readonly MaterialDungeonSession materialDungeon = new MaterialDungeonSession();
 
         private static async Task Main(string[] args)
         {
@@ -129,13 +130,14 @@ namespace RequiemLantern.Preview
                 string error = null; RewardData reward = null; bool persist = false;
                 RecruitmentResult recruitmentResult = null; CouponReward couponReward = null;
                 ActivityReward activityReward = null, dungeonPrize = null; bool exitDungeonAfterSave = false;
+                MaterialReward materialReward = null; bool exitMaterialAfterSave = false;
                 string actionName = action == null ? "" : action.Action;
                 bool collectionAction = new[] { "recruit", "redeem-code", "equip-character" }.Contains(actionName);
                 bool hubAction = collectionAction || actionName == "activity-check-in" || actionName == "quest-claim";
-                if (hubAction && (campaign.Active != null || dungeon.Active != null)) {
+                if (hubAction && (campaign.Active != null || dungeon.Active != null || materialDungeon.Active != null)) {
                     await RespondJson(context, Snapshot("원정을 마친 뒤 등대 요새에서 이용해 주세요.", null), 400); return;
                 }
-                bool economicAction = hubAction || new[]{"synchronize","reward","stage-story","prologue","repair","dungeon-reward"}.Contains(actionName);
+                bool economicAction = hubAction || new[]{"synchronize","reward","stage-story","prologue","repair","dungeon-reward","material-reward"}.Contains(actionName);
                 var checkpoint = economicAction ? progress.Capture() : null;
                 var campaignCheckpoint = economicAction ? campaign.Capture() : null;
                 bool battleAction = new[] { "recommend", "link", "remove", "clear", "reuse", "resolve", "next", "lantern", "restart" }.Contains(actionName);
@@ -146,7 +148,7 @@ namespace RequiemLantern.Preview
                 {
                     case "stage-enter":
                     case "stage-replay":
-                        if(dungeon.Active != null){error="잔향 회수를 마친 뒤 본편에 출항해 주세요.";break;}
+                        if(dungeon.Active != null || materialDungeon.Active != null){error="진행 중인 원정을 마친 뒤 본편에 출항해 주세요.";break;}
                         if (campaign.Enter(action.StageId, progress.Data, actionName == "stage-replay", out error) && campaign.Phase == CampaignPhase.Battle)
                             battle = CampaignBattleFactory.Create(campaign.Active, progress.Data);
                         break;
@@ -165,19 +167,20 @@ namespace RequiemLantern.Preview
                     case "resolve": battle.ResolveRound(action.Grades); break;
                     case "next": battle.BeginNextRound(); break;
                     case "restart":
-                        if(dungeon.Active != null){dungeon.Restart(progress);battle=dungeon.Battle;}
+                        if(materialDungeon.Active != null){materialDungeon.Restart(progress);battle=materialDungeon.Battle;}
+                        else if(dungeon.Active != null){dungeon.Restart(progress);battle=dungeon.Battle;}
                         else if (campaign.Active != null) battle = CampaignBattleFactory.Create(campaign.Active, progress.Data);
                         else battle = BattleEngine.CreatePrototype(progress.Data);
                         break;
                     case "lantern": battle.TryLantern(action.ActorId, out error); break;
                     case "prologue": progress.MarkPrologueComplete(); persist = true; break;
                     case "reward":
-                        if(dungeon.Active != null){error="잔향 회수 결과에서 회수 보상을 받아 주세요.";break;}
+                        if(dungeon.Active != null || materialDungeon.Active != null){error="진행 중인 원정 결과에서 전용 보상을 받아 주세요.";break;}
                         if (campaign.Active != null) persist = campaign.AcceptVictory(battle, progress, out reward, out error);
                         else if (!progress.ClaimVictory(battle, out reward)) error = "승리 후 한 번만 보상을 받을 수 있습니다."; else persist = true;
                         break;
                     case "synchronize":
-                        if (dungeon.Active != null || campaign.Phase == CampaignPhase.Battle && battle.State.Outcome == BattleOutcome.Ongoing) error = "출격을 마친 뒤 잔영을 동기화해 주세요.";
+                        if (dungeon.Active != null || materialDungeon.Active != null || campaign.Phase == CampaignPhase.Battle && battle.State.Outcome == BattleOutcome.Ongoing) error = "출격을 마친 뒤 잔영을 동기화해 주세요.";
                         else if (progress.Synchronize(action.ActorId, out error)) { persist = true; progress.ApplyToBattle(battle.State); }
                         break;
                     case "repair": if (progress.RepairKeep(out error)) persist = true; break;
@@ -193,13 +196,21 @@ namespace RequiemLantern.Preview
                     case "activity-check-in": persist=progress.CheckIn(); break;
                     case "quest-claim": persist=progress.ClaimQuest(action.QuestId,action.PeriodKey,out activityReward,out error); break;
                     case "dungeon-enter":
-                        if(campaign.Active != null){error="본편 원정을 마친 뒤 잔향 회수에 출항해 주세요.";break;}
+                        if(campaign.Active != null || materialDungeon.Active != null){error="진행 중인 원정을 마친 뒤 잔향 회수에 출항해 주세요.";break;}
                         if(dungeon.Enter(action.DungeonId,progress,action.Practice,out error))battle=dungeon.Battle;
                         break;
                     case "dungeon-exit": dungeon.Exit(); break;
                     case "dungeon-reward":
                         persist=dungeon.ClaimVictory(progress,out dungeonPrize,out error);
                         exitDungeonAfterSave=persist;break;
+                    case "material-enter":
+                        if(campaign.Active != null || dungeon.Active != null){error="진행 중인 원정을 마친 뒤 기억 잠항에 출항해 주세요.";break;}
+                        if(materialDungeon.Enter(action.ActorId,progress,out error))battle=materialDungeon.Battle;
+                        break;
+                    case "material-exit": materialDungeon.Exit(); break;
+                    case "material-reward":
+                        persist=materialDungeon.ClaimVictory(progress,out materialReward,out error);
+                        exitMaterialAfterSave=persist;break;
                     default: error = "알 수 없는 동작입니다."; break;
                 }
                 if (persist) {
@@ -207,11 +218,13 @@ namespace RequiemLantern.Preview
                     catch (Exception ex) when (checkpoint != null && (ex is IOException || ex is UnauthorizedAccessException || ex is InvalidOperationException)) {
                         progress.Restore(checkpoint);campaign.Restore(campaignCheckpoint);progress.ApplyToBattle(battle.State);
                         recruitmentResult = null;couponReward = null;reward = null;activityReward = null;dungeonPrize = null;exitDungeonAfterSave = false;
+                        materialReward = null;exitMaterialAfterSave = false;
                         error = "저장하지 못해 이번 요청을 취소했습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.";
                     }
                 }
                 if(exitDungeonAfterSave&&error==null)dungeon.Exit();
-                await RespondJson(context, Snapshot(error, reward, recruitmentResult, couponReward,activityReward,dungeonPrize), error == null ? 200 : 400); return;
+                if(exitMaterialAfterSave&&error==null)materialDungeon.Exit();
+                await RespondJson(context, Snapshot(error, reward, recruitmentResult, couponReward,activityReward,dungeonPrize,materialReward), error == null ? 200 : 400); return;
             }
             if (request.Method != "GET" && request.Method != "HEAD")
             { await RespondJson(context, new { error = "Method not allowed." }, 405); return; }
@@ -226,13 +239,15 @@ namespace RequiemLantern.Preview
             await ServeFile(context, System.IO.Path.Combine(root, "Preview"), path == "/" ? "index.html" : path.TrimStart('/'), new[] { ".html", ".css", ".js", ".json", ".svg", ".png", ".webp", ".ico" }, true);
         }
 
-        private static object Snapshot(string error, RewardData reward, RecruitmentResult recruitmentResult = null, CouponReward couponReward = null,ActivityReward activityReward = null,ActivityReward dungeonPrize = null)
+        private static object Snapshot(string error, RewardData reward, RecruitmentResult recruitmentResult = null, CouponReward couponReward = null,ActivityReward activityReward = null,ActivityReward dungeonPrize = null,MaterialReward materialReward = null)
         {
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "recurring-v14",
+                application = "RequiemLantern", runtimeRevision = "sync-material-v15",
                 activities = progress.GetActivities(),
+                materials = progress.GetSynchronizationMaterials(),
+                materialDungeon = new{activeCharacterId=materialDungeon.Active?.CharacterId,active=materialDungeon.Active,outcome=materialDungeon.Active==null?null:(BattleOutcome?)materialDungeon.Battle.State.Outcome},
                 dungeon = new{ activeId=dungeon.Active?.Id,active=dungeon.Active,practice=dungeon.Practice,outcome=dungeon.Active==null?null:(BattleOutcome?)dungeon.Battle.State.Outcome },
                 recruitment = new {
                     characters = RecruitmentCatalog.Characters, banners = RecruitmentCatalog.Banners,
@@ -241,7 +256,7 @@ namespace RequiemLantern.Preview
                     pickupGuaranteed = progress.Data.PickupGuaranteed, ownedCharacters = progress.Data.OwnedCharacters,
                     party = progress.Data.ActiveParty, stardust = progress.Data.Stardust, characterShards = progress.Data.CharacterShards
                 },
-                recruitmentResult, couponReward,activityReward,dungeonPrize,
+                recruitmentResult, couponReward,activityReward,dungeonPrize,materialReward,
                 previews = battle.State.Links.Where(x => x.Kind == LinkKind.Clash).Select(x => new { actorId = x.ActorId, slot = x.Slot, preview = battle.Preview(x) }),
                 story = new { prologue = StoryCatalog.Prologue, firstMeal = StoryCatalog.FirstMeal, epilogue = StoryCatalog.Epilogue },
                 campaign = new {

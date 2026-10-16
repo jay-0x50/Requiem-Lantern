@@ -24,6 +24,7 @@ namespace RequiemLantern.Core
         public uint RecruitRandomState;
         public List<string> OwnedCharacters = new List<string>(), ActiveParty = new List<string>(), RedeemedCodes = new List<string>();
         public RecurringProgress Activities = new RecurringProgress();
+        public List<SyncMaterialStack> SyncMaterials = new List<SyncMaterialStack>();
     }
 
     [Serializable]
@@ -58,6 +59,7 @@ namespace RequiemLantern.Core
             Data.ClaimedBattles = Data.ClaimedBattles ?? new List<string>();
             RecruitmentCatalog.InitializeCollection(Data);
             RecurringRules.Initialize(Data);
+            InitializeSyncMaterials(Data);
         }
         static ProgressData Clone(ProgressData data)
         {
@@ -90,15 +92,18 @@ namespace RequiemLantern.Core
         public bool RedeemCode(string input,out CouponReward reward,out string error)
         {
             reward=null;error=null;string code=RecruitmentCatalog.NormalizeCode(input);
-            if(code!=RecruitmentCatalog.TestCurrencyCode&&code!=RecruitmentCatalog.TestMaterialsCode){error="사용할 수 없는 쿠폰입니다.";return false;}
+            if(code!=RecruitmentCatalog.TestCurrencyCode&&code!=RecruitmentCatalog.TestMaterialsCode&&code!=MaterialCatalog.TestCouponCode){error="사용할 수 없는 쿠폰입니다.";return false;}
             if(Data.RedeemedCodes.Contains(code)){error="이미 사용한 쿠폰입니다.";return false;}
             var pending=new CouponReward{Code=code};
             if(code==RecruitmentCatalog.TestCurrencyCode){pending.Stardust=RecruitmentCatalog.TestAmount;pending.Coins=RecruitmentCatalog.TestAmount;}
-            else{pending.LanternFragments=pending.MemoryFragments=pending.CharacterShards=RecruitmentCatalog.TestAmount;}
+            else if(code==RecruitmentCatalog.TestMaterialsCode){pending.LanternFragments=pending.MemoryFragments=pending.CharacterShards=RecruitmentCatalog.TestAmount;}
+            else pending.SyncMaterials=MaterialCatalog.Definitions.Select(value=>new SyncMaterialStack { CharacterId=value.CharacterId,Count=RecruitmentCatalog.TestAmount }).ToList();
             if(Data.Stardust>int.MaxValue-pending.Stardust||Data.Coins>int.MaxValue-pending.Coins||Data.LanternFragments>int.MaxValue-pending.LanternFragments
-                ||Data.MemoryFragments>int.MaxValue-pending.MemoryFragments||Data.CharacterShards>int.MaxValue-pending.CharacterShards)
+                ||Data.MemoryFragments>int.MaxValue-pending.MemoryFragments||Data.CharacterShards>int.MaxValue-pending.CharacterShards
+                ||pending.SyncMaterials!=null&&pending.SyncMaterials.Any(value=>MaterialCount(value.CharacterId)>int.MaxValue-value.Count))
             {error="재료 보관 한도를 초과하여 쿠폰을 사용하지 않았습니다.";return false;}
             Data.Stardust+=pending.Stardust;Data.Coins+=pending.Coins;Data.LanternFragments+=pending.LanternFragments;Data.MemoryFragments+=pending.MemoryFragments;Data.CharacterShards+=pending.CharacterShards;
+            if(pending.SyncMaterials!=null)foreach(var material in pending.SyncMaterials)AddMaterial(material.CharacterId,material.Count);
             Data.RedeemedCodes.Add(code);reward=pending;return true;
         }
         public CharacterProgress GetCharacter(string id)
@@ -115,7 +120,9 @@ namespace RequiemLantern.Core
             var existing = Data.Characters.FirstOrDefault(x => x.Id == id);
             if (existing != null && existing.SyncLevel >= 1) { error = "이미 동기화하여 3스킬을 개방했습니다."; return false; }
             if (Data.LanternFragments < SynchronizationCost) { error = "동기화에 등불 조각 " + SynchronizationCost + "개가 필요합니다."; return false; }
-            var value = GetCharacter(id);if(existing==null)Data.Characters.Add(value);Data.LanternFragments -= SynchronizationCost; value.SyncLevel = 1; return true;
+            var material=MaterialCatalog.Get(id);
+            if(MaterialCount(id)<material.RequiredCount){error="동기화에 "+material.MaterialName+" "+material.RequiredCount+"개가 필요합니다. (보유 "+MaterialCount(id)+"개)";return false;}
+            var value = GetCharacter(id);if(existing==null)Data.Characters.Add(value);Data.LanternFragments -= SynchronizationCost; AddMaterial(id,-material.RequiredCount);value.SyncLevel = 1; return true;
         }
         public void ApplyToBattle(BattleState state)
         {
@@ -130,7 +137,7 @@ namespace RequiemLantern.Core
         public bool ClaimVictory(BattleEngine battle, out RewardData reward, bool deferStageClear = false)
         {
             reward = null;
-            if (battle == null || battle.State.StageId.StartsWith("weekly_",StringComparison.Ordinal) || battle.State.Outcome != BattleOutcome.Victory || Data.ClaimedBattles.Contains(battle.State.BattleId)) return false;
+            if (battle == null || battle.State.StageId.StartsWith("weekly_",StringComparison.Ordinal) || battle.State.StageId.StartsWith("material_",StringComparison.Ordinal) || battle.State.Outcome != BattleOutcome.Victory || Data.ClaimedBattles.Contains(battle.State.BattleId)) return false;
             bool first = !Data.ClearedStages.Contains(battle.State.StageId) && !Data.RewardedStages.Contains(battle.State.StageId);
             var pending = new RewardData { Coins = battle.State.CoinReward, LanternFragments = first ? battle.State.FirstLanternReward : battle.State.RepeatLanternReward, MemoryFragments = first ? battle.State.MemoryReward : 0, FirstClear = first };
             if(pending.Coins<0||pending.LanternFragments<0||pending.MemoryFragments<0||Data.Coins>int.MaxValue-pending.Coins||Data.LanternFragments>int.MaxValue-pending.LanternFragments||Data.MemoryFragments>int.MaxValue-pending.MemoryFragments)return false;
@@ -197,11 +204,13 @@ namespace RequiemLantern.Core
                 if (data.LanternFragments < 0 || data.MemoryFragments < 0 || data.Characters.Any(x => x == null || !PrototypeData.IsCharacter(x.Id) || x.Level < 1 || x.SyncLevel < 0) || data.Characters.GroupBy(x => x.Id).Any(x => x.Count() > 1)) throw new InvalidOperationException("Invalid character growth.");
                 RecruitmentCatalog.InitializeCollection(data);
                 RecurringRules.Initialize(data);
+                ProgressService.InitializeSyncMaterials(data);
+                if(!ProgressService.ValidSyncMaterials(data))throw new InvalidOperationException("Invalid synchronization material inventory.");
                 if(!RecurringRules.Valid(data.Activities))throw new InvalidOperationException("Invalid recurring activity state.");
                 if(data.CollectionVersion!=RecruitmentCatalog.CollectionVersion||data.Stardust<0||data.CharacterShards<0||data.RecruitPity<0||data.RecruitPity>=RecruitmentCatalog.HardPity||data.RecruitRandomState==0
                     ||data.OwnedCharacters.Any(id=>RecruitmentCatalog.Character(id)==null)||data.OwnedCharacters.Distinct().Count()!=data.OwnedCharacters.Count
                     ||data.ActiveParty.Count!=PrototypeData.PartyCapacity||data.ActiveParty.Distinct().Count()!=PrototypeData.PartyCapacity||data.ActiveParty.Any(id=>!data.OwnedCharacters.Contains(id))
-                    ||data.RedeemedCodes.Distinct().Count()!=data.RedeemedCodes.Count||data.RedeemedCodes.Any(code=>code!=RecruitmentCatalog.TestCurrencyCode&&code!=RecruitmentCatalog.TestMaterialsCode))
+                    ||data.RedeemedCodes.Distinct().Count()!=data.RedeemedCodes.Count||data.RedeemedCodes.Any(code=>code!=RecruitmentCatalog.TestCurrencyCode&&code!=RecruitmentCatalog.TestMaterialsCode&&code!=MaterialCatalog.TestCouponCode))
                     throw new InvalidOperationException("Invalid collection or recruitment state.");
                 return data;
             }
@@ -211,6 +220,7 @@ namespace RequiemLantern.Core
             if (data == null) throw new ArgumentNullException("data");
             RecruitmentCatalog.InitializeCollection(data);
             RecurringRules.Initialize(data);
+            ProgressService.InitializeSyncMaterials(data);
             string directory = System.IO.Path.GetDirectoryName(Path);
             if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
             string pending = Path + ".tmp";

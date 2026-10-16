@@ -130,13 +130,15 @@ namespace RequiemLantern.Presentation
             var input=fieldRect.gameObject.AddComponent<InputField>();input.targetGraphic=backing;input.textComponent=text;input.placeholder=placeholder;input.characterLimit=64;
             input.lineType=InputField.LineType.SingleLine;input.contentType=InputField.ContentType.Standard;
             input.onValueChanged.AddListener(value=>{var notice=modal.Find("Recruitment notice");if(notice)notice.GetComponent<Text>().text="";});
-            Button(modal,"Fill currency coupon","별가루 · 코인 테스트",390,540,550,55,()=>input.text=RecruitmentCatalog.TestCurrencyCode);
-            Button(modal,"Fill materials coupon","성장 재료 테스트",959,540,565,55,()=>input.text=RecruitmentCatalog.TestMaterialsCode);
+            Button(modal,"Fill currency coupon","별가루 · 코인",390,540,367,55,()=>input.text=RecruitmentCatalog.TestCurrencyCode);
+            Button(modal,"Fill materials coupon","공통 성장 재료",774,540,367,55,()=>input.text=RecruitmentCatalog.TestMaterialsCode);
+            Button(modal,"Fill sync materials coupon","전용 재료 7종",1158,540,367,55,()=>input.text=MaterialCatalog.TestCouponCode);
+            Label(modal,"Sync coupon help","전용 재료 쿠폰: 캐릭터 7명의 재료를 각각 +9,999,999개 지급합니다.",391,617,1135,45,21,Muted);
             Button(modal,"Redeem coupon","쿠폰 사용",1161,700,364,65,()=>{
                 if(!overlay||page!="settings"||!RecruitmentAllowed())return;
                 var checkpoint=progress.Capture();if(!progress.RedeemCode(input.text,out var reward,out string error)){RecruitmentNotice(error);return;}
                 if(!PersistRecruitment()){progress.Restore(checkpoint);RecruitmentNotice("저장하지 못해 쿠폰 사용을 취소했습니다. 다시 사용할 수 있습니다.");return;}
-                CloseRecruitmentOverlay();ShowSettings();Notify(reward.Stardust>0?"쿠폰 사용 완료 · 별가루 +"+reward.Stardust.ToString("N0")+" / 코인 +"+reward.Coins.ToString("N0"):"쿠폰 사용 완료 · 등불 조각 · 기억의 파편 · 공용 조각 각 +"+reward.LanternFragments.ToString("N0"));
+                CloseRecruitmentOverlay();ShowSettings();Notify(reward.SyncMaterials!=null?"쿠폰 사용 완료 · 캐릭터별 전용 재료 7종 각 +"+RecruitmentCatalog.TestAmount.ToString("N0"):reward.Stardust>0?"쿠폰 사용 완료 · 별가루 +"+reward.Stardust.ToString("N0")+" / 코인 +"+reward.Coins.ToString("N0"):"쿠폰 사용 완료 · 등불 조각 · 기억의 파편 · 공용 조각 각 +"+reward.LanternFragments.ToString("N0"));
             },true);
             Button(modal,"Close coupon","닫기",390,700,320,65,CloseRecruitmentOverlay);
             EventSystemSelect(input.gameObject);

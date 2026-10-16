@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "dateKst": "2026-10-16",
+  "execution": "Explicit DLL invocation after each project build; UseAppHost=false in all four test projects",
+  "buildWarnings": 0,
+  "buildErrors": 0,
+  "testCounts": {
+    "CoreTests.dll": 87,
+    "CampaignTests.dll": 23,
+    "RecurringContentTests.dll": 20,
+    "SynchronizationMaterialsTests.dll": 18
+  },
+  "materialRoutes": 7,
+  "seeds": [0, 1, 42],
+  "actualMaterialDungeonWins": 21,
+  "starterParty": ["lian", "minato", "heidel", "mare"],
+  "synchronizationLevel": 0,
+  "igniteGrade": "Good",
+  "playerSaveModified": false
+}

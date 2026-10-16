@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "sync-material-v15",
+  "port": 8132,
+  "checks": [
+    "Fresh seven unique materials, rarity costs and locked/invalid requests preserve all progress.",
+    "Actual starter-party 1-2 victory and authored after-story unlock farming only after story completion.",
+    "Campaign/weekly/material sessions cannot overlap; growth/inventory edits reject during farming, restart stays on its route and retreat gives nothing.",
+    "All seven routes award exactly three selected materials, including unowned pre-farming; repeat runs count actual quest victories without weekly quota or main rewards.",
+    "A coupon-free earned path pays ten Lian materials plus ten common lanterns once; other characters materials and ownership remain intact.",
+    "Real save-path failures restore farming receipt, quest progress, synchronization costs and growth; same victory retries once and exact data survives restart.",
+    "Separate test coupon grants seven inventories atomically once; existing coupon grants no new material, real save failure/one-stack overflow grant nothing and retry persists.",
+    "Legacy XML without the inventory loads with empty materials while preserving every existing field, including completed synchronization and unlocked third skills."
+  ],
+  "playerSaveModified": false,
+  "actualFarmWins": 11,
+  "processStopped": true
+}

@@ -445,6 +445,7 @@ internal static class CoreTests
         Test("synchronization is atomic, persistent and independent of character level", () => {
             var p=new ProgressService(new ProgressData());string error;False(p.Synchronize("lian",out error));Equal(0,p.Data.Characters.Count);
             p.Data.LanternFragments=10;False(p.Synchronize("missing",out error));Equal(10,p.Data.LanternFragments);
+            False(p.Synchronize("lian",out error));Equal(10,p.Data.LanternFragments);p.Data.SyncMaterials.Add(new SyncMaterialStack { CharacterId="lian",Count=10 });
             True(p.Synchronize("lian",out error));Equal(0,p.Data.LanternFragments);Equal(1,p.GetCharacter("lian").SyncLevel);Equal(1,p.GetCharacter("lian").Level);
             p.Data.LanternFragments=10;False(p.Synchronize("lian",out error));Equal(10,p.Data.LanternFragments);
             var b=BattleEngine.CreatePrototype(p.Data,1234);True(BattleRules.IsSkillUnlocked(b.Unit("lian"),b.Skill("lian","lian_crescendo")));

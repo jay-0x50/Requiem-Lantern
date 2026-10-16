@@ -72,6 +72,9 @@ namespace RequiemLantern.Presentation
             RecruitmentSmokeClick("Fill materials coupon",true);RecruitmentSmokeClick("Redeem coupon",true);
             if(progress.Data.LanternFragments!=RecruitmentCatalog.TestAmount||progress.Data.MemoryFragments!=RecruitmentCatalog.TestAmount||progress.Data.CharacterShards!=RecruitmentCatalog.TestAmount)
                 throw new Exception("The material coupon did not grant all growth materials.");
+            // This acceptance fixture tests acquired-party controls. Supply the
+            // newly required Sera material without consuming an unrelated code.
+            progress.Data.SyncMaterials.Add(new SyncMaterialStack{CharacterId="sera",Count=MaterialCatalog.Get("sera").RequiredCount});
             progress=new ProgressService(progress.Capture(),new RecruitmentSmokeRandom());progress.Data.RecruitPity=79;progress.Data.PickupGuaranteed=true;
             ShowRecruitment("sera");yield return Capture(directory,"03-sera-pickup-and-guarantee");
             RecruitmentSmokeClick("Recruit rates");if(!overlay.Find("Rate details").GetComponent<Text>().text.Contains("0.8%"))throw new Exception("The rates details were not reachable.");

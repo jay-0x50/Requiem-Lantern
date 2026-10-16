@@ -83,7 +83,7 @@ try:
         if process.poll() is not None:raise RuntimeError('QA host exited')
         try:data=call();break
         except urllib.error.URLError:time.sleep(.2)
-    assert data and data['runtimeRevision']=='recurring-v14'
+    assert data and data['runtimeRevision']=='sync-material-v15'
     assert all(1<=line['autoDelay']<=6 for line in data['story']['prologue'])
     four_party(data)
     assert data['battle']['ember']==3 and data['battle']['isBoss']
@@ -298,7 +298,7 @@ try:
     assert [actor['slotCount'] for actor in data['battle']['allies']]==[1,1,1,1]
     print('PASS: HTTP normal R1-R5 roster progression, boss R1-R3 caps, locked-second-action atomic rejection, both offers replaced after used or defense-only rounds, stale CardId rejection and full restart.')
     combat_art_routes()
-    print('PASS: v14 HTTP revision; starter ownership/active party; boss 4/5/6 actions on intact guard-only rounds and interception of an extra uniquely identified core action; fresh two-card offers per round with stable weighted bags and non-mutating recommendation/reuse; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups; exact enemy/part/intent identity; teammate interception and damage events; atomic card/slot/budget checks; original art and six SD PNG/layout routes; 24 combat WAVs; story cast metadata and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
+    print('PASS: v15 HTTP revision; starter ownership/active party; boss 4/5/6 actions on intact guard-only rounds and interception of an extra uniquely identified core action; fresh two-card offers per round with stable weighted bags and non-mutating recommendation/reuse; turn-based action progression with explicit boss metadata; four allies/eight distinct card choices; authored 2-3 enemy groups; exact enemy/part/intent identity; teammate interception and damage events; atomic card/slot/budget checks; original art and six SD PNG/layout routes; 24 combat WAVs; story cast metadata and stage locks; story completion, S3 lock, victory/after-story rewards, replay and synchronization funds.')
 finally:
     process.terminate()
     try:process.wait(timeout=5)

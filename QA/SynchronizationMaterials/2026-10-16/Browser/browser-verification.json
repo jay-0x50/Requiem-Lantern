@@ -1,0 +1,72 @@
+{
+  "status": "PASS",
+  "dateKst": "2026-10-16",
+  "runtimeRevision": "sync-material-v15",
+  "isolatedPort": 8128,
+  "livePort8127Touched": false,
+  "uiRegressionCases": 139,
+  "newMaterialUiCases": 12,
+  "actualHttpResponseLossScenarios": 4,
+  "actualUiChecks": [
+    "new starter party and hub memory-dive entry",
+    "seven dedicated material choices and actual 1-2 unlock prerequisite",
+    "unowned Sera material preparation and disabled synchronization",
+    "actual 1-2 victory and after-story unlock without forged progress",
+    "Mare memory dive using unchanged starter party, two enemies, existing action and melee rules",
+    "UI victory grants Mare material exactly +3 and no common resources or weekly quota",
+    "unowned Sera material dive entry, retreat preserves stock and costs nothing",
+    "new coupon visibly grants seven dedicated stocks each 9999999",
+    "existing common-material coupon remains usable",
+    "Mare synchronization through UI consumes six dedicated items and ten lantern fragments, level stays one, third skill opens",
+    "material source link returns to the corresponding character route",
+    "quest board and weekly salvage both expose material source",
+    "weekly salvage quota remains three of three after material claim",
+    "final character selector labels and rarity text fit after restoring 56px tab height",
+    "console warnings and errors: none"
+  ],
+  "actualUiResult": {
+    "party": [
+      "lian",
+      "minato",
+      "heidel",
+      "mare"
+    ],
+    "mareLevel": 1,
+    "mareSyncLevel": 1,
+    "mareMaterialCount": 9999996,
+    "lanternFragments": 9999991,
+    "coins": 40,
+    "weeklyDungeonRewardsClaimed": 0
+  },
+  "responseLossEvidence": "QA/SynchronizationMaterials/2026-10-16/Browser/response-loss-http.json",
+  "sourceSha256": {
+    "Preview/app.js": "f6da4c062a92d10195865e45cb99d7e77e999b9129a922564a14418dd8894e78",
+    "Preview/theme.css": "e1508902d442a7eb7993238e6808f7bc1494e46aba826ff4aaba4c69eb558643",
+    "Tests/preview-regression.cjs": "dffafbfb3ee7c109742068a8f038bf33cd03a4c57cc1acb741a02fd50b658903",
+    "Tests/preview-response-loss-http.cjs": "c4d0dc9cadb5db5bef76ba65ec542448dfc040ef4c68bad4b59c7a74d98bfc6f"
+  },
+  "screenshots": {
+    "Screens01-hub.jpg": "b9a215f1c7fe161f826ed6fa2ae622593dbad68ec9f98e49ec10af942ea8f05e",
+    "Screens02-materials-locked.jpg": "f22e7fef752d0f325d9975e7754be21bff28194fbdbe107a9ff744e97ff59ab8",
+    "Screens03-unowned-material.jpg": "ba5ce70c5369cc254d3d74a129aa6e4c92aa839f50a755972068c747a49d7906",
+    "Screens04-roster-requirements.jpg": "767a393db9b6857f264c73edb4df1e8058b811da63ea39eae8072e018254fda4",
+    "Screens05-mare-dive-unlocked.jpg": "7fa31f42173427b603618852836600c4c62829879f5e6629ca1281679aecc448",
+    "Screens06-material-planning.jpg": "92100540e6927107f75f5180629439ddeae17ba48defdac1a0dfccc2d5bb0d7e",
+    "Screens07-material-execution.jpg": "49075eca10bcb493aa9e04c8f9041598b25615415fb26147c94079323ce30bdb",
+    "Screens08-material-victory.jpg": "17ebb3dcae3e099b7e911e28ae51642d91f679f934780b076dc7061d1e91dd15",
+    "Screens09-material-reward.jpg": "6a25708021ed1f8daba112a5f28fe7b1b94d1a0acc6e54ee70d98b69659617ad",
+    "Screens10-retreat-inventory.jpg": "4a2729df34963517f055711f3c73760bcb1bcae648eebac6ffcf40f4f7ad293d",
+    "Screens11-sync-coupon.jpg": "3b48d888fd091af2b6f844b8ceea0727491bd6c3a13986144f25e604eafe7e02",
+    "Screens12-mare-sync-ready.jpg": "46e9ff115b3b2368cb18f909b4a8b46de18c387c39786ce0a14e81c577675f26",
+    "Screens13-mare-synchronized.jpg": "50dedc0e315197d8a44036068fd06d699d876978c268f97e39df1344799b52fa",
+    "Screens14-inventory-source-link.jpg": "bb5a1203a63283b886cedcf3cc2368574a134590e6cc8bce03f7fa68de91a265",
+    "Screens15-supply-material-link.jpg": "6a4fda837949c9abf4a3b0a6143867eefdc83df270bfb5857034b0b4cb90dfba",
+    "Screens16-weekly-quota-unchanged.jpg": "b47de2d983aaa2ad1208b897b5c91a4551eb36abfacd4fe8381c8814c21973f2"
+  },
+  "limitations": [
+    "Screens01–04 precede the roster tab-height repair identified during visual QA. Screens05–16 use the final UI; Screens12–13 verify the repaired roster.",
+    "The actual browser performed one Mare dive victory and one unowned Sera entry/retreat. Native and Core suites separately cover repeated farming and all material types.",
+    "The successful server response is deliberately consumed and then thrown away by the HTTP test fetch wrapper; the actual app.js recovery logic processes the subsequent authoritative error snapshot.",
+    "All screenshots, coupons, campaign progress and fault injection use disposable local QA saves. No player save, configuration or live host was modified by this agent."
+  ]
+}

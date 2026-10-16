@@ -44,7 +44,7 @@ namespace RequiemLantern.Presentation
         void ShowRecurringBoard(bool weekly=false)
         {
             if(page=="battle"||page=="resolve"){Notify("전투를 마친 뒤 보급 게시판을 열어 주세요.");return;}
-            campaign.Exit();ExitWeeklyDungeon();weeklyQuestTab=weekly;recurringBusy=false;
+            campaign.Exit();ExitWeeklyDungeon();ExitMaterialDungeon();weeklyQuestTab=weekly;recurringBusy=false;
             if(!RefreshRecurringActivities())return;
             Clear("recurring");Header("SUPPLY BOARD / 귀항호 보급 의뢰","보급 게시판",ShowHub);
             Button(screen,"Daily quests","일일 의뢰",84,146,390,64,()=>ShowRecurringBoard(false),!weekly);
@@ -66,7 +66,8 @@ namespace RequiemLantern.Presentation
             Label(screen,"Supply note heading","작은 항해가,\n다음 불씨를 남깁니다.",1370,316,428,107,31,Ivory);
             Label(screen,"Supply currency","보유 별가루  "+progress.Data.Stardust.ToString("N0"),1373,451,421,43,25,Gold);
             Label(screen,"Supply note","완료한 의뢰는 직접 수령해 주세요.\n\n승리 보상을 받은 전투만 집계합니다. 패배·퇴각·연습은 제외됩니다.\n\n미수령 보상은 초기화 후 사라집니다.",1373,516,421,249,23,Muted);
-            Button(screen,"Supply dungeon","잔향 회수로 →",1371,813,429,75,ShowWeeklyDungeons,true);
+            Button(screen,"Supply dungeon","잔향 회수로 →",1371,790,429,60,ShowWeeklyDungeons,true);
+            Button(screen,"Supply materials","전용 재료 · 기억 잠항 →",1371,868,429,60,()=>ShowMaterialDungeons());
             Footer("일일·주간 의뢰는 각각 수령할 수 있습니다 · 진행과 수령 기록은 이 기기에 저장됩니다");
         }
         void ClaimRecurringQuest(string id,string periodKey)
@@ -84,7 +85,7 @@ namespace RequiemLantern.Presentation
         void ShowWeeklyDungeons()
         {
             if(page=="battle"||page=="resolve"){Notify("전투를 마친 뒤 잔향 회수를 열어 주세요.");return;}
-            campaign.Exit();ExitWeeklyDungeon();recurringBusy=false;
+            campaign.Exit();ExitWeeklyDungeon();ExitMaterialDungeon();recurringBusy=false;
             if(!RefreshRecurringActivities())return;
             Clear("weeklyDungeon");Header("ECHO SALVAGE / 귀항호 주간 원정","잔향 회수",ShowHub);
             var sea=Texture("VoyageSea");if(sea)screen.Find("The eternal night").GetComponent<RawImage>().texture=sea;
@@ -106,6 +107,7 @@ namespace RequiemLantern.Presentation
             }
             Label(screen,"Dungeon availability",recurringSnapshot.DungeonUnlocked?"승리 후 보상을 수령할 때만 횟수가 줄어듭니다. 연습은 보상과 의뢰 진행도가 없습니다.":recurringSnapshot.UnlockDescription,94,932,1710,41,23,Gold,TextAnchor.MiddleCenter);
             Button(screen,"Dungeon supply board","보급 게시판",1480,965,340,47,()=>ShowRecurringBoard(true));
+            Button(screen,"Dungeon materials","기억 잠항",1118,965,340,47,()=>ShowMaterialDungeons());
             Footer("메인 이야기와 별도의 주간 원정입니다 · 원정에서 본편 스테이지를 완료하거나 최초 보상을 받지 않습니다");
         }
         void StartWeeklyDungeon(string id,bool practice)
@@ -113,7 +115,7 @@ namespace RequiemLantern.Presentation
             if(recurringBusy||page!="weeklyDungeon")return;
             if(!RefreshRecurringActivities())return;
             if(!weeklyDungeon.Enter(id,progress,practice,out string error)){Notify(error);return;}
-            campaign.Exit();battle=weeklyDungeon.Battle;PrepareBattlePresentation();
+            campaign.Exit();ExitMaterialDungeon();battle=weeklyDungeon.Battle;PrepareBattlePresentation();
             if(practice)Notify("연습 원정 · 보상과 의뢰 진행도가 없습니다.");
         }
         void RetryWeeklyDungeon()

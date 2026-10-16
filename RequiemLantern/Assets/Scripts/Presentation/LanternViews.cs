@@ -31,15 +31,16 @@ namespace RequiemLantern.Presentation
         }
         void ShowHub()
         {
-            campaign.Exit();ExitWeeklyDungeon();RefreshRecurringActivities();Clear("hub");Header("BEACON KEEP  /  영야의 해안","등대 요새");
+            campaign.Exit();ExitWeeklyDungeon();ExitMaterialDungeon();RefreshRecurringActivities();Clear("hub");Header("BEACON KEEP  /  영야의 해안","등대 요새");
             Box(screen,"Portrait plate",66,160,850,800,new Color(.025f,.04f,.06f,.2f));
             Character(screen,"Lian",190,143,625,811);
             Label(screen,"Location number","01",80,170,150,100,72,new Color(.9f,.8f,.66f,.6f));
             Label(screen,"Keep status",$"등대 복구  {progress.Data.KeepLevel}단계",94,800,600,46,25,Gold);
             Label(screen,"Lian quote","“…살아 있으면, 그걸로 됐어.”",94,862,800,64,30);
             Label(screen,"Lian caption","리안  /  등대의 파수꾼",96,927,700,38,19,Muted);
-            Button(screen,"Supply board","보급 게시판",95,969,350,47,()=>ShowRecurringBoard());
-            Button(screen,"Weekly dungeon","잔향 회수",464,969,350,47,ShowWeeklyDungeons);
+            Button(screen,"Supply board","보급 게시판",95,969,230,47,()=>ShowRecurringBoard());
+            Button(screen,"Weekly dungeon","잔향 회수",340,969,230,47,ShowWeeklyDungeons);
+            Button(screen,"Material dungeon","기억 잠항",585,969,230,47,()=>ShowMaterialDungeons());
             var next=NextCampaignStage();
             var nextChapter=CampaignCatalog.Chapters[next.Chapter-1];
             Label(screen,"Main quest label","MAIN STORY / "+CampaignCharacterName(nextChapter.FocusCharacterId)+"의 이야기",1010,177,760,40,18,Gold);
@@ -127,8 +128,8 @@ namespace RequiemLantern.Presentation
             Label(screen,"Character name",CharacterNames[selected],820,225,1010,110,76);
             Label(screen,"Role",CharacterRoles[selected],829,361,1010,45,27,Gold);
             Box(screen,"Description rule",832,442,940,1,new Color(.4f,.45f,.5f,.6f));
-            Label(screen,"Biography",descriptions[selected],830,484,935,172,28,Muted);
-            Label(screen,"Character quote","“"+CharacterQuotes[selected]+"”",830,650,920,57,27);
+            Label(screen,"Biography",descriptions[selected],830,465,935,128,26,Muted);
+            Label(screen,"Character quote","“"+CharacterQuotes[selected]+"”",830,605,920,49,25);
             if(selected<7){
                 string id=CharacterIds[selected].ToLowerInvariant();bool owned=progress.IsOwned(id);var growth=progress.GetCharacter(id);
                 var catalog=RecruitmentCatalog.Characters.First(value=>value.Id==id);
@@ -137,16 +138,18 @@ namespace RequiemLantern.Presentation
                 var chapter=CampaignCatalog.Chapters.Find(c=>c.FocusCharacterId==id);
                 if(chapter!=null){
                     bool available=CampaignRules.IsUnlocked(progress.Data,chapter.Stages[0])||CampaignRules.IsCleared(progress.Data,chapter.Stages[0]);
-                    var mainStory=Button(screen,"Main chapter "+id,$"{chapter.Number}장 · {CharacterNames[selected]}의 본편 이야기"+(available?" →":" · 앞 장 완료 필요"),832,710,596,43,()=>ShowCharacterChapter(id));
+                    var mainStory=Button(screen,"Main chapter "+id,$"{chapter.Number}장 · {CharacterNames[selected]}의 본편 이야기"+(available?" →":" · 앞 장 완료 필요"),832,663,596,43,()=>ShowCharacterChapter(id));
                     mainStory.interactable=available;
                 }
-                var equip=Button(screen,"Equip character "+id,owned?"파티 편성":"미보유 · 편성 불가",1444,710,326,43,()=>ShowPartyAssignment(id,()=>ShowRoster(selected)),owned);equip.interactable=owned;
-                var sync=Button(screen,"Synchronize "+id,!owned?catalog.Recruitable?"미보유 · 잔영 소환으로 획득하면 동기화할 수 있습니다.":"스토리 주인공 · 기존 보유 캐릭터의 성장은 유지됩니다.":growth.SyncLevel>0?"동기화 완료 · 3스킬 해금":"동기화 · 등불 조각 10 → 3스킬 해금",832,765,938,41,()=>{
-                    var checkpoint=progress.Capture();if(progress.Synchronize(id,out string error)){if(!Persist()){progress.Restore(checkpoint);Notify("저장하지 못해 동기화를 취소했습니다.");return;}ShowRoster(selected);Notify("동기화가 완료되어 3스킬이 열렸습니다.");}else Notify(error);
-                },owned&&growth.SyncLevel==0);
-                sync.interactable=owned&&growth.SyncLevel==0;
+                var equip=Button(screen,"Equip character "+id,owned?"파티 편성":"미보유 · 편성 불가",1444,663,326,43,()=>ShowPartyAssignment(id,()=>ShowRoster(selected)),owned);equip.interactable=owned;
+                var material=progress.GetSynchronizationMaterials().Entries.First(value=>value.CharacterId==id);
+                Box(screen,"Synchronization backing",832,721,938,122,new Color(.025f,.044f,.066f,.97f));
+                Label(screen,"Synchronization requirements",material.MaterialName+"  "+material.Count.ToString("N0")+" / "+material.RequiredCount+"   ·   등불 조각  "+progress.Data.LanternFragments.ToString("N0")+" / "+ProgressService.SynchronizationCost,852,730,898,36,21,material.CanSynchronize?Gold:Muted);
+                string syncCaption=material.Synchronized?"동기화 완료 · 3스킬 해금":!owned?"미보유 · 획득 후 동기화 가능":material.CanSynchronize?"동기화 → 3스킬 개방":"동기화 재료가 부족합니다";
+                var sync=Button(screen,"Synchronize "+id,syncCaption,850,782,593,45,()=>SynchronizeFromRoster(id,selected),material.CanSynchronize);sync.interactable=material.CanSynchronize;
+                Button(screen,"Find sync material "+id,"기억 잠항 →",1460,782,292,45,()=>ShowMaterialDungeons(id));
             }
-            for(int i=0;i<CharacterIds.Length;i++){int n=i;string id=CharacterIds[i].ToLowerInvariant();var entry=RecruitmentCatalog.Character(id);string state=entry!=null?(progress.IsOwned(id)?" · 보유":entry.Recruitable?" · 미보유":" · 주인공"):" · 기록";Button(screen,"Select "+CharacterIds[i],CharacterNames[i]+state,833+(i%4)*241,817+(i/4)*82,220,65,()=>ShowRoster(n),i==selected);}
+            for(int i=0;i<CharacterIds.Length;i++){int n=i;string id=CharacterIds[i].ToLowerInvariant();var entry=RecruitmentCatalog.Character(id);string state=entry!=null?(progress.IsOwned(id)?" · 보유":entry.Recruitable?" · 미보유":" · 주인공"):" · 기록";Button(screen,"Select "+CharacterIds[i],CharacterNames[i]+state,833+(i%4)*241,866+(i/4)*72,220,56,()=>ShowRoster(n),i==selected);}
             Footer("스토리 출연과 보유 여부는 별개입니다 · 보유한 잔영만 동기화와 전투 편성이 가능합니다");
         }
         void ShowSettings()

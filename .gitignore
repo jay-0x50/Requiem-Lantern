@@ -9,6 +9,7 @@ Builds/
 !Tests/CoreTests.csproj
 !Tests/CampaignTests.csproj
 !Tests/RecurringContentTests.csproj
+!Tests/SynchronizationMaterialsTests.csproj
 *.sln
 *.blend1
 *.blend2

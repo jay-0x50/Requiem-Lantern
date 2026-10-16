@@ -43,7 +43,11 @@ JSON 키는 camelCase, enum은 문자열이다.
 
 스테이지 요청에는 `stageId`를 전달한다. `stage-story`에는 `expectedPhase`도 전달해 중복 완료와 오래된 화면의 요청을 막는다. `campaign` 응답은 5개 장의 스테이지 목록과 해금·완료 상태, 진행 중 스테이지, `BeforeStory / Battle / AfterStory / Complete` 단계, 현재 대본을 제공한다. 혼합 스테이지의 보상은 승리 때 지급하며 완료 표시는 후속 대화가 끝난 뒤 저장한다. 승리 후 종료했다면 재진입 시 후속 대화부터 이어진다.
 
-`synchronize`는 `actorId`에 해당하는 잔영의 동기화 1을 등불 조각 10개로 개방한다. `progress.characters`의 레벨·동기화 값은 별도로 저장한다. 전투 중에는 동기화할 수 없다.
+`synchronize`는 `actorId`에 해당하는 보유 잔영의 동기화 1을 등불 조각 10개와 전용 재료(★5 10개 / ★4 6개)로 개방한다. `progress.characters`의 레벨·동기화 값과 `progress.syncMaterials`의 `{characterId,count}` 재고는 별도로 저장한다. 기존 완료된 동기화는 보존하며, 전투 중에는 동기화할 수 없다.
+
+전용 재료는 `materials` 스냅샷의 `entries`에서 이름·보유량·필요량·소유·동기화 가능 여부를 확인한다. `material-enter` (`actorId`)로 기억 잠항에 입장하고, 실제 승리 후 `material-reward` 저장이 성공하면 전용 재료 3개를 지급한 뒤 세션을 종료한다. `material-exit`은 무보상 퇴각이다. 현재 세션은 `materialDungeon`, 수령 결과는 `materialReward`에 반환한다. 일반 `reward`로 대신 받을 수 없다. 본편·잔향 회수·기억 잠항은 동시에 진행할 수 없다. 미보유 재료도 미리 채집할 수 있으며, 주간 횟수와 재화 소모는 없다. 실제 승리 수령 기록은 전투 의뢰에 반영한다.
+
+전용 재료 테스트 쿠폰 `LANTERN-SYNC-MATERIALS`는 기존 두 쿠폰과 독립적으로 저장당 한 번, 7종 각각 9,999,999개를 지급한다. 이 결과에만 `couponReward.syncMaterials` 배열을 반환한다. 기존 쿠폰에는 해당 필드가 null이다. 모든 종류의 보관 한도를 먼저 검사하며 저장 실패 시 재고·쿠폰 사용 기록을 함께 복원한다.
 
 격리 검수는 `dotnet PreviewHost.dll "프로젝트 경로" "격리 저장 경로" 8128`처럼 저장 경로와 포트를 추가로 지정한다. 기본 실행은 기존 8127과 개인 저장 파일을 사용한다.
 

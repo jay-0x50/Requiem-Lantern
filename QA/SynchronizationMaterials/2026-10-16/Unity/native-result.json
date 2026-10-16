@@ -1,0 +1,118 @@
+{
+  "dateKst": "2026-10-16",
+  "result": "PASS",
+  "exitCode": 0,
+  "command": "RequiemLantern.exe --material-smoke --capture-dir QA/SynchronizationMaterials/2026-10-16/Unity -screen-width 1600 -screen-height 900 -screen-fullscreen 0",
+  "buildLog": "Logs/unity-sync-material-v15-build-final.log",
+  "renderedSize": "1600x900",
+  "canvasReference": "1920x1080",
+  "isolatedSave": "material-progress.xml",
+  "injectedUtc": "2026-10-16T00:00:00Z",
+  "playerSaveUnchanged": true,
+  "managedAssembly": {
+    "path": "Builds/Windows/RequiemLantern_Data/Managed/Assembly-CSharp.dll",
+    "sha256": "c8400252a02ada4b764f6160ffb51ac0c18d2276b17485285fb51caf9e7279bf"
+  },
+  "sourceHashes": [
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternMaterials.cs",
+      "sha256": "071b83395e09cfc5d3cd17f361c4af083b2e8d6ff5af9e1d64114f61723967d6"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternMaterialSmoke.cs",
+      "sha256": "50bdf10438f3e38d4d0a4172bd716751da9e4d06100e6ca95c16382b59db56b6"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternApp.cs",
+      "sha256": "19de4556a7527063640b997bda3a2a542955ad1905b0a68e6f917b4f597960dc"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternViews.cs",
+      "sha256": "764e39374416f15db17c4951c10e5b125d54e9f06a83a5236de520194479854b"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecurring.cs",
+      "sha256": "92c5c4de2a9c124d92cd8a976b7271153589ff92c779bdb936513eb20958a807"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBattle.cs",
+      "sha256": "a7691ffa73eabb4ba2e28d8af73d81de02e55d5fdbc8da1f2c8c4d20a5901c11"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternCampaign.cs",
+      "sha256": "ea7cae53c4fe5d533d4eb3468ccae943965631b277c1e2208376a0a123a00332"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecruitment.cs",
+      "sha256": "098c74652687a77240fbd9731c21f687ce304e6bc99fc916702fe1077ac73a40"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBootstrap.cs",
+      "sha256": "703840beaeece6a2a7fccf37f361cd8f60b129f29595a498ff294478a4f8d30a"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/SynchronizationMaterials.cs",
+      "sha256": "629e1a67753708c8b8a01caf1234e7fe83cadbba674e2b71e660a0675848f124"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/ProgressService.cs",
+      "sha256": "32c558585bf72fe3d1eaa9cecf515406464c9c56c4dc1f2db6f79c20236449a9"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/Recruitment.cs",
+      "sha256": "c8e85698fc0fc131e254210f95eda1019848d0bb36e9ec759234d4725ca09d18"
+    }
+  ],
+  "captures": [
+    {
+      "name": "01-roster-character-material-required.png",
+      "bytes": 2415523,
+      "sha256": "eaedad1bc071df2edcce4a73d4438c8c99b8f280db35ec76296abfa7299cde66"
+    },
+    {
+      "name": "02-seven-materials-before-unlock.png",
+      "bytes": 1700403,
+      "sha256": "a10c91c0f35beac704a340bf0c5fcf3aa88e755068e446a974bd55c90a007594"
+    },
+    {
+      "name": "03-mare-material-unlimited-route.png",
+      "bytes": 1611814,
+      "sha256": "6ab2a60181504d9531da9698ebd741c27db205bc1fd7a47ab5fdd0ca81c43ae4"
+    },
+    {
+      "name": "04-two-enemy-material-battle.png",
+      "bytes": 1980516,
+      "sha256": "648356ff03b0e0aa3353df044e6950b8eb6b42d55d0c9d3ffd206bd629fc2765"
+    },
+    {
+      "name": "05-material-reward-save-retry.png",
+      "bytes": 2634523,
+      "sha256": "38bc12b2954905847f2b9194d795aab76d162783b1323656f3f4fc5e659a88c4"
+    },
+    {
+      "name": "06-mare-ready-to-synchronize.png",
+      "bytes": 2350240,
+      "sha256": "a0a545e634b282a7041ad2acc5fd6712575a57b14379fe27af8408d7f6e93c94"
+    },
+    {
+      "name": "07-mare-synchronized-s3-unlocked.png",
+      "bytes": 2356791,
+      "sha256": "f674d64a5c5dffe9438955d9c6c15004426bc741f34a0a375223f3c3b63c1e4d"
+    },
+    {
+      "name": "08-unowned-sera-prefarmed-material.png",
+      "bytes": 2409578,
+      "sha256": "ef1e9104ee941ffbcfcd7242a4dd892e529ae25d758091062071af6af2a5036c"
+    },
+    {
+      "name": "09-dedicated-material-test-coupon.png",
+      "bytes": 958634,
+      "sha256": "a6008aa03edffb253e1d72aecefd9e14e8cb5d08c3b8d18bc48348a49917b9aa"
+    },
+    {
+      "name": "10-seven-inventories-persisted.png",
+      "bytes": 1694336,
+      "sha256": "1998edd91df03fbd53118786a24de86125187b1569d0ca69c84f643bfdcdbdbb"
+    }
+  ]
+}

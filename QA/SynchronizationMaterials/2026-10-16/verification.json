@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "dateKst": "2026-10-16",
+  "runtimeRevision": "sync-material-v15",
+  "baselineCommit": "dde7672fd2417cf00af3ed3e29f2832b44fc5507",
+  "core": {
+    "testCases": {
+      "CoreTests.dll": 87,
+      "CampaignTests.dll": 23,
+      "RecurringContentTests.dll": 20,
+      "SynchronizationMaterialsTests.dll": 18
+    },
+    "actualDefaultPartyRouteWins": 21,
+    "report": "core-validation.json"
+  },
+  "host": {
+    "materialHttpGroups": 8,
+    "actualMaterialWins": 11,
+    "recurringHttpGroups": 8,
+    "recruitmentHttpGroups": 6,
+    "reports": [
+      "API/result.json",
+      "RecurringAPI/result.json",
+      "RecruitmentAPI/result.json"
+    ]
+  },
+  "preview": {
+    "uiRegressionCases": 139,
+    "actualChromeCaptures": 16,
+    "actualHttpResponseLossScenarios": 4,
+    "consoleErrors": 0,
+    "reports": [
+      "Browser/browser-verification.json",
+      "Browser/response-loss-http.json"
+    ]
+  },
+  "unity": {
+    "windowsBuild": "PASS",
+    "smokeExitCode": 0,
+    "actualCaptures": 10,
+    "report": "Unity/native-result.json",
+    "sourceAndAssemblyHashesRechecked": true,
+    "playerSaveUnchanged": true
+  },
+  "live": {
+    "status": "PASS",
+    "runtimeRevision": "sync-material-v15",
+    "backedUpFiles": 2,
+    "originalSaveBytesUnchanged": true,
+    "existingSavedFieldsCompared": [
+      "Coins",
+      "LanternFragments",
+      "MemoryFragments",
+      "KeepLevel",
+      "ClearedStages",
+      "ClaimedBattles"
+    ],
+    "existingSavedGrowthCompared": true,
+    "materialDefinitions": 7,
+    "newMaterialInventoryEmpty": true,
+    "playerRewardActionsPerformed": false
+  },
+  "validationRepairs": [
+    "A 33-character GUID caused the initial Unity import to ignore the new Core script. Corrected it to a valid 32-character GUID; final Unity build and smoke passed. check-unity-source.ps1 now rejects malformed or duplicate script GUIDs before compilation.",
+    "All four test projects use UseAppHost=false and were executed by exact DLL name to avoid selecting a shared stale apphost."
+  ],
+  "coverage": [
+    "Seven independent inventories and rarity-based requirements; other characters materials cannot replace the required type",
+    "Real 1-2 battle and after-story unlock; unowned pre-farming; actual repeat battles and three materials per saved victory",
+    "Exact simultaneous common/dedicated consumption; S3 unlock; completed synchronization and all old saved fields remain valid",
+    "Save failures restore inventory, receipts, quest metrics, coupon usage and growth; retry preserves the same victory",
+    "Lost reward replies recover from exact saved battle receipts without duplicate payout",
+    "Weekly salvage quota, main completion and ordinary currency are unchanged by farming; actual victory metrics count toward quests",
+    "Separate seven-material coupon with overflow prechecks and once-per-save persistence"
+  ],
+  "limits": [
+    "Initial farming routes reuse the existing two-enemy battle and portraits; route-specific backgrounds and new enemy art are not included.",
+    "Current synchronization growth supports level 1; later levels and recipes remain future work."
+  ]
+}

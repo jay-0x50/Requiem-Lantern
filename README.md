@@ -75,6 +75,24 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 
 모든 의뢰와 쉬움 원정 3회를 마치면 일주일에 별가루 **2,000개**, 어려움 3회면 **2,120개**입니다. 쿠폰 없이 반복해서 얻는 초기 수급량이며 기존 소환 비용·확률·천장은 유지합니다. 진행과 수령 기록은 로컬 저장이며, 초기화는 기기 시각을 KST로 환산해 계산합니다. 시간을 뒤로 돌려도 이미 지난 보상 기간을 다시 열지 않습니다.
 
+## 캐릭터 전용 동기화 재료와 기억 잠항
+
+잔영 기록에서 **등불 조각 10개와 해당 캐릭터의 전용 재료**를 사용하면 동기화 1과 3스킬을 개방합니다. ★5는 전용 재료 10개, ★4는 6개가 필요합니다. 이미 동기화를 완료한 캐릭터는 완료 상태를 유지합니다. 공용 캐릭터 조각은 전용 재료와 별도 재고입니다.
+
+| 캐릭터 | 전용 재료 | 필요량 |
+|---|---|---|
+| 리안 | 파수꾼의 심지 | 10 |
+| 세라 | 잿빛 맹세 | 10 |
+| 노아 | 이름 없는 인장 | 10 |
+| 미나토 | 해류 유리구슬 | 6 |
+| 하이델 | 서리 렌즈 | 6 |
+| 카이 | 귀항 나침반 | 6 |
+| 마레 | 붉은 인양 고리 | 6 |
+
+**기억 잠항**은 본편 **1-2의 전투와 후속 이야기 완료** 뒤 열립니다. 거점이나 잔영 기록의 재료 획득처에서 캐릭터를 선택해 현재 편성한 4인으로 출격합니다. 적 두 명을 쓰러뜨리고 승리 보상을 수령하면 **선택한 전용 재료 3개**를 확정 획득합니다. 재화 소모와 일일·주간 횟수 제한 없이 반복할 수 있으며, 미보유 인물의 재료도 미리 모을 수 있습니다. 동기화에는 해당 캐릭터를 보유해야 합니다.
+
+잠항 승리 보상을 수령하면 일일·주간 전투 의뢰에도 반영합니다. 잔향 회수의 주간 3회는 소비하지 않으며, 본편 완료·최초 보상 기록과 일반 재화는 변경하지 않습니다. 실패·퇴각에는 재료를 지급하지 않습니다. 저장 실패는 재고와 의뢰 기록을 복원해 같은 승리에서 다시 수령할 수 있습니다.
+
 ## 픽업 소환과 테스트 쿠폰
 
 거점의 **잔영 소환**에서 리안·세라·노아 픽업을 선택합니다. 1회 별가루 160개, 10회 1,600개이며 기본 ★5 확률은 0.8%입니다. ★5 중 픽업 50%, 나머지 두 명은 각각 25%입니다. **80회 이내 ★5 확정**, 비픽업 ★5를 얻으면 **다음 ★5는 픽업 확정**입니다. 배너를 바꾸거나 재시작해도 천장·확정 상태가 이어집니다.
@@ -85,6 +103,7 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 |---|---|
 | `LANTERN-TEST-9999999` | 별가루·코인 각각 9,999,999개 |
 | `LANTERN-MATERIALS` | 등불 조각·기억의 파편·캐릭터 조각 각각 9,999,999개 |
+| `LANTERN-SYNC-MATERIALS` | 캐릭터 전용 동기화 재료 7종 각각 9,999,999개 |
 
 획득 결과는 보유·편성과 함께 저장합니다. 중복은 ★4 조각 20개, ★5 조각 100개로 바뀝니다. 이전 모집 저장은 클리어·성장·재화·소유·편성을 보존하고 새 ★4 마레만 한 번 지급합니다. 카이는 기존 보유·사용을 유지하며 신규 소환 풀에서는 제외합니다. [규칙과 저장 이관 상세](기획서/08_픽업_모집_보유편성_테스트쿠폰.md).
 
@@ -174,7 +193,7 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 
 정신력은 0에서 시작해 -20~+20이며 점화 확률은 10~90%입니다. 매 맞불에서 불·어둠을 다시 켜고 전체 위력을 비교합니다. 번갈아 이기면 충돌을 이어가고, 한쪽이 두 번 연속 이긴 뒤에만 실제 타격합니다. 동률은 연승을 초기화합니다. 기존 속성 상성과 유불리 예측은 유지합니다.
 
-리안·세라·미나토·하이델·노아는 각각 1·2·3스킬과 방어·회피·반격 중 하나를 갖습니다. 잔영 기록에서 등불 조각 10개로 동기화 1을 열면 3스킬을 사용할 수 있습니다. 동기화는 레벨과 별도로 저장합니다. 자세한 초기 수치는 [전투 개편 규칙](기획서/07_정신력_불꽃_맞불_동기화.md)을 참고합니다.
+리안·세라·노아·미나토·하이델·카이·마레는 각각 1·2·3스킬과 방어·회피·반격 중 하나를 갖습니다. 잔영 기록에서 등불 조각 10개와 캐릭터 전용 재료(★5 10개 / ★4 6개)로 동기화 1을 열면 3스킬을 사용할 수 있습니다. 동기화는 레벨과 별도로 저장합니다. 자세한 초기 수치는 [전투 개편 규칙](기획서/07_정신력_불꽃_맞불_동기화.md)을 참고합니다.
 
 - [메인 캠페인 대본](기획서/06_메인스토리_장과_스테이지.md)
 - [보관용 이전 서사 초안](기획서/03_캐릭터스토리_리안_세라_노아.md)
@@ -223,6 +242,7 @@ Blender 캐릭터는 원화를 평면 메시로 변형하는 **정면 2.5D 빌�
 - 전투 규칙·추천: `Assets/Scripts/Core/BattleEngine.cs`
 - 타이밍·상성·데이터 구조: `Assets/Scripts/Core/BattleData.cs`
 - 저장·보상·복구: `Assets/Scripts/Core/ProgressService.cs`
+- 전용 동기화 재료·기억 잠항: `Assets/Scripts/Core/SynchronizationMaterials.cs`
 - Unity UI: `Assets/Scripts/Presentation/`
 - 캐릭터/배경: `Assets/Resources/Art/`
 - Blender 재생성: `Art/Blender/Scripts/build_characters.py`
@@ -235,6 +255,7 @@ Blender 캐릭터는 원화를 평면 메시로 변형하는 **정면 2.5D 빌�
 dotnet run --project Tests/CoreTests.csproj
 dotnet run --project Tests/CampaignTests.csproj
 dotnet run --project Tests/RecurringContentTests.csproj
+dotnet run --project Tests/SynchronizationMaterialsTests.csproj
 node Tests/preview-regression.cjs
 node Tests/combat-fx-regression.cjs
 node Tests/combat-audio-regression.cjs
@@ -248,7 +269,9 @@ Windows 빌드를 실행할 때 `--smoke --capture-dir "절대경로"`를 전달
 
 진행 저장 위치: 브라우저는 `PreviewHost/.local/progress.xml`, Unity는 `Application.persistentDataPath/progress.xml`. 두 실행 환경의 진행 파일은 별도입니다.
 
-주기 콘텐츠의 실제 HTTP 검수는 `python Tests/recurring-api-regression.py --host PreviewHost/bin/recurring-qa/PreviewHost.dll`, Unity 전용 검수는 Windows 실행 파일의 `--recurring-smoke --capture-dir "절대경로"`를 사용합니다. 별도 저장과 QA 시계로 초기화·보상 수령·저장 실패 재시도를 검사합니다. 기록은 `QA/RecurringContent/2026-10-16/`에 있습니다.
+HTTP 검수용 호스트는 `dotnet build PreviewHost/PreviewHost.csproj -o PreviewHost/bin/material-qa`로 만듭니다. `python Tests/material-api-regression.py`는 실제 채집·동기화·쿠폰·구 저장을 검사하고, `python Tests/recurring-api-regression.py --host PreviewHost/bin/material-qa/PreviewHost.dll`은 별도 저장과 QA 시계로 초기화·주간 보상·저장 실패를 검사합니다.
+
+Unity 전용 검수는 Windows 실행 파일의 `--material-smoke --capture-dir "절대경로"`와 `--recurring-smoke --capture-dir "절대경로"`를 사용합니다. 최신 재료 검수 기록은 `QA/SynchronizationMaterials/2026-10-16/`, 이전 주기 콘텐츠 검수는 `QA/RecurringContent/2026-10-16/`에 있습니다.
 
 ## 아트 출처
 

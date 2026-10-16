@@ -35,7 +35,7 @@ namespace RequiemLantern.Presentation
             Application.logMessageReceived+=onLog;
             var watchdog=StartCoroutine(SmokeWatchdog());
             var arguments=Environment.GetCommandLineArgs();var steps=new Stack<IEnumerator>();
-            steps.Push(arguments.Contains("--recurring-smoke")?SmokeRecurringSteps():arguments.Contains("--story-reading-smoke")?SmokeStoryReadingSteps():arguments.Contains("--mare-smoke")?SmokeMareSteps():arguments.Contains("--coupon-smoke")?SmokeCouponFeedbackSteps():arguments.Contains("--recruitment-smoke")?SmokeRecruitmentSteps():arguments.Contains("--title-smoke")?SmokeTitleSteps():arguments.Contains("--intent-smoke")?SmokeIntentDockSteps():arguments.Contains("--ux-smoke")?SmokeUxSteps():SmokeSteps());
+            steps.Push(arguments.Contains("--material-smoke")?SmokeMaterialSteps():arguments.Contains("--recurring-smoke")?SmokeRecurringSteps():arguments.Contains("--story-reading-smoke")?SmokeStoryReadingSteps():arguments.Contains("--mare-smoke")?SmokeMareSteps():arguments.Contains("--coupon-smoke")?SmokeCouponFeedbackSteps():arguments.Contains("--recruitment-smoke")?SmokeRecruitmentSteps():arguments.Contains("--title-smoke")?SmokeTitleSteps():arguments.Contains("--intent-smoke")?SmokeIntentDockSteps():arguments.Contains("--ux-smoke")?SmokeUxSteps():SmokeSteps());
             try {
                 // Drive nested enumerators ourselves so errors inside Capture/SmokeSteps
                 // produce a failure marker and exit code instead of silently ending a coroutine.

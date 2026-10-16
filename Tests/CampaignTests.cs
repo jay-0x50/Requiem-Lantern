@@ -250,6 +250,7 @@ internal static class CampaignTests
             progress.Data.OwnedCharacters=RecruitmentCatalog.Characters.Select(character=>character.Id).ToList();
             progress.Data.ActiveParty=new[]{"lian","sera","minato","noa"}.ToList();
             foreach(string id in new[]{"lian","sera","minato","heidel","noa"}){
+                progress.Data.SyncMaterials.Add(new SyncMaterialStack { CharacterId=id,Count=MaterialCatalog.Get(id).RequiredCount });
                 True(progress.Synchronize(id,out var error));Equal(1,progress.GetCharacter(id).SyncLevel);Equal(1,progress.GetCharacter(id).Level);
             }
             Equal(0,progress.Data.LanternFragments);var restored=RoundTrip(progress.Data,"sync");
@@ -270,7 +271,8 @@ internal static class CampaignTests
             var store=new SaveStore(path);var data=store.Load();True(store.LastWarning==null);Equal(120,data.Coins);Equal(10,data.LanternFragments);
             True(data.RewardedStages!=null);True(data.Characters!=null);Equal(0,data.RewardedStages.Count);Equal(0,data.Characters.Count);
             True(CampaignRules.IsUnlocked(data,Mixed));False(CampaignRules.IsUnlocked(data,Stages[9]));
-            var progress=new ProgressService(data);True(progress.Synchronize("lian",out var error));store.Save(data);Equal(1,store.Load().Characters.Single().SyncLevel);
+            var progress=new ProgressService(data);Equal(0,data.SyncMaterials.Count);False(progress.Synchronize("lian",out var error));Equal(10,data.LanternFragments);
+            data.SyncMaterials.Add(new SyncMaterialStack { CharacterId="lian",Count=10 });True(progress.Synchronize("lian",out error));store.Save(data);Equal(1,store.Load().Characters.Single().SyncLevel);
             var oldBattle=Won(Stages[8],data,0);True(progress.ClaimVictory(oldBattle,out var reward));False(reward.FirstClear);Equal(oldBattle.State.RepeatLanternReward,reward.LanternFragments);
         });
         Test("all authored human bosses and story portraits have matching art resources",()=>{

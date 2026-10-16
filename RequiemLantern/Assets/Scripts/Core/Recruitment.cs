@@ -30,6 +30,7 @@ namespace RequiemLantern.Core
     {
         public string Code;
         public int Stardust, Coins, LanternFragments, MemoryFragments, CharacterShards;
+        public List<SyncMaterialStack> SyncMaterials;
     }
     public static class RecruitmentCatalog
     {

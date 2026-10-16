@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parent.parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--host',type=Path,default=ROOT/'PreviewHost/bin/recruitment-qa/PreviewHost.dll')
 args=parser.parse_args()
-QA=ROOT/'QA/RecurringContent/2026-10-16/RecruitmentAPI'
+QA=ROOT/'QA/SynchronizationMaterials/2026-10-16/RecruitmentAPI'
 QA.mkdir(parents=True,exist_ok=True)
 SAVE=QA/('progress-'+str(time.time_ns())+'.xml')
 PORT=8130
@@ -47,7 +47,7 @@ def unchanged(before,action,**fields):
     return result
 
 try:
-    data=start();assert data['runtimeRevision']=='recurring-v14'
+    data=start();assert data['runtimeRevision']=='sync-material-v15'
     starter=['lian','minato','heidel','mare']
     assert data['progress']['activeParty']==data['progress']['ownedCharacters']==starter
     rarity={character['id']:character['rarity'] for character in data['recruitment']['characters']}
@@ -66,7 +66,11 @@ try:
     data=call('redeem-code',code='LANTERN-MATERIALS')
     assert all(data['progress'][key]==9999999 for key in ['lanternFragments','memoryFragments','characterShards'])
     unchanged(data,'redeem-code',code='lantern-materials')
-    checks.append('Both coupons normalize input, grant the exact amounts and reject reuse without changes.')
+    data=call('redeem-code',code='LANTERN-SYNC-MATERIALS')
+    assert len(data['couponReward']['syncMaterials'])==7
+    assert all(entry['count']==9999999 for entry in data['progress']['syncMaterials'])
+    unchanged(data,'redeem-code',code='LANTERN-SYNC-MATERIALS')
+    checks.append('Three coupons normalize input, grant the exact amounts and reject reuse without changes.')
 
     before=data['progress'];data=call('recruit',bannerId='sera',count=10)
     result=data['recruitmentResult'];assert result['cost']==1600 and len(result['pulls'])==10
@@ -100,7 +104,7 @@ try:
     assert [ally['id'] for ally in data['battle']['allies']]==['lian','noa','heidel','mare']
     for action,fields in [('recruit',dict(bannerId='sera',count=1)),('redeem-code',dict(code='UNKNOWN')),('equip-character',dict(actorId='minato',slot=1))]:unchanged(data,action,**fields)
     checks.append('The actual campaign uses the saved owned party; inventory changes are rejected during an active expedition.')
-    report={'status':'PASS','runtimeRevision':'recurring-v14','port':PORT,'checks':checks,'playerSaveModified':False,'processStopped':True}
+    report={'status':'PASS','runtimeRevision':'sync-material-v15','port':PORT,'checks':checks,'playerSaveModified':False,'processStopped':True}
     (QA/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     for check in checks:print('PASS:',check)
 finally:

@@ -1,0 +1,130 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "sync-material-v15",
+  "isolatedPort": 8128,
+  "scenarios": [
+    {
+      "scenario": "campaign reward committed, reply lost, retry 400 receipt restores after-story",
+      "battleId": "af4e63af25b142408bb67df3cd698690",
+      "calls": [
+        {
+          "action": "reward",
+          "status": 200
+        },
+        {
+          "action": "reward",
+          "status": 400
+        }
+      ],
+      "before": {
+        "coins": 0,
+        "stardust": 0,
+        "lanternFragments": 0,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "after": {
+        "coins": 40,
+        "stardust": 0,
+        "lanternFragments": 2,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "weeklyVictories": 1,
+      "claimedOccurrences": 1
+    },
+    {
+      "scenario": "dungeon reward committed, reply lost, exited session recovered without second payout",
+      "battleId": "aeea4eb2e0b14f059272fc84b44762b7",
+      "calls": [
+        {
+          "action": "dungeon-reward",
+          "status": 200
+        },
+        {
+          "action": "dungeon-reward",
+          "status": 400
+        },
+        {
+          "action": "state",
+          "status": 200
+        }
+      ],
+      "before": {
+        "coins": 40,
+        "stardust": 0,
+        "lanternFragments": 2,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "after": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "weeklyDungeonClaims": 1,
+      "claimedOccurrences": 1
+    },
+    {
+      "scenario": "practice committed, reply lost, exited session recovered without rewards or quest progress",
+      "battleId": "936f05a386f2437c9b0111fcd866825f",
+      "calls": [
+        {
+          "action": "dungeon-reward",
+          "status": 200
+        },
+        {
+          "action": "dungeon-reward",
+          "status": 400
+        },
+        {
+          "action": "state",
+          "status": 200
+        }
+      ],
+      "before": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "after": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "weeklyDungeonClaims": 1,
+      "claimedOccurrences": 1
+    },
+    {
+      "scenario": "unowned character material saved, reply lost, exited session recovered without second drop or weekly quota use",
+      "battleId": "10dbd901ae4349c9b719d8659666f6fd",
+      "calls": [
+        {
+          "action": "material-reward",
+          "status": 200
+        },
+        {
+          "action": "material-reward",
+          "status": 400
+        },
+        {
+          "action": "state",
+          "status": 200
+        }
+      ],
+      "materialCharacter": "sera",
+      "beforeCount": 0,
+      "afterCount": 3,
+      "weeklyDungeonClaims": 1,
+      "claimedOccurrences": 1
+    }
+  ],
+  "uiUsesActualAppScript": true,
+  "lossInjectedAfterServerCompletedRequest": true
+}
