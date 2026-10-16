@@ -1,0 +1,69 @@
+{
+  "dateKst": "2026-10-16",
+  "status": "PASS",
+  "runtimeRevision": "recurring-v14",
+  "baselineCommit": "bd8433add5d920ee92a736f7c6a7b0b911189a7d",
+  "core": {
+    "newRecurringScenarios": 20,
+    "existingCoreCases": 87,
+    "existingCampaignCases": 23,
+    "actualDefaultPartyDungeonWins": 9,
+    "balanceReport": "core-dungeon-balance-runs.txt",
+    "report": "core-validation.md"
+  },
+  "host": {
+    "recurringHttpGroups": 8,
+    "recruitmentHttpGroups": 6,
+    "reports": [
+      "API/result.json",
+      "RecruitmentAPI/result.json"
+    ]
+  },
+  "preview": {
+    "uiRegressionCases": 127,
+    "actualChromeScreens": 17,
+    "consoleErrors": 0,
+    "report": "Browser/browser-verification.json",
+    "actualHttpLostResponseScenarios": 3,
+    "lostResponseReport": "Browser/response-loss-http.json",
+    "finalSourceHashesRechecked": true
+  },
+  "unity": {
+    "windowsBuild": "PASS",
+    "actualSmokeExitCode": 0,
+    "screens": 10,
+    "report": "Unity/native-result.json",
+    "sourceAndAssemblyHashesRechecked": true
+  },
+  "live": {
+    "status": "PASS",
+    "runtimeRevision": "recurring-v14",
+    "backedUpFiles": 2,
+    "originalSaveBytesUnchanged": true,
+    "presentSavedFieldsComparedToRunningState": [
+      "Coins",
+      "LanternFragments",
+      "MemoryFragments",
+      "KeepLevel",
+      "ClearedStages",
+      "ClaimedBattles"
+    ],
+    "previousServiceRunning": false,
+    "mainStageClearedCount": 1,
+    "playerRewardActionsPerformed": false
+  },
+  "coverage": [
+    "KST daily/Monday 05:00 resets and rollback protection",
+    "All eight objectives and exact rewards",
+    "Shared three-reward quota, failures/retreat and zero-reward practice across reset",
+    "Existing player save compatibility",
+    "Real save-path failures, progress/phase rollback and retry without duplicate rewards",
+    "Real Unity and Chrome screens and actual starter-party combat",
+    "Lost success replies for campaign, paid dungeon and practice recover from the exact authoritative receipt without duplicate rewards"
+  ],
+  "limits": [
+    "Local device UTC clock converted to KST; no account server or server anti-cheat",
+    "Initial three dungeon definitions reuse current enemies and combat assets; balance is initial",
+    "Full existing audio/animation suites were not rerun because those assets and systems were unchanged"
+  ]
+}

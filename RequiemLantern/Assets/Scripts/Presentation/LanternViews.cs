@@ -31,13 +31,15 @@ namespace RequiemLantern.Presentation
         }
         void ShowHub()
         {
-            campaign.Exit();Clear("hub");Header("BEACON KEEP  /  영야의 해안","등대 요새");
+            campaign.Exit();ExitWeeklyDungeon();RefreshRecurringActivities();Clear("hub");Header("BEACON KEEP  /  영야의 해안","등대 요새");
             Box(screen,"Portrait plate",66,160,850,800,new Color(.025f,.04f,.06f,.2f));
             Character(screen,"Lian",190,143,625,811);
             Label(screen,"Location number","01",80,170,150,100,72,new Color(.9f,.8f,.66f,.6f));
             Label(screen,"Keep status",$"등대 복구  {progress.Data.KeepLevel}단계",94,800,600,46,25,Gold);
             Label(screen,"Lian quote","“…살아 있으면, 그걸로 됐어.”",94,862,800,64,30);
             Label(screen,"Lian caption","리안  /  등대의 파수꾼",96,927,700,38,19,Muted);
+            Button(screen,"Supply board","보급 게시판",95,969,350,47,()=>ShowRecurringBoard());
+            Button(screen,"Weekly dungeon","잔향 회수",464,969,350,47,ShowWeeklyDungeons);
             var next=NextCampaignStage();
             var nextChapter=CampaignCatalog.Chapters[next.Chapter-1];
             Label(screen,"Main quest label","MAIN STORY / "+CampaignCharacterName(nextChapter.FocusCharacterId)+"의 이야기",1010,177,760,40,18,Gold);

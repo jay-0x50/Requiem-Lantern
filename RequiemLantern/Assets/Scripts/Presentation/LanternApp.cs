@@ -48,16 +48,17 @@ namespace RequiemLantern.Presentation
             combatAudio=new CombatAudioBank(transform);
             ShowTitle();
             if(!string.IsNullOrEmpty(save.LastWarning))Notify(save.LastWarning);
-            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"||argument=="--recruitment-smoke"||argument=="--coupon-smoke"||argument=="--mare-smoke"||argument=="--story-reading-smoke"))StartCoroutine(SmokeTour());
+            if(Environment.GetCommandLineArgs().Any(argument=>argument=="--smoke"||argument=="--ux-smoke"||argument=="--intent-smoke"||argument=="--title-smoke"||argument=="--recruitment-smoke"||argument=="--coupon-smoke"||argument=="--mare-smoke"||argument=="--story-reading-smoke"||argument=="--recurring-smoke"))StartCoroutine(SmokeTour());
         }
         void Update()
         {
             combatAudio?.Update(sound);
+            TickRecurringActivities();
             if(toast)toast.gameObject.SetActive(Time.unscaledTime<toastUntil);
             if(page=="title"){TickTitleInput();return;}
             ProcessStoryInput(Time.unscaledDeltaTime,Input.GetKeyDown(KeyCode.Space));
             if(Input.GetKeyDown(KeyCode.Escape)&&page!="title"&&page!="resolve"){
-                if(overlay){if(page=="recruitment")DismissRecruitmentOverlay();else if(page=="story")CloseStoryLog();else CloseRecruitmentOverlay();}else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else ShowHub();
+                if(overlay){if(page=="recruitment")DismissRecruitmentOverlay();else if(page=="story")CloseStoryLog();else CloseRecruitmentOverlay();}else if(page=="battle")ConfirmRetreat();else if(page=="settings")ReturnFromSettings();else if(page=="result"&&weeklyDungeon.Active!=null&&battle.State.Outcome==BattleOutcome.Victory)ClaimWeeklyDungeonReward();else if(page=="result"&&battleRewardSavePending)ShowResult();else ShowHub();
             }
         }
         bool Persist() { try { save.Save(progress.Data); return true; } catch(Exception e) { Notify("저장하지 못했습니다. 저장 공간을 확인해 주세요."); Debug.LogException(e); return false; } }

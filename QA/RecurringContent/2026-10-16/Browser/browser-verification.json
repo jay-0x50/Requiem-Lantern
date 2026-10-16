@@ -1,0 +1,91 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "recurring-v14",
+  "isolatedPort": 8128,
+  "livePort8127Untouched": true,
+  "defaultParty": [
+    "lian",
+    "minato",
+    "heidel",
+    "mare"
+  ],
+  "uiRegressionCases": 127,
+  "newRecurringCases": 19,
+  "actualBrowserChecks": [
+    "new-save campaign entry, hub check-in and badge",
+    "daily claim through UI, persisted currency and disabled completed claim",
+    "four daily and four weekly objectives with KST reset",
+    "locked salvage before actual stage 1-2 after-story completion",
+    "actual 1-2 API battle/after-story unlock using unchanged starter party",
+    "three salvage definitions, shared three-reward cap and own rewards",
+    "easy salvage entry, AI combat through browser and victory result",
+    "explicit saved salvage claim: 3 to 2 rewards, server prize only",
+    "practice entry, clear zero-reward/zero-progress label, retreat keeps two rewards",
+    "no console warnings or errors",
+    "real .xml.tmp path blockage: two UI reward-save attempts retain victory, currency and quest progress",
+    "unblock and retry same battle: reward saved once, exact one quest increment, original after-story restored",
+    "final daily/weekly four-row lists fit 519px without scrolling"
+  ],
+  "saveRetry": {
+    "battleId": "b9bc79fdda2a479a85b85d1243bd873c",
+    "beforeCoins": 640,
+    "afterCoins": 680,
+    "afterLantern": 9,
+    "claimedOccurrences": 1,
+    "weeklyVictories": 3,
+    "sharedDungeonClaims": 1
+  },
+  "sourceSha256": {
+    "Preview/app.js": "0982f09b089d86c1a555d4836278700e70603447cf930ee00f51d885a0f047d5",
+    "Preview/theme.css": "01c8fe444a6ec546eb6c2aac87d642ec114be1795bf82995ac1eb0c0492832b4",
+    "Tests/preview-regression.cjs": "7d39d9d43f27d9e1107d574fe4bc2367aba69094c63a7454bd310efdff808b58",
+    "Tests/preview-response-loss-http.cjs": "805e1fa7b29a4adeab98285d077b784aa1b0da285922afce8c0cdff275b7786b"
+  },
+  "screenshots": {
+    "Screens01-hub.jpg": "52394db24f29544b922dab30cceaf07fdf5f1c5fcc14fcaa79bf9dbd24dba89e",
+    "Screens02-daily.jpg": "33458347afe04648bc100f067db0cb45673f78d0338d05a9c23509aa3b9cf68b",
+    "Screens03-daily-claimed.jpg": "aa5785833951316f6e2cd98390e27580a8d6aa091af6a023d7032256bd8a409a",
+    "Screens04-weekly.jpg": "99a759dd816c5fb05af765622c0e7c9cb0140e695d6f16ba28537a6574e5581f",
+    "Screens05-dungeon-locked.jpg": "4aaaa0c781bd6f52ceb2ed557d04f761a5de171d04eb098b21eddc6f658281d9",
+    "Screens06-dungeon-unlocked.jpg": "123f0808a842d7f83947f9deb195546403e05b185486be4b69d4761d4b582a65",
+    "Screens07-salvage-planning.jpg": "3610e3e13883990307392ad7326acde7679df143438fb75ac0cd25d043e3f933",
+    "Screens08-salvage-execution.jpg": "a3b4fa99a78c28732cbb3d98d2c335c64660b13773954dbab56dff1277f72f8c",
+    "Screens09-unclaimed-victory.jpg": "f0f0080f7ea3dc5ca1e2b8406b714c827d4e80418ef5a26df7b736933375d8ed",
+    "Screens10-saved-prize.jpg": "c309e5c79cd058fb93bc0a2160aa0af26aa73d344d462b8b779a616d5fbe8801",
+    "Screens11-practice.jpg": "02df5a3d2ccab90a40ea1bfa2143c267e5d0639993e013705dc69c062866729d",
+    "Screens12-practice-retreat-quota.jpg": "705a7b9c469ca9cd7b59eaffa2c74d224b81965ba85065c0da066952887f33b5",
+    "Screens13-battle-save-failed.jpg": "848aa2fbce672e3b26d8a0c7d82d618697f3db886a8d630396e83c95601c2adf",
+    "Screens14-battle-retry-saved.jpg": "2f489a91fd71bde721b9a357c6a47602301973e1dd752d6870a5d86da979e9be",
+    "Screens15-after-story-restored.jpg": "d21f36711290fa6e73b9e3d7788a587aca200f833618da25c407d68b6d5f782a",
+    "Screens16-final-daily-progress.jpg": "b69cba2a7d8d4406c51eb56b53ea893be8595e0ad323caff4d5d25c8d931c99d",
+    "Screens17-final-weekly-progress.jpg": "c66e5f790864025a47d4146e3266cc880ea49129e1229533545b27d1155e949f"
+  },
+  "limitations": [
+    "Shared cap exhaustion rendering is covered by the browser script regression suite; native and root API QA independently cover consuming all three actual rewards.",
+    "Save failure was injected only into the isolated 8128 save temp path and fully removed.",
+    "Chrome captures 01–12 predate the normal reward-save retry follow-up; 13–17 include that follow-up. All captures predate the final response-loss reconciliation fix, which changes behavior without changing layout. Final source hashes and three actual HTTP response-loss scenarios are recorded separately."
+  ],
+  "captureSourceSha256": {
+    "Preview/app.js": "60cb4fd35e77ac50638c3979062b651ea893690a7424782caec9dddac0004ec9",
+    "Preview/theme.css": "01c8fe444a6ec546eb6c2aac87d642ec114be1795bf82995ac1eb0c0492832b4",
+    "Tests/preview-regression.cjs": "9a4e51496aed71f9455aa38edb433bff97144d1f97cae8ec2205d8219edff914"
+  },
+  "responseLossFollowUp": {
+    "dateKst": "2026-10-16",
+    "status": "PASS",
+    "scenarioCount": 3,
+    "testSource": "Tests/preview-response-loss-http.cjs",
+    "evidence": "QA/RecurringContent/2026-10-16/Browser/response-loss-http.json",
+    "injection": "actual server POST completed and saved; client consumed the success reply, then threw before app.js received it",
+    "covered": [
+      "ordinary campaign reward saved once; retry 400 authoritative exact battle receipt restores after-story",
+      "weekly dungeon reward saved once and server session exited; retry 400 exact receipt restores route without a second payout or invented prize popup",
+      "practice session saved once and exited; retry 400 restores route with no reward or quest increments"
+    ],
+    "layoutChanged": false,
+    "additionalChromeCaptureRequired": false,
+    "captureTiming": "The existing 17 Chrome captures predate this response-loss follow-up. They remain layout evidence; final behavior was verified using the actual app.js against isolated real HTTP on 8128 plus 127 script regressions.",
+    "livePort8127Restarted": false,
+    "disposableSave": "QA/RecurringContent/2026-10-16/Browser/response-loss-progress.xml"
+  }
+}

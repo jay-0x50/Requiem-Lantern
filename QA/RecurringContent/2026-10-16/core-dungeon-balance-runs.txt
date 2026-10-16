@@ -1,0 +1,9 @@
+coast seed=0 result=Victory rounds=4 clashes=4
+coast seed=1 result=Victory rounds=3 clashes=3
+coast seed=42 result=Victory rounds=3 clashes=4
+reef seed=0 result=Victory rounds=6 clashes=14
+reef seed=1 result=Victory rounds=6 clashes=11
+reef seed=42 result=Victory rounds=5 clashes=11
+watch seed=0 result=Victory rounds=6 clashes=13
+watch seed=1 result=Victory rounds=5 clashes=14
+watch seed=42 result=Victory rounds=6 clashes=14

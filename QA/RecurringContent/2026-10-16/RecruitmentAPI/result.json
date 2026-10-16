@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "recurring-v14",
+  "port": 8130,
+  "checks": [
+    "Fresh 1x5-star/3x4-star grant; invalid, insufficient and unowned requests preserve all progress.",
+    "Both coupons normalize input, grant the exact amounts and reject reuse without changes.",
+    "Ten pulls charge once and persist ownership, pity, guarantee, currency, coupon use and random stream across restart.",
+    "A real save-path failure rolls back draw/RNG/pity/currency and synchronization/materials, restores battle growth and returns no result.",
+    "The 80th guaranteed five-star honors the newly selected banner and persists the acquired/edited party.",
+    "The actual campaign uses the saved owned party; inventory changes are rejected during an active expedition."
+  ],
+  "playerSaveModified": false,
+  "processStopped": true
+}

@@ -23,6 +23,7 @@ namespace RequiemLantern.Core
         public bool PickupGuaranteed;
         public uint RecruitRandomState;
         public List<string> OwnedCharacters = new List<string>(), ActiveParty = new List<string>(), RedeemedCodes = new List<string>();
+        public RecurringProgress Activities = new RecurringProgress();
     }
 
     [Serializable]
@@ -40,20 +41,23 @@ namespace RequiemLantern.Core
         public string Summary { get { return "코인 +" + Coins + " / 등불 조각 +" + LanternFragments + " / 기억의 파편 +" + MemoryFragments; } }
     }
 
-    public sealed class ProgressService
+    public sealed partial class ProgressService
     {
         public ProgressData Data { get; private set; }
         public const int SynchronizationCost = 10;
         readonly IRecruitRandom recruitRandom;
-        public ProgressService(ProgressData data,IRecruitRandom randomSource=null)
+        readonly Func<DateTime> utcNow;
+        public ProgressService(ProgressData data,IRecruitRandom randomSource=null,Func<DateTime> utcNow=null)
         {
             Data = data ?? new ProgressData();
             recruitRandom=randomSource;
+            this.utcNow=utcNow??(()=>DateTime.UtcNow);
             Data.Characters = Data.Characters ?? new List<CharacterProgress>();
             Data.ClearedStages = Data.ClearedStages ?? new List<string>();
             Data.RewardedStages = Data.RewardedStages ?? new List<string>();
             Data.ClaimedBattles = Data.ClaimedBattles ?? new List<string>();
             RecruitmentCatalog.InitializeCollection(Data);
+            RecurringRules.Initialize(Data);
         }
         static ProgressData Clone(ProgressData data)
         {
@@ -126,13 +130,18 @@ namespace RequiemLantern.Core
         public bool ClaimVictory(BattleEngine battle, out RewardData reward, bool deferStageClear = false)
         {
             reward = null;
-            if (battle.State.Outcome != BattleOutcome.Victory || Data.ClaimedBattles.Contains(battle.State.BattleId)) return false;
+            if (battle == null || battle.State.StageId.StartsWith("weekly_",StringComparison.Ordinal) || battle.State.Outcome != BattleOutcome.Victory || Data.ClaimedBattles.Contains(battle.State.BattleId)) return false;
             bool first = !Data.ClearedStages.Contains(battle.State.StageId) && !Data.RewardedStages.Contains(battle.State.StageId);
-            reward = new RewardData { Coins = battle.State.CoinReward, LanternFragments = first ? battle.State.FirstLanternReward : battle.State.RepeatLanternReward, MemoryFragments = first ? battle.State.MemoryReward : 0, FirstClear = first };
+            var pending = new RewardData { Coins = battle.State.CoinReward, LanternFragments = first ? battle.State.FirstLanternReward : battle.State.RepeatLanternReward, MemoryFragments = first ? battle.State.MemoryReward : 0, FirstClear = first };
+            if(pending.Coins<0||pending.LanternFragments<0||pending.MemoryFragments<0||Data.Coins>int.MaxValue-pending.Coins||Data.LanternFragments>int.MaxValue-pending.LanternFragments||Data.MemoryFragments>int.MaxValue-pending.MemoryFragments)return false;
+            var stage=CampaignCatalog.Get(battle.State.StageId);
+            var activities=battle.IsCampaignBattle&&stage!=null&&stage.HasBattle?VictoryActivities(battle,false):null;
+            reward=pending;
             Data.Coins += reward.Coins; Data.LanternFragments += reward.LanternFragments; Data.MemoryFragments += reward.MemoryFragments;
             Data.ClaimedBattles.Add(battle.State.BattleId);
             if (!Data.RewardedStages.Contains(battle.State.StageId)) Data.RewardedStages.Add(battle.State.StageId);
             if (!deferStageClear && !Data.ClearedStages.Contains(battle.State.StageId)) Data.ClearedStages.Add(battle.State.StageId);
+            if(activities!=null)Data.Activities=activities;
             return true;
         }
         public bool RepairKeep(out string error)
@@ -187,6 +196,8 @@ namespace RequiemLantern.Core
                 data.Characters = data.Characters ?? new List<CharacterProgress>();
                 if (data.LanternFragments < 0 || data.MemoryFragments < 0 || data.Characters.Any(x => x == null || !PrototypeData.IsCharacter(x.Id) || x.Level < 1 || x.SyncLevel < 0) || data.Characters.GroupBy(x => x.Id).Any(x => x.Count() > 1)) throw new InvalidOperationException("Invalid character growth.");
                 RecruitmentCatalog.InitializeCollection(data);
+                RecurringRules.Initialize(data);
+                if(!RecurringRules.Valid(data.Activities))throw new InvalidOperationException("Invalid recurring activity state.");
                 if(data.CollectionVersion!=RecruitmentCatalog.CollectionVersion||data.Stardust<0||data.CharacterShards<0||data.RecruitPity<0||data.RecruitPity>=RecruitmentCatalog.HardPity||data.RecruitRandomState==0
                     ||data.OwnedCharacters.Any(id=>RecruitmentCatalog.Character(id)==null)||data.OwnedCharacters.Distinct().Count()!=data.OwnedCharacters.Count
                     ||data.ActiveParty.Count!=PrototypeData.PartyCapacity||data.ActiveParty.Distinct().Count()!=PrototypeData.PartyCapacity||data.ActiveParty.Any(id=>!data.OwnedCharacters.Contains(id))
@@ -199,6 +210,7 @@ namespace RequiemLantern.Core
         {
             if (data == null) throw new ArgumentNullException("data");
             RecruitmentCatalog.InitializeCollection(data);
+            RecurringRules.Initialize(data);
             string directory = System.IO.Path.GetDirectoryName(Path);
             if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
             string pending = Path + ".tmp";

@@ -1,0 +1,107 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "recurring-v14",
+  "isolatedPort": 8128,
+  "scenarios": [
+    {
+      "scenario": "campaign reward committed, reply lost, retry 400 receipt restores after-story",
+      "battleId": "ce577ebfbb0b40e4bf48aa508eab6271",
+      "calls": [
+        {
+          "action": "reward",
+          "status": 200
+        },
+        {
+          "action": "reward",
+          "status": 400
+        }
+      ],
+      "before": {
+        "coins": 0,
+        "stardust": 0,
+        "lanternFragments": 0,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "after": {
+        "coins": 40,
+        "stardust": 0,
+        "lanternFragments": 2,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "weeklyVictories": 1,
+      "claimedOccurrences": 1
+    },
+    {
+      "scenario": "dungeon reward committed, reply lost, exited session recovered without second payout",
+      "battleId": "e70523a56b5c4d95a76f907fbe2e5856",
+      "calls": [
+        {
+          "action": "dungeon-reward",
+          "status": 200
+        },
+        {
+          "action": "dungeon-reward",
+          "status": 400
+        },
+        {
+          "action": "state",
+          "status": 200
+        }
+      ],
+      "before": {
+        "coins": 40,
+        "stardust": 0,
+        "lanternFragments": 2,
+        "memoryFragments": 0,
+        "characterShards": 0
+      },
+      "after": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "weeklyDungeonClaims": 1,
+      "claimedOccurrences": 1
+    },
+    {
+      "scenario": "practice committed, reply lost, exited session recovered without rewards or quest progress",
+      "battleId": "92accb2aff5a4fd0a4c10a1a9c0ddae4",
+      "calls": [
+        {
+          "action": "dungeon-reward",
+          "status": 200
+        },
+        {
+          "action": "dungeon-reward",
+          "status": 400
+        },
+        {
+          "action": "state",
+          "status": 200
+        }
+      ],
+      "before": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "after": {
+        "coins": 540,
+        "stardust": 80,
+        "lanternFragments": 7,
+        "memoryFragments": 0,
+        "characterShards": 5
+      },
+      "weeklyDungeonClaims": 1,
+      "claimedOccurrences": 1
+    }
+  ],
+  "uiUsesActualAppScript": true,
+  "lossInjectedAfterServerCompletedRequest": true
+}

@@ -17,7 +17,10 @@ namespace RequiemLantern.Presentation
         Dictionary<string,Vector2> anchors=new Dictionary<string,Vector2>();
         Dictionary<string,Vector2> slotAnchors=new Dictionary<string,Vector2>();
         ThreadGraphic dragLine; bool ignitionTapped; float ignitionTimestamp;
-        void StartBattle(){campaign.Exit();battle=BattleEngine.CreatePrototype(progress.Data);PrepareBattlePresentation();}
+        bool battleRewardSavePending;
+        string presentedRewardBattleId;
+        RewardData presentedBattleReward;
+        void StartBattle(){campaign.Exit();ExitWeeklyDungeon();battle=BattleEngine.CreatePrototype(progress.Data);PrepareBattlePresentation();}
         string ArtId(string id){return CharacterIds.FirstOrDefault(x=>x.Equals(id,StringComparison.OrdinalIgnoreCase))??id;}
         Color ElementColor(Element e){switch(e){case Element.Flame:return Hex("E77A5D");case Element.Tide:return Teal;case Element.Frost:return Hex("A7D4E9");case Element.Shadow:return Violet;default:return Gold;}}
         Image Gauge(Transform p,string name,float x,float y,float w,int value,int max,Color color)
@@ -309,8 +312,8 @@ namespace RequiemLantern.Presentation
             HideIntentTooltip();
             if(overlay)return;
             overlay=MakeRect(stage,"Retreat prompt",0,0,1920,1080);Box(overlay,"Scrim",0,0,1920,1080,new Color(0,0,0,.84f)).raycastTarget=true;
-            Label(overlay,"Retreat question","이 전투를 중단하고 작전실로 돌아갈까요?",370,350,1180,120,38,Ivory,TextAnchor.MiddleCenter);
-            Button(overlay,"Stay","전투 계속",530,540,390,76,()=>Destroy(overlay.gameObject),true);Button(overlay,"Leave","작전실로 돌아가기",1000,540,390,76,LeaveCampaignBattle);
+            Label(overlay,"Retreat question",weeklyDungeon.Active!=null?"원정을 중단하고 귀항할까요?\n주간 보상 횟수는 차감되지 않습니다.":"이 전투를 중단하고 작전실로 돌아갈까요?",370,350,1180,140,38,Ivory,TextAnchor.MiddleCenter);
+            Button(overlay,"Stay","전투 계속",530,540,390,76,()=>Destroy(overlay.gameObject),true);Button(overlay,"Leave",weeklyDungeon.Active!=null?"원정 선택으로":"작전실로 돌아가기",1000,540,390,76,LeaveCampaignBattle);
         }
         void ShowBattleLog()
         {
@@ -397,26 +400,35 @@ namespace RequiemLantern.Presentation
         }
         void ShowResult()
         {
+            if(weeklyDungeon.Active!=null&&weeklyDungeon.Battle==battle){ShowWeeklyDungeonResult();return;}
             bool victory=battle.State.Outcome==BattleOutcome.Victory;RewardData reward=null;
             bool inCampaign=campaign.Active!=null;
-            if(victory){
-                if(inCampaign&&campaign.Phase==CampaignPhase.Battle){
-                    if(campaign.AcceptVictory(battle,progress,out reward,out string error))Persist();else Notify(error);
-                }else if(!inCampaign&&progress.ClaimVictory(battle,out reward))Persist();
+            battleRewardSavePending=false;
+            if(victory&&!progress.Data.ClaimedBattles.Contains(battle.State.BattleId)){
+                var snapshot=progress.Capture();var checkpoint=campaign.Capture();string error=null;
+                bool claimed=inCampaign?campaign.AcceptVictory(battle,progress,out reward,out error):progress.ClaimVictory(battle,out reward);
+                if(claimed){
+                    if(!PersistRecruitment()){
+                        progress.Restore(snapshot);campaign.Restore(checkpoint);reward=null;battleRewardSavePending=true;
+                        Notify("저장하지 못해 전투 보상 수령을 취소했습니다. 아래 버튼으로 다시 시도해 주세요.");
+                    }else {presentedRewardBattleId=battle.State.BattleId;presentedBattleReward=reward;}
+                }else {battleRewardSavePending=true;Notify(error??"전투 보상을 수령하지 못했습니다.");}
             }
+            if(reward==null&&presentedRewardBattleId==battle.State.BattleId)reward=presentedBattleReward;
             Clear("result");Character(screen,battle.State.Allies[0].Portrait,90,143,700,826);
             Label(screen,"Result eyebrow",victory?"THE LIGHT REMAINS":"A MOMENT IN THE DARK",862,233,970,39,21,Gold);
             Label(screen,"Result headline",victory?"지켜낸 불씨":"아직, 끝이 아니야",854,310,1010,130,70);
             Label(screen,"Result quote",victory?"어둠이 물러난 자리.\n동료들에게 남겨진 이야기를 이어갑니다.":"빛실을 다시 잇고, 다른 길을 찾아보자.\n정신력과 불의 수치를 확인하고 다시 맞붙을 수 있다.",864,482,930,132,29,Muted);
             if(reward!=null)Label(screen,"Rewards",reward.Summary.Replace(" / ","\n"),870,655,904,143,28,Gold);
             bool hasAfter=inCampaign&&campaign.Phase==CampaignPhase.AfterStory;
-            string caption=victory?hasAfter?"후속 이야기 읽기 →":"작전실로 →":"다시 도전하기 →";
+            string caption=battleRewardSavePending?"보상 저장 다시 시도 →":victory?hasAfter?"후속 이야기 읽기 →":"작전실로 →":"다시 도전하기 →";
             Button(screen,"Result continue",caption,865,857,560,83,()=>{
+                if(battleRewardSavePending){ShowResult();return;}
                 if(inCampaign){if(victory)ContinueCampaign();else StartCampaignBattle();}
                 else if(victory)ShowStages();else StartBattle();
             },true);
-            Button(screen,"Result hub","등대로",1450,857,312,83,ShowHub);
-            Footer(hasAfter?"후속 대화를 마치면 이 스테이지가 완료됩니다":"진행 상황 자동 저장 · 기록실에서 완료한 이야기를 다시 볼 수 있습니다");
+            Button(screen,"Result hub",battleRewardSavePending?"저장 재시도":"등대로",1450,857,312,83,()=>{if(battleRewardSavePending)ShowResult();else ShowHub();});
+            Footer(battleRewardSavePending?"저장에 성공한 뒤 보상을 지급하고 이야기를 이어갑니다":hasAfter?"후속 대화를 마치면 이 스테이지가 완료됩니다":"진행 상황 자동 저장 · 기록실에서 완료한 이야기를 다시 볼 수 있습니다");
         }
     }
 }

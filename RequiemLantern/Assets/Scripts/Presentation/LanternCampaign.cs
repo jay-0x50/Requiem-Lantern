@@ -18,7 +18,7 @@ namespace RequiemLantern.Presentation
         void ShowStages() { ShowCampaign(false); }
         void ShowCampaign(bool archive)
         {
-            campaign.Exit();campaignArchive=archive;
+            campaign.Exit();ExitWeeklyDungeon();campaignArchive=archive;
             var chapters=CampaignCatalog.Chapters.Where(c=>archive?c.Stages.Any(s=>CampaignRules.IsCleared(progress.Data,s)):
                 CampaignRules.IsUnlocked(progress.Data,c.Stages[0])||CampaignRules.IsCleared(progress.Data,c.Stages[0])).ToList();
             Clear("stages");Header(archive?"MEMORY ARCHIVE / 지나온 항로":"VOYAGE OF THE LANTERN / 귀항호 항해도",archive?"항해 기록실":"항해 준비",ShowHub);
@@ -141,6 +141,7 @@ namespace RequiemLantern.Presentation
         void EnterCampaignStage(string id,bool replay=false)
         {
             if(!campaign.Enter(id,progress.Data,replay,out string error)){Notify(error);return;}
+            ExitWeeklyDungeon();
             selectedStage=campaign.Active.Id;selectedChapter=campaign.Active.Chapter;
             ContinueCampaign();
         }
@@ -156,8 +157,10 @@ namespace RequiemLantern.Presentation
         }
         void FinishCampaignStory()
         {
+            var snapshot=progress.Capture();var checkpoint=campaign.Capture();
             if(!campaign.FinishStory(progress.Data,out bool changed,out string error)){Notify(error);return;}
-            if(changed)Persist();ContinueCampaign();
+            if(changed&&!PersistRecruitment()){progress.Restore(snapshot);campaign.Restore(checkpoint);Notify("저장하지 못했습니다. 이 장면을 다시 마치면 저장을 재시도합니다.");storyIndex=Math.Max(0,story.Count-1);storyDone=FinishCampaignStory;DrawStory();return;}
+            ContinueCampaign();
         }
         void StartCampaignBattle()
         {
@@ -172,6 +175,7 @@ namespace RequiemLantern.Presentation
         }
         void LeaveCampaignBattle()
         {
+            if(weeklyDungeon.Active!=null){ExitWeeklyDungeon();Clear("weeklyDungeon");ShowWeeklyDungeons();return;}
             if(campaign.Active!=null)ShowCampaign(false);else ShowHub();
         }
         void ShowCharacterChapter(string id)

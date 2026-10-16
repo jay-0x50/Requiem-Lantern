@@ -8,6 +8,7 @@ Builds/
 !PreviewHost/PreviewHost.csproj
 !Tests/CoreTests.csproj
 !Tests/CampaignTests.csproj
+!Tests/RecurringContentTests.csproj
 *.sln
 *.blend1
 *.blend2

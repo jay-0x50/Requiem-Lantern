@@ -35,11 +35,19 @@ JSON 키는 camelCase, enum은 문자열이다.
 
 지원 action: `recommend`, `link`, `remove`, `clear`, `reuse`, `resolve`, `next`, `restart`, `lantern`, `prologue`, `reward`, `repair`, `stage-enter`, `stage-replay`, `stage-story`, `stage-exit`, `synchronize`.
 
+모집·편성: `recruit`, `redeem-code`, `equip-character`.
+
+주기 콘텐츠: `activity-check-in`, `quest-claim` (`questId`, `periodKey`), `dungeon-enter` (`dungeonId`: coast/reef/watch, `practice`), `dungeon-reward`, `dungeon-exit`. 상태는 `activities`에 기간·목표·보상·해금과 공유 주간 횟수, `dungeon`에 현재 원정·연습 여부를 제공한다. 의뢰 보상은 `activityReward`, 원정 보상은 `dungeonPrize`로 반환한다. 던전 승리는 명시 `dungeon-reward` 저장에 성공한 뒤 세션을 닫으며 실패하면 같은 승리를 유지한다. 일반 `reward`로 던전 보상을 대신 받을 수 없다.
+
+승리 보상을 받지 못한 상태의 이탈은 UI에서 먼저 저장을 재시도한다. 본편 보상·후속 이야기 저장 실패도 진행 데이터와 캠페인 단계를 함께 복원한다. 본편과 던전은 동시에 진행할 수 없다.
+
 스테이지 요청에는 `stageId`를 전달한다. `stage-story`에는 `expectedPhase`도 전달해 중복 완료와 오래된 화면의 요청을 막는다. `campaign` 응답은 5개 장의 스테이지 목록과 해금·완료 상태, 진행 중 스테이지, `BeforeStory / Battle / AfterStory / Complete` 단계, 현재 대본을 제공한다. 혼합 스테이지의 보상은 승리 때 지급하며 완료 표시는 후속 대화가 끝난 뒤 저장한다. 승리 후 종료했다면 재진입 시 후속 대화부터 이어진다.
 
 `synchronize`는 `actorId`에 해당하는 잔영의 동기화 1을 등불 조각 10개로 개방한다. `progress.characters`의 레벨·동기화 값은 별도로 저장한다. 전투 중에는 동기화할 수 없다.
 
 격리 검수는 `dotnet PreviewHost.dll "프로젝트 경로" "격리 저장 경로" 8128`처럼 저장 경로와 포트를 추가로 지정한다. 기본 실행은 기존 8127과 개인 저장 파일을 사용한다.
+
+초기화 경계 검수에만 네 번째 인자로 작업공간 `QA/` 아래의 시계 파일을 전달할 수 있다. 파일에는 UTC ISO 시각을 쓰며 서비스가 현재 시각 대신 읽는다. 예: `dotnet PreviewHost.dll "프로젝트 경로" "격리 저장 경로" 8131 "프로젝트 경로/QA/RecurringContent/2026-10-16/API/clock.txt"`. 일반 실행은 해당 인자가 없고 실제 `DateTime.UtcNow`를 사용한다. API로 시각을 바꾸는 기능은 없다.
 
 상태 응답 구조:
 

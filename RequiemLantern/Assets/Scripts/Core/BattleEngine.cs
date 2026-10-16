@@ -8,6 +8,10 @@ namespace RequiemLantern.Core
     public sealed class BattleEngine
     {
         public BattleState State { get; private set; }
+        public int ResolvedClashes { get; private set; }
+        public int ResolvedDefenses { get; private set; }
+        internal bool IsCampaignBattle { get; private set; }
+        internal void MarkCampaignBattle() { IsCampaignBattle = true; }
         private readonly Func<BattleState> factory;
         private readonly List<LinkCommand> previousLinks = new List<LinkCommand>();
         private sealed class DefenseAction
@@ -394,6 +398,7 @@ namespace RequiemLantern.Core
         public void Restart()
         {
             if (factory == null) throw new InvalidOperationException("Restart requires a battle factory.");
+            ResolvedClashes = ResolvedDefenses = 0;
             State = factory(); if (ownsRandom) random = new SeededBattleRandom(State.RandomSeed); deckRandom.Clear(); foreach (var actor in State.Allies) InitializeDeck(actor); previousLinks.Clear(); guards.Clear(); elementsHit.Clear(); reactions.Clear(); shattered.Clear(); Observe();
         }
 
@@ -484,6 +489,7 @@ namespace RequiemLantern.Core
             }
             if (link.Kind == LinkKind.Guard)
             {
+                ResolvedDefenses++;
                 var roll = RollSkill(actor, skill, null, multiplier); LogRoll(actor, Unit(link.TargetId), roll, null, 0, skill);
                 guards[link.TargetId] = new DefenseAction { Actor = actor, Skill = skill, Roll = roll };
                 Log("Guard", actor.Id, link.TargetId, actor.Name + " · " + skill.Name + " — 방어 위력 " + roll.Power.ToString("0.#"), (int)Math.Round(roll.Power)); return;
@@ -553,6 +559,7 @@ namespace RequiemLantern.Core
             var enemy = Unit(intent.ActorId);
             if (intent.Kind == IntentKind.Illusion)
             { intent.Resolved = true; Log("Illusion", actor.Id, enemy.Id, "허상선 — 빛실이 허공을 가릅니다.", 0); return; }
+            ResolvedClashes++;
             if (intent.TargetId != actor.Id)
             {
                 var protectedAlly = Unit(intent.TargetId);

@@ -331,7 +331,98 @@ async function intentDockChecks(){
  pass('three ordinary enemies retain separate compact owner rows with no adjacent-row overlap or viewport spill');
 }
 
+function activitiesFixture(env){
+ const reward={coins:100,stardust:40,lanternFragments:2,memoryFragments:3,characterShards:1};
+ const quest=(id,current,target,claimed=false)=>({id,title:'의뢰 '+id,description:'전투를 승리하고 보상을 수령하세요.',current,target,claimed,canClaim:!claimed&&current>=target,periodKey:id.startsWith('d')?'2026-10-16':'2026-10-12',reward});
+ const activities={dailyKey:'2026-10-16',weeklyKey:'2026-10-12',nextDailyResetUtc:'2026-10-16T20:00:00Z',nextWeeklyResetUtc:'2026-10-18T20:00:00Z',dailyQuests:[quest('d_visit',1,1),quest('d_win',0,1),quest('d_clash',2,3),quest('d_guard',2,2,true)],weeklyQuests:[quest('w_win',6,10),quest('w_clash',20,20),quest('w_guard',3,8),quest('w_dungeon',1,3)],weeklyDungeonRewardsClaimed:1,weeklyDungeonRewardLimit:3,dungeonUnlocked:true,unlockDescription:'메인 스토리 1-2를 완료하면 열립니다.',dungeons:[['coast','잿빛 해안','초급',3,false],['depth','깊은 수로','중급',3,false],['core','가라앉은 등대','상급',1,true]].map(([id,name,difficultyLabel,enemyCount,isBoss])=>({id,name,difficultyLabel,enemyCount,isBoss,description:'해안에 남은 잔향을 회수합니다.',reward}))};
+ recruitmentFixture(env);fourParty(env);env.run('data.activities='+JSON.stringify(activities)+';data.dungeon={activeId:null,active:null,practice:false};tone=()=>{};');return activities;
+}
+async function recurringChecks(){
+ let env=environment();activitiesFixture(env);env.context.command=undefined;
+ env.run(`globalThis.checkIns=[];command=async action=>{checkIns.push(action);return true;};showHub();`);await Promise.resolve();await Promise.resolve();
+ assert.deepEqual(Array.from(env.context.checkIns),['activity-check-in']);assert.ok(env.game.innerHTML.includes('보급 게시판'));assert.ok(env.game.innerHTML.includes('수령 가능 2건'));assert.ok(env.game.innerHTML.includes('잔향 회수'));
+ env.context.showHub();await Promise.resolve();assert.equal(env.context.checkIns.length,1);
+ pass('the keep exposes both recurring activities and checks in only once for its current daily key without a redraw loop');
+
+ env=environment();activitiesFixture(env);env.context.showActivities();assert.equal((env.game.innerHTML.match(/data-quest-id=/g)||[]).length,4);assert.ok(env.game.innerHTML.includes('수령 가능'));assert.ok(env.game.innerHTML.includes('수령 완료'));assert.ok(env.game.innerHTML.includes('10. 17. (토) 05:00 KST'));assert.ok(env.game.innerHTML.includes('별가루'));
+ await env.click('activity-tab:weekly');assert.equal(env.run('activityTab'),'weekly');assert.ok(env.game.innerHTML.includes('6 <small>/ 10'));assert.ok(env.game.innerHTML.includes('매주 월요일 오전 5시'));assert.ok(!env.game.innerHTML.includes('data-quest-id="d_visit"'));
+ env.run(`data.activities.weeklyQuests[0].title='<img src=x>';showActivities();`);assert.ok(env.game.innerHTML.includes('&lt;img src=x&gt;'));assert.ok(!env.game.innerHTML.includes('<img src=x>'));
+ pass('daily and weekly boards render authoritative progress and claim states with escaped copy and explicit Korea-time reset dates');
+
+ env=environment();activitiesFixture(env);env.context.showActivities();const calls=[];let release;
+ env.context.fetch=async(_url,args)=>{calls.push(JSON.parse(args.body));return new Promise(done=>release=done);};const before=env.run('data.progress.coins'),pending=env.context.claimQuest('d_visit');await env.click('quest-claim:d_visit');await env.click('activity-tab:weekly');env.events.keydown({code:'Escape',preventDefault(){}});
+ assert.equal(calls.length,1);assert.deepEqual(calls[0],{action:'quest-claim',questId:'d_visit',periodKey:'2026-10-16'});assert.equal(env.run('activityBusy'),true);assert.equal(env.run('activityTab'),'daily');assert.equal(env.run('page'),'activities');assert.equal(env.run('data.progress.coins'),before);
+ const payload=JSON.parse(env.run('JSON.stringify(data)'));payload.progress.coins=100;payload.activities.dailyQuests[0].claimed=true;payload.activities.dailyQuests[0].canClaim=false;payload.activityReward=payload.activities.dailyQuests[0].reward;
+ release({ok:true,json:async()=>payload});await pending;assert.equal(env.run('activityBusy'),false);assert.equal(env.run('data.progress.coins'),100);assert.equal(env.run('data.activities.dailyQuests[0].claimed'),true);
+ await env.context.claimQuest('d_visit');assert.equal(calls.length,1);
+ pass('a claim submits the exact period once, blocks duplicate input and navigation, waits for saved balances and cannot reclaim a returned completed quest');
+
+ env=environment();activitiesFixture(env);env.context.showActivities();env.run(`activityReward={stardust:999};command=async()=>{lastCommandError='저장 실패';return false;};`);await env.context.claimQuest('d_visit');assert.equal(env.run('activityReward'),null);assert.equal(env.run('activityBusy'),false);assert.equal(env.run('data.progress.stardust'),undefined);assert.equal(env.run('data.activities.dailyQuests[0].canClaim'),true);assert.ok(!env.game.innerHTML.includes('999'));
+ pass('failed claim persistence preserves the unclaimed reward and clears old success data so it remains retryable');
+
+ env=environment();activitiesFixture(env);env.context.showDungeons();assert.equal((env.game.innerHTML.match(/data-dungeon-id=/g)||[]).length,3);assert.ok(env.game.innerHTML.includes('2<span> / 3회 남음'));assert.ok(env.game.innerHTML.includes('모든 난도 공유'));assert.ok(env.game.innerHTML.includes('실패·퇴각은 차감 없음'));assert.ok(env.game.innerHTML.includes('/art/Anger.png'));assert.ok(!env.game.innerHTML.includes('/art/Denial.png'));
+ env.run(`data.activities.dungeonUnlocked=false;showDungeons();globalThis.entries=[];command=async(action,args)=>{entries.push({action,...args});return true;};`);await env.context.enterDungeon('coast');await env.context.enterDungeon('coast',true);assert.equal(env.context.entries.length,0);assert.ok(env.game.innerHTML.includes('메인 스토리 1-2'));
+ env.run(`data.activities.dungeonUnlocked=true;data.activities.weeklyDungeonRewardsClaimed=3;showDungeons();`);assert.ok(!env.game.innerHTML.includes('data-action="dungeon-enter:'));assert.ok(env.game.innerHTML.includes('data-action="dungeon-practice:coast"'));await env.context.enterDungeon('coast',false);assert.equal(env.context.entries.length,0);
+ pass('three salvage routes share one quota, lock before the story prerequisite and expose only explicitly labeled practice when rewards are exhausted');
+
+ env=environment();activitiesFixture(env);env.context.showDungeons();const entries=[];let enterReply;env.context.fetch=async(_url,args)=>{entries.push(JSON.parse(args.body));return new Promise(done=>enterReply=done);};const entry=env.context.enterDungeon('core',true);await env.context.enterDungeon('core',true);env.events.keydown({code:'Escape',preventDefault(){}});assert.equal(entries.length,1);assert.equal(entries[0].practice,true);assert.equal(env.run('page'),'dungeons');
+ const entered=JSON.parse(env.run('JSON.stringify(data)'));entered.dungeon={activeId:'core',active:entered.activities.dungeons[2],practice:true};entered.battle.isBoss=true;entered.battle.stageName='가라앉은 등대';enterReply({ok:true,json:async()=>entered});await entry;assert.equal(env.run('page'),'battle');assert.ok(env.game.innerHTML.includes('연습 / 보상·의뢰 진행 없음'));assert.equal(env.run('data.battle.allies.length'),4);assert.equal(env.run('selectedSlot'),0);
+ pass('one pending practice entry preserves the real four-person party and visibly distinguishes a reward-free battle from the weekly reward route');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:false};globalThis.roundCalls=[];command=async action=>{roundCalls.push(action);if(action==='resolve')data.battle.outcome='Victory';return true;};battleFx.play=async()=>true;showBattle();`);await env.context.resolveRound();assert.deepEqual(Array.from(env.context.roundCalls),['resolve']);assert.equal(env.run('page'),'result');assert.ok(env.game.innerHTML.includes('보상 수령하고 귀환'));assert.ok(!env.game.innerHTML.includes('남겨진 기억 읽기'));
+ pass('a won salvage battle waits on its own result instead of granting the standalone campaign reward or opening an unrelated epilogue');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:false};data.battle.outcome='Victory';showResult();globalThis.claims=[];command=async(action,args)=>{claims.push({action,...args});return false;};`);await env.context.go('hub');assert.equal(env.context.claims.length,1);assert.equal(env.context.claims[0].action,'dungeon-reward');assert.equal(env.run('page'),'result');assert.equal(env.run('data.dungeon.activeId'),'coast');assert.equal(env.run('activityBusy'),false);assert.equal(env.run('data.activities.weeklyDungeonRewardsClaimed'),1);
+ pass('leaving an unclaimed victory first attempts the saved reward, and a failed save keeps the same victory and quota available for retry');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:false};data.battle.outcome='Victory';showResult();`);const claims=[];let claimReply;env.context.fetch=async(url,args)=>{if(!args)return{ok:true,json:async()=>JSON.parse(env.run('JSON.stringify(data)'))};claims.push(JSON.parse(args.body));return new Promise(done=>claimReply=done);};const claim=env.context.claimDungeonReward();await env.context.claimDungeonReward();await env.context.go('hub');assert.equal(claims.length,1);assert.equal(env.run('page'),'result');assert.equal(claims[0].action,'dungeon-reward');
+ const claimed=JSON.parse(env.run('JSON.stringify(data)'));claimed.dungeon={activeId:null,active:null,practice:false};claimed.activities.weeklyDungeonRewardsClaimed=2;claimed.dungeonPrize={coins:777,memoryFragments:9};claimReply({ok:true,json:async()=>claimed});await claim;assert.equal(env.run('page'),'dungeons');assert.equal(env.run('activityBusy'),false);assert.ok(env.modalHtml.includes('+777'));assert.ok(!env.modalHtml.includes('별가루'));assert.equal(env.run('data.dungeon.activeId'),null);assert.equal(claims.length,1);
+ pass('a saved dungeon claim exits once, returns the reduced shared quota and shows only the actual server prize while suppressing competing clicks');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:false};data.battle.outcome='Defeat';showResult();globalThis.exits=[];command=async(action,args)=>{exits.push({action,...args});if(action==='dungeon-exit')data.dungeon.activeId=null;return true;};`);await env.context.go('hub');assert.equal(env.context.exits[0].action,'dungeon-exit');assert.ok(!Array.from(env.context.exits).some(x=>x.action==='dungeon-reward'));assert.equal(env.run('page'),'hub');assert.equal(env.run('data.activities.weeklyDungeonRewardsClaimed'),1);
+ pass('defeat returns through the dungeon-only exit without granting a reward or consuming the shared weekly quota');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:true};showBattle();`);env.events.keydown({code:'Escape',preventDefault(){}});assert.ok(env.modalHtml.includes('회수 항로로 돌아갈까요'));assert.ok(env.modalHtml.includes('주간 보상 횟수는 줄어들지 않습니다'));assert.ok(env.modalHtml.includes('data-action="go:dungeons"'));assert.equal(env.run('collectionAllowed()'),false);
+ pass('salvage retreat explains its cost and returns to its route, while active dungeon parties cannot be edited through collection actions');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='Battle';data.battle.battleId='qa-unsaved-win';data.progress.claimedBattles=[];lastReward={coins:999,lanternFragments:999};globalThis.rewardCalls=[];command=async action=>{rewardCalls.push(action);if(action==='resolve'){data.battle.outcome='Victory';return true;}return false;};battleFx.play=async()=>true;showBattle();`);await env.context.resolveRound();assert.deepEqual(Array.from(env.context.rewardCalls),['resolve','reward']);assert.equal(env.run('battleRewardSavePending'),true);assert.equal(env.run('page'),'result');assert.ok(env.game.innerHTML.includes('보상 저장 다시 시도'));assert.ok(env.game.innerHTML.includes('승리는 유지됩니다'));assert.ok(!env.game.innerHTML.includes('후속 이야기 →'));assert.ok(!env.game.innerHTML.includes('+999'));
+ await env.context.go('hub');await env.context.go('stages');env.events.keydown({code:'Escape',preventDefault(){}});await Promise.resolve();await Promise.resolve();assert.ok(Array.from(env.context.rewardCalls).slice(2).every(x=>x==='reward'));assert.equal(env.run('page'),'result');assert.equal(env.run('data.campaign.phase'),'Battle');assert.equal(env.run('data.battle.outcome'),'Victory');
+ pass('a failed campaign reward save retains victory, hides unsaved rewards and retries before hub, stages or Escape can discard its session');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='Battle';data.battle.outcome='Victory';data.battle.battleId='qa-reloaded-win';data.progress.claimedBattles=[];battleRewardSavePending=false;showTitle();globalThis.reloadCalls=[];command=async action=>{reloadCalls.push(action);return false;};`);await env.context.go('hub');assert.deepEqual(Array.from(env.context.reloadCalls),['reward']);assert.equal(env.run('page'),'result');assert.equal(env.run('data.campaign.phase'),'Battle');assert.ok(env.game.innerHTML.includes('보상 저장 다시 시도'));
+ pass('reloading the preview reconstructs an unclaimed victory from its authoritative battle ID instead of losing it behind the title');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='Battle';data.campaign.currentStory=[{speaker:'리안',text:'돌아가자.'}];data.battle.outcome='Victory';data.battle.battleId='qa-retry-win';data.progress.claimedBattles=[];battleRewardSavePending=true;showResult();`);const retries=[];let retryReply;env.context.fetch=async(_url,args)=>{retries.push(JSON.parse(args.body));return new Promise(done=>retryReply=done);};const retry=env.context.retryBattleReward();await env.click('battle-reward-retry');await env.context.go('hub');env.events.keydown({code:'Escape',preventDefault(){}});assert.equal(retries.length,1);assert.equal(retries[0].action,'reward');assert.equal(env.run('page'),'result');
+ const saved=JSON.parse(env.run('JSON.stringify(data)'));saved.progress.claimedBattles.push('qa-retry-win');saved.campaign.phase='AfterStory';saved.reward={coins:40,lanternFragments:2,memoryFragments:0};retryReply({ok:true,json:async()=>saved});await retry;assert.equal(env.run('battleRewardSavePending'),false);assert.ok(env.game.innerHTML.includes('후속 이야기 →'));assert.ok(env.game.innerHTML.includes('+40'));await env.click('campaign-story');assert.equal(env.run('page'),'story');assert.equal(retries.length,1);
+ pass('one successful persisted reward retry unlocks the original after-story and suppresses duplicate retries without restarting the battle');
+
+ env=environment();env.run(`data.battle.outcome='Victory';data.battle.battleId='qa-offline-win';data.progress.claimedBattles=[];command=async()=>{throw Error('연결 끊김');};showResult();`);await env.context.retryBattleReward();assert.equal(env.run('page'),'result');assert.equal(env.run('battleRewardSavePending'),true);assert.equal(env.run('activityBusy'),false);assert.ok(env.game.innerHTML.includes('보상 저장 다시 시도'));
+ pass('a network failure during reward retry keeps the saved-result recovery control available on the same victory');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='Battle';data.battle.outcome='Victory';data.battle.battleId='qa-lost-reply';data.progress.claimedBattles=[];battleRewardSavePending=true;showResult();`);
+ const acknowledged=JSON.parse(env.run('JSON.stringify(data)'));acknowledged.progress.claimedBattles.push('qa-lost-reply');acknowledged.campaign.phase='AfterStory';acknowledged.error='이 스테이지의 전투에서 승리해야 합니다.';let rewardReplyLost=true;const lostRequests=[];
+ env.context.fetch=async(_url,args)=>{lostRequests.push(JSON.parse(args.body).action);if(rewardReplyLost){rewardReplyLost=false;throw Error('QA: 저장 완료 뒤 응답 유실');}return{ok:false,json:async()=>acknowledged};};
+ await env.context.retryBattleReward();assert.equal(env.run('battleRewardSavePending'),true);await env.context.retryBattleReward();assert.deepEqual(lostRequests,['reward','reward']);assert.equal(env.run('battleRewardSavePending'),false);assert.equal(env.run('unclaimedBattleVictory()'),false);assert.ok(env.game.innerHTML.includes('후속 이야기 →'));assert.ok(!env.game.innerHTML.includes('보상 저장 다시 시도'));assert.equal(env.run('data.progress.claimedBattles.length'),1);
+ pass('a saved reward with a lost reply recovers from the retry error snapshot when that exact battle is authoritatively claimed');
+
+ env=environment();campaignFixture(env);env.run(`data.campaign.activeStage=data.campaign.chapters[0].stages[1];data.campaign.phase='AfterStory';data.battle.outcome='Victory';data.battle.battleId='qa-already-saved';data.progress.claimedBattles=['qa-already-saved'];battleRewardSavePending=true;showResult();globalThis.savedNavigation=[];command=async action=>{savedNavigation.push(action);if(action==='stage-exit')data.campaign.activeStage=null;return true;};`);assert.equal(env.run('unclaimedBattleVictory()'),false);assert.ok(env.game.innerHTML.includes('후속 이야기 →'));await env.context.retryBattleReward('hub');assert.equal(env.run('page'),'hub');assert.equal(env.run('battleRewardSavePending'),false);assert.deepEqual(Array.from(env.context.savedNavigation),['stage-exit']);
+ env.run(`data.battle.battleId='qa-different-battle';battleRewardSavePending=true;`);assert.equal(env.run('unclaimedBattleVictory()'),true);
+ pass('authoritative completion overrides a stale pending flag, restores the requested destination and never borrows a different battle receipt');
+
+ for(const practice of [false,true]){
+  env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:${practice}};data.battle.outcome='Victory';data.battle.battleId='qa-lost-dungeon';data.battle.stageId='weekly_coast';data.progress.claimedBattles=[];showResult();`);
+  const received=JSON.parse(env.run('JSON.stringify(data)'));received.dungeon={activeId:null,active:null,practice:false};received.progress.claimedBattles.push('qa-lost-dungeon');if(!practice)received.activities.weeklyDungeonRewardsClaimed++;received.error='이 항로의 전투에서 승리해야 합니다.';let dungeonReplyLost=true;const dungeonRequests=[];
+  env.context.fetch=async(_url,args)=>{if(!args)return{ok:true,json:async()=>received};dungeonRequests.push(JSON.parse(args.body).action);if(dungeonReplyLost){dungeonReplyLost=false;throw Error('QA: 던전 저장 완료 뒤 응답 유실');}return{ok:false,json:async()=>received};};
+  await env.context.claimDungeonReward();assert.equal(env.run('page'),'result');assert.equal(env.run('data.dungeon.activeId'),'coast');await env.context.claimDungeonReward();assert.equal(env.run('page'),'dungeons');assert.equal(env.run('data.dungeon.activeId'),null);assert.equal(env.run('data.activities.weeklyDungeonRewardsClaimed'),practice?1:2);assert.equal(env.run('unclaimedBattleVictory()'),false);assert.deepEqual(dungeonRequests,['dungeon-reward','dungeon-reward']);assert.equal(env.modalHtml,'');assert.equal(env.run('data.progress.claimedBattles.length'),1);
+ }
+ pass('reward and practice dungeon receipts survive a lost reply after server session exit without duplicate quota use or an invented prize popup');
+
+ env=environment();activitiesFixture(env);env.run(`data.dungeon={activeId:'coast',active:data.activities.dungeons[0],practice:false};data.battle.outcome='Victory';data.battle.battleId='qa-not-claimed';data.battle.stageId='weekly_coast';data.progress.claimedBattles=[];showResult();`);const notClaimed=JSON.parse(env.run('JSON.stringify(data)'));notClaimed.dungeon={activeId:null,active:null,practice:false};notClaimed.progress.claimedBattles=['some-other-battle'];notClaimed.error='진행 중인 회수가 없습니다.';env.context.fetch=async()=>({ok:false,json:async()=>notClaimed});await env.context.claimDungeonReward();assert.equal(env.run('page'),'dungeons');assert.equal(env.run('data.activities.weeklyDungeonRewardsClaimed'),1);assert.equal(env.modalHtml,'');assert.equal(env.run('lastCommandError'),'진행 중인 회수가 없습니다.');assert.equal(env.run("battleRewardClaimed('qa-not-claimed')"),false);
+ pass('an exited dungeon without the exact saved battle receipt reports its error and never treats an unrelated reward as a recovered success');
+}
+
 async function main() {
+  if(process.argv.includes('--recurring-only')){await recurringChecks();console.log('TOTAL '+passed+' recurring UI cases passed');return;}
   if(process.argv.includes('--recruitment-only')){await recruitmentChecks();console.log('TOTAL '+passed+' recruitment UI cases passed');return;}
   if(process.argv.includes('--title-only')){await titleInputChecks();console.log('TOTAL '+passed+' title input cases passed');return;}
   if(process.argv.includes('--intent-dock-only')){await intentDockChecks();console.log('TOTAL '+passed+' intent-dock cases passed');return;}
@@ -1003,7 +1094,9 @@ async function main() {
   await titleInputChecks();
   candidateActionStatusChecks();
   await intentDockChecks();
+  await recurringChecks();
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 
-main().catch(error => { console.error(error); process.exitCode = 1; });
+module.exports = { environment };
+if(require.main===module)main().catch(error => { console.error(error); process.exitCode = 1; });

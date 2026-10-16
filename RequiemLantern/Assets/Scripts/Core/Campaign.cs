@@ -41,6 +41,13 @@ namespace RequiemLantern.Core
             return changed;
         }
     }
+    public sealed class CampaignCheckpoint
+    {
+        internal readonly StageData Active;
+        internal readonly CampaignPhase Phase;
+        internal readonly bool Replay;
+        internal CampaignCheckpoint(StageData active,CampaignPhase phase,bool replay) { Active=active;Phase=phase;Replay=replay; }
+    }
     // Only this session advances before-story → battle → after-story. The client cannot
     // mark a mixed stage complete by skipping its fight or by replaying a story.
     public sealed class CampaignSession
@@ -48,6 +55,12 @@ namespace RequiemLantern.Core
         public StageData Active { get; private set; }
         public CampaignPhase Phase { get; private set; }
         public bool Replay { get; private set; }
+        public CampaignCheckpoint Capture() { return new CampaignCheckpoint(Active,Phase,Replay); }
+        public void Restore(CampaignCheckpoint snapshot)
+        {
+            if(snapshot==null)throw new ArgumentNullException("snapshot");
+            Active=snapshot.Active;Phase=snapshot.Phase;Replay=snapshot.Replay;
+        }
         public bool Enter(string id, ProgressData progress, bool replay, out string error)
         {
             error = null; var next = CampaignCatalog.Get(id);
@@ -96,6 +109,7 @@ namespace RequiemLantern.Core
             if(stage == null || !stage.HasBattle)throw new ArgumentException("Battle stage required.");
             Func<BattleState> factory = () => Build(stage, progress, seed);
             var battle = new BattleEngine(factory(),factory);
+            battle.MarkCampaignBattle();
             battle.BeginCampaign(); return battle;
         }
         static BattleState Build(StageData stage, ProgressData progress, int? seed)

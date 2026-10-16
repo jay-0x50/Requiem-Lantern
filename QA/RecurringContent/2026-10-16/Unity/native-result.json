@@ -1,0 +1,114 @@
+{
+  "dateKst": "2026-10-16",
+  "result": "PASS",
+  "exitCode": 0,
+  "command": "RequiemLantern.exe --recurring-smoke --capture-dir QA/RecurringContent/2026-10-16/Unity -screen-width 1600 -screen-height 900 -screen-fullscreen 0",
+  "buildLog": "Logs/unity-recurring-v14-build.log",
+  "renderedSize": "1600x900",
+  "canvasReference": "1920x1080",
+  "isolatedSave": "recurring-progress.xml",
+  "injectedStartUtc": "2026-10-16T00:00:00Z",
+  "initialHiddenAttempt": "Exited 1 before the first capture because Unity supplied no render texture. A normal-window rerun completed all checks; the final report and all ten images are from that rerun.",
+  "managedAssembly": {
+    "path": "Builds/Windows/RequiemLantern_Data/Managed/Assembly-CSharp.dll",
+    "sha256": "840326d82ade9c1d870eb6f6d059f2e0916b1a0331a199c2df959506133c5302"
+  },
+  "sourceHashes": [
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecurring.cs",
+      "sha256": "57b59faa3f04c73b6e1decdaa720cce4b0d7007e93eee1965a4f569c71a44f19"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecurringSmoke.cs",
+      "sha256": "4b5eaa9bc71116713336d1a918b65c8d9ffac8f3bb65f6a397b5a64de5a6ad7d"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternApp.cs",
+      "sha256": "59614713af08ff5d4e8788e1dd2393cc3cd9d479f6e2dc6bae341304196f3d4b"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBattle.cs",
+      "sha256": "66835c9b9428b739bb12d83d8fc324962a2c6210c51856eeaedda5ae12a3fa39"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternCampaign.cs",
+      "sha256": "c0eee87a21d17fa5844cda1b650dd8248d6143de316f6290985adbbac8a3be06"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternViews.cs",
+      "sha256": "c8749511b5dd6e2dafc68d2b4b10e6233aa40ba7906f3fbebaa4396def24a89a"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBootstrap.cs",
+      "sha256": "301d2fce7990abbe3799a4492651d2fda7c58feb6bee9469c0e8cb30e6394a0c"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/RecurringContent.cs",
+      "sha256": "166dc1a4f3f5e1ae273cec07704a1caffbe42aa5ea58f88ed158303e9179bcfc"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/ProgressService.cs",
+      "sha256": "037bb6a4a7dc2073906eeb2896025c75510e08cbf61cf70761ab772eb2a8a83b"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/Campaign.cs",
+      "sha256": "d2d1fbf1962c37676980b932cd17f32c57f5eb4ae5a8e4714a7a57c1bfeefd3f"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/BattleEngine.cs",
+      "sha256": "7ec8e2f197bf51b77a0b5e4513258437cf65b214e41bfd772d7980b0dbee85f4"
+    }
+  ],
+  "captures": [
+    {
+      "name": "01-hub-supply-entry.png",
+      "bytes": 2337658,
+      "sha256": "404899fe9a46c23275481e1147584b130626b4f71abaaa2ab768e0cf02927f05"
+    },
+    {
+      "name": "02-locked-until-main-story.png",
+      "bytes": 1275303,
+      "sha256": "3497e1edbc6dcac697526da465855c962912cea17f2c60ac408749364caee65d"
+    },
+    {
+      "name": "03-daily-claimed-and-progress.png",
+      "bytes": 1728180,
+      "sha256": "d0d9e0c5377c9c4259580fe49a00fdc13a1e7e4ca2cdd6414c9f2a1a632a1378"
+    },
+    {
+      "name": "04-three-salvage-difficulties.png",
+      "bytes": 1272634,
+      "sha256": "9c5ee7f4bc1730669cf6434a15e5b26c52b07940e0a9f0f116f0b837b406240f"
+    },
+    {
+      "name": "05-three-enemy-weekly-battle.png",
+      "bytes": 1990286,
+      "sha256": "fb06eb0431d09bf7e23fe2b194d952e9ebe7b2f97f47e7a586486c9ec7b177a3"
+    },
+    {
+      "name": "06-weekly-boss-intents.png",
+      "bytes": 1952624,
+      "sha256": "c48019a41eb8be8d28ed9110acf4d6da692c59d318547e395bf5a06fc0da855b"
+    },
+    {
+      "name": "07-reward-save-failure-retry.png",
+      "bytes": 2636064,
+      "sha256": "2008b2aa8745cd50104807da723b1182005eb8c1ac8ac9601180d9458901a2a9"
+    },
+    {
+      "name": "08-weekly-quest-reward-claimed.png",
+      "bytes": 1749116,
+      "sha256": "9f0e18538bc387a067a942062750b0d31f4da7fab5357d01dee741de04d0cd96"
+    },
+    {
+      "name": "09-practice-result.png",
+      "bytes": 2626289,
+      "sha256": "746990bdb4df6b31114886bd8a3ee1a73e03b71a37bf2212da92569e675e46a9"
+    },
+    {
+      "name": "10-next-week-reset.png",
+      "bytes": 1745736,
+      "sha256": "006863f70c4044e0aaab41a85c7b74c0f80e7877e37be2a1b3b976e1fafca85f"
+    }
+  ]
+}
