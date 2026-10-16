@@ -1,0 +1,498 @@
+[
+  {
+    "caption": "③ 실행 · 각성꺼지지 않는 파수 · 고조각성 중첩을 소모했습니다. 이번 행동의 위력이 강화됩니다.",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "리안 · 각성 / 꺼지지 않는 파수 · 고조이번에는, 아무도 두고 가지 않아.",
+    "style": "",
+    "ms": 18,
+    "file": "09-real-awakened-attack-01.jpg"
+  },
+  {
+    "caption": "③ 실행 · 점등 / 격돌 / 타격리안 · 꺼지지 않는 파수 · 고조 — 양호공격 자세를 잡습니다",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "style": "",
+    "ms": 1149,
+    "file": "09-real-awakened-attack-02.jpg"
+  },
+  {
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등불의 점등을 확인합니다…",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "style": "",
+    "ms": 1398,
+    "file": "09-real-awakened-attack-03.jpg"
+  },
+  {
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등리안 · 불꽃 3/4 · 위력 44.4",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "style": "",
+    "ms": 1655,
+    "file": "09-real-awakened-attack-04.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "approach",
+    "style": "shield-crown",
+    "ms": 1734,
+    "file": "09-real-awakened-attack-05.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "windup",
+    "style": "shield-crown",
+    "ms": 1880,
+    "file": "09-real-awakened-attack-06.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "signature",
+    "style": "shield-crown",
+    "ms": 2114,
+    "file": "09-real-awakened-attack-07.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "swing",
+    "style": "shield-crown",
+    "ms": 2249,
+    "file": "09-real-awakened-attack-08.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "contact",
+    "style": "shield-crown",
+    "ms": 2331,
+    "file": "09-real-awakened-attack-09.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "recoil",
+    "style": "shield-crown",
+    "ms": 2490,
+    "file": "09-real-awakened-attack-10.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "recover",
+    "style": "shield-crown",
+    "ms": 2646,
+    "file": "09-real-awakened-attack-11.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격공격리안 → 기억의 그림자 1  43",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "return",
+    "style": "shield-crown",
+    "ms": 2819,
+    "file": "09-real-awakened-attack-12.jpg"
+  },
+  {
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등어둠의 발현을 확인합니다…",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "style": "",
+    "ms": 2980,
+    "file": "09-real-awakened-attack-13.jpg"
+  },
+  {
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등기억의 그림자 1 · 어둠 2/2 · 위력 16.8",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "",
+    "style": "",
+    "ms": 3596,
+    "file": "09-real-awakened-attack-14.jpg"
+  },
+  {
+    "caption": "③ 실행 · 격돌 / 타격적의 공격기억의 그림자 1 → 카이  11",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "130 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "96 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "105 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "120 / 120"
+      }
+    ],
+    "phase": "approach",
+    "style": "strike",
+    "ms": 3774,
+    "file": "09-real-awakened-attack-15.jpg"
+  }
+]

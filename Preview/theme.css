@@ -633,3 +633,12 @@
 .material-bottom{position:absolute;left:55px;right:55px;bottom:70px;display:flex;align-items:center;gap:14px}.material-bottom>button{height:43px;font-size:14px;padding:0 20px}.material-bottom>span{font-size:12px;color:#adbdc7;margin-left:auto}
 .sync-material-status{margin-top:9px;padding:10px 14px;background:#102231df;border-left:2px solid #819b9c;display:flex;align-items:center;gap:19px;min-height:49px;flex-wrap:wrap;font-size:12px;color:#b6c6cb}.sync-material-status span{white-space:nowrap}.sync-material-status b{font-size:13px;font-weight:500;color:#dfc48e;margin-left:8px}.sync-material-status button{margin-left:auto;height:33px;font-size:11px;padding:5px 13px}.roster .roster-tabs{margin-top:13px}.roster .roster-tabs button{height:56px}
 .material-prize{padding:19px 25px;margin:23px 0;display:flex;align-items:center;gap:30px;max-width:650px;background:#142a39db;border:1px solid #a2a47977;color:#dfd7c2}.material-prize>span{font-size:23px}.material-prize>strong{font-size:34px;font-weight:400;color:#ecd09b;margin-left:auto}.modal .material-prize{min-width:420px;margin:6px 0 32px}.coupon-status>small{line-height:1.9;word-break:keep-all}
+
+/* Battle-only awakening and ally support stay with the four compact identities. */
+.battle .action-dock{height:228px}
+.fighter-effects{height:20px;display:flex;align-items:center;justify-content:space-between;gap:4px;white-space:nowrap;overflow:hidden;font-size:10px;color:#c5d9df}
+.awakening-gauge{display:flex;align-items:center;gap:4px;min-width:0;color:#bda986}
+.awakening-gauge i{width:7px;height:10px;display:inline-block;border:1px solid #8a7654;clip-path:polygon(50% 0,100% 60%,75% 100%,25% 100%,0 60%);background:#32313a}
+.awakening-gauge i.lit{background:#f3c577;border-color:#ffe4af}.awakening-gauge b{font-weight:500;font-size:10px}.awakening-gauge.ready{color:#ffe1a0}.awakening-gauge.ready i{filter:drop-shadow(0 0 4px #ffcd72)}
+.awakening-gauge small{font-size:10px;color:#8fa8b9}.fighter-buffs{color:#a3d8dc;overflow:hidden;text-overflow:ellipsis;text-align:right;font-variant-numeric:tabular-nums}
+.battle .field-name{top:586px}

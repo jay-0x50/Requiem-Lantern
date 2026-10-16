@@ -56,7 +56,7 @@ namespace RequiemLantern.Presentation
                 string name=child.name;
                 if(name=="Thread layer"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
                     ||name.StartsWith("Support target ",StringComparison.Ordinal)||name.StartsWith("Enemy body target ",StringComparison.Ordinal)
-                    ||name=="Action progression"||name=="Battle instruction"||name=="Recommend"||name=="Reuse"||name=="Clear links"
+                    ||name.StartsWith("Traits ",StringComparison.Ordinal)||name=="Selected skill information"||name=="Action progression"||name=="Battle instruction"||name=="Recommend"||name=="Reuse"||name=="Clear links"
                     ||name=="Auto mode"||name=="Release lantern"||name=="Battle log")child.gameObject.SetActive(false);
             }
             foreach(var ally in battle.State.Allies)foreach(string suffix in new[]{" battlefield name"," field HP track"," field HP fill"}){
@@ -114,7 +114,7 @@ namespace RequiemLantern.Presentation
             var unit=battle.Unit(id);
             if(skill.Kind!=SkillKind.Attack)return unit!=null&&!unit.IsEnemy&&unit.Alive;
             var intent=battle.Intent(id);if(intent!=null)return !intent.Cancelled&&!intent.Resolved;
-            if(unit!=null)return unit.IsEnemy&&unit.Alive;
+            if(unit!=null)return unit.Alive&&(unit.IsEnemy||skill.CanSupportAlly);
             return battle.State.Enemies.Any(enemy=>enemy.Alive&&enemy.Parts.Any(part=>part.Id==id&&!part.Destroyed));
         }
         string DropTarget(PointerEventData e)
@@ -159,7 +159,7 @@ namespace RequiemLantern.Presentation
                         hint=preview.Summary+"\n"+(intent.Kind==IntentKind.Area?"전체 공격에 맞불":intent.TargetId==selectedActor?"자신을 향한 공격에 맞불":IntentOriginalTarget(intent)+" 대신 "+battle.Unit(selectedActor).Name+" 가로막기");
                     }
                 }
-                else if(battle.Skill(selectedActor,selectedSkill).Kind!=SkillKind.Attack)color=Teal;
+                else if(battle.Unit(snappedTarget)!=null&&!battle.Unit(snappedTarget).IsEnemy){color=Teal;hint="동료 지원 → "+battle.Unit(snappedTarget).Name+"\n"+battle.Skill(selectedActor,selectedSkill).SupportDescription;}
             }
             dragLine.To=ToMesh(point);dragLine.color=color;dragLine.SetVerticesDirty();
             dragHalo.color=new Color(color.r,color.g,color.b,snappedTarget!=null?1:.35f);dragHalo.rectTransform.anchoredPosition=new Vector2(point.x-37,-point.y+37);
@@ -197,6 +197,9 @@ namespace RequiemLantern.Presentation
             if(e.Type=="Relink"||e.Type=="Illusion")activeClashActor=null;
             status.text=e.Type=="FlameRoll"?"불과 어둠의 위력을 판정합니다…":e.Message;
             if(e.Type=="Sanity")RefreshSanity(e.ActorId,e.ActorSanity);
+            if(e.Type!="SupportApplied"&&e.Type!="Damage"&&e.Type!="ShieldAbsorb")ApplyFlavorEvent(e);
+            if(e.Type=="SkillStart"){yield return PresentSkillIntroduction(e,layer,version);yield break;}
+            if(e.Type=="Heal"||e.Type=="SupportApplied"){yield return PresentSupportGesture(e,layer,version);yield break;}
             if(e.Type=="FlameRoll"){
                 yield return PresentFlameRoll(e,layer,version);
                 if(status&&version==screenVersion)status.text=e.Message;
@@ -302,17 +305,19 @@ namespace RequiemLantern.Presentation
             Box(fx,"Duel atmosphere",0,117,1920,665,new Color(.014f,.020f,.035f,.25f));
             var marker=fx.gameObject.AddComponent<CombatPhaseMarker>();
             marker.Clash=clash;marker.SkillId=e.SkillId;marker.SkillNumber=e.SkillNumber;
-            bool heavy=!clash&&(actor.Id=="lian"||actor.Id=="heidel"||actor.IsEnemy)&&e.SkillNumber>=2;
+            bool heavy=!clash&&(actor.Id=="lian"||actor.Id=="heidel"||actor.Id=="mare"&&e.SkillNumber==3||actor.IsEnemy)&&e.SkillNumber>=2;
             bool flourish=!clash&&actor.Id=="sera"&&e.SkillNumber>=2;
-            bool sweep=!clash&&(actor.Id=="minato"||actor.Id=="noa");
+            bool sweep=!clash&&(actor.Id=="minato"||actor.Id=="noa"||actor.Id=="kai"&&e.SkillNumber==3);
+            bool special=!clash&&e.SkillNumber==3&&!actor.IsEnemy;
+            bool rangedSpecial=special&&actor.Id=="heidel";
             var dimmed=new Dictionary<RawImage,Color>();
             var planningWidgets=new List<GameObject>();
             foreach(Transform child in screen){
                 string name=child.name;
-                bool planning=name=="Thread layer"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
+                bool planning=name=="Thread layer"||name.StartsWith("Traits ",StringComparison.Ordinal)||name=="Selected skill information"||name.StartsWith("Intent ",StringComparison.Ordinal)||name.StartsWith("Part ",StringComparison.Ordinal)
                     ||name.StartsWith("Support target ",StringComparison.Ordinal)||name.StartsWith("Enemy body target ",StringComparison.Ordinal)||name=="Clash prediction"
                     ||name=="Recommend"||name=="Reuse"||name=="Clear links"||name=="Auto mode"||name=="Release lantern"||name=="Battle log";
-                if(planning&&child.gameObject.activeSelf){planningWidgets.Add(child.gameObject);child.gameObject.SetActive(false);}
+                if((planning||(rangedSpecial||reducedMotion)&&(name=="Enemy rift "+target.Id||name=="Sanity "+target.Id))&&child.gameObject.activeSelf){planningWidgets.Add(child.gameObject);child.gameObject.SetActive(false);}
             }
             foreach(var image in fighters.Values)if(image&&image!=actorImage&&image!=targetImage){dimmed[image]=image.color;var tint=image.color;image.color=new Color(tint.r*.45f,tint.g*.47f,tint.b*.53f,tint.a);}
             CombatPosePlayer attacker=null,defender=null;
@@ -336,6 +341,7 @@ namespace RequiemLantern.Presentation
                 // the target's body instead of stopping at its extended weapon.
                 Vector2 targetMeet=new Vector2(clash?contactX-defendContact.x:contactX+facing*35,clash?contactY-defendContact.y:groundY);
                 Vector2 contact=new Vector2(contactX,contactY);
+                if(special&&actor.Id=="heidel"){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,BodyHeight(target)*.48f);}
                 if(reducedMotion){actorMeet=attacker.OriginalFoot;targetMeet=defender.OriginalFoot;contact=defender.OriginalFoot-new Vector2(0,BodyHeight(target)*.48f);}
                 marker.ActorId=actor.Id;marker.TargetId=target.Id;marker.Attacker=attacker.Image;marker.Defender=defender.Image;marker.ContactPoint=contact;marker.AtlasActive=attacker.HasAtlas;marker.FrameLayoutActive=attacker.HasFrameLayout;marker.SDActive=attacker.HasSDAtlas;marker.BodyHeight=BodyHeight(actor);
                 var shadowA=Box(fx,"Attacker ground",0,0,96,7,new Color(0,0,0,.25f));
@@ -360,8 +366,11 @@ namespace RequiemLantern.Presentation
                 var feedback=Label(fx,"Battle feedback",damage?"−"+e.Amount:e.Type=="Tie"?"동 률":e.WinnerStreak+"연승",contact.x-180,contact.y-132,360,88,damage?58:40,Color.clear,TextAnchor.MiddleCenter);
                 var actorIdentity=Label(fx,"Duel attacker identity","",0,0,250,29,20,actor.IsEnemy?Violet:Gold,facing>0?TextAnchor.MiddleRight:TextAnchor.MiddleLeft);
                 var targetIdentity=Label(fx,"Duel defender identity","",0,0,250,29,20,target.IsEnemy?Violet:Gold,facing>0?TextAnchor.MiddleLeft:TextAnchor.MiddleRight);
+                if(rangedSpecial){actorIdentity.alignment=TextAnchor.MiddleCenter;targetIdentity.alignment=TextAnchor.MiddleCenter;}
                 marker.ActorIdentity=actorIdentity;marker.TargetIdentity=targetIdentity;
                 status.transform.SetAsLastSibling();
+                if(special)yield return PresentS3Prelude(e,attacker,defender,fx,marker,actorMeet,targetMeet,contact,version);
+                if(version!=screenVersion||!fx)yield break;
                 float speed=autoMode?.72f:1;
                 float approach=(reducedMotion?.10f:.25f)*speed,windup=.16f*speed,swing=.11f*speed;
                 float contactAt=approach+windup+swing,hold=reducedMotion?.025f:.075f,follow=.12f*speed,recoil=.11f*speed,recover=.18f*speed;
@@ -373,13 +382,14 @@ namespace RequiemLantern.Presentation
                 }
                 float recoilAt=contactAt+hold+follow,recoverAt=recoilAt+recoil,duration=recoverAt+recover;
                 if(clash){approach=(reducedMotion?.06f:.15f)*speed;windup=.10f*speed;swing=.08f*speed;hold=reducedMotion?.025f:.065f;follow=.06f*speed;recoil=.05f*speed;recover=.10f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
+                if(special){approach=.04f*speed;windup=.09f*speed;swing=.09f*speed;contactAt=approach+windup+swing;recoilAt=contactAt+hold+follow;recoverAt=recoilAt+recoil;duration=recoverAt+recover;}
                 Action impact=()=>{
                     if(applied||version!=screenVersion)return;applied=true;
-                    if(damage&&visibleHealth.ContainsKey(e.TargetId))RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);
+                    if(damage&&visibleHealth.ContainsKey(e.TargetId)){RefreshHealth(e.TargetId,visibleHealth[e.TargetId]-e.Amount);ApplyFlavorEvent(e);var specialMarker=fx.GetComponent<SkillFlavorMarker>();if(specialMarker){specialMarker.HealthChanges++;specialMarker.VisualContacts++;specialMarker.Phase="damage-contact";}}
                     if(PlayCombatSound(clash?"clash":HitSoundFamily(actor,e.SkillNumber,e.Amount),true))marker.ContactSoundCount++;
                 };
                 bool returnSwung=false;
-                for(float elapsed=0;elapsed<duration;elapsed+=Time.unscaledDeltaTime){
+                for(float elapsed=0;elapsed<duration;elapsed+=special?Mathf.Min(.05f,Time.unscaledDeltaTime):Time.unscaledDeltaTime){
                     if(version!=screenVersion||!fx)yield break;
                     string phase;int attackPose,defendPose;
                     if(elapsed<approach){phase="approach";attackPose=CombatPosePlayer.Idle;defendPose=CombatPosePlayer.Idle;}
@@ -402,13 +412,14 @@ namespace RequiemLantern.Presentation
                         // sprites, foot pivots, weapon tips and sparks share a single
                         // transform, while HP and flame judgement remain stationary.
                         float focus=Smooth(elapsed/approach)*(1-returning);
-                        float zoom=1+(clash?.10f:.16f)*focus*(autoMode?.75f:1);
-                        Vector2 offset=new Vector2(1050-contact.x*zoom,555-contact.y*zoom)*focus;
+                        float zoom=1+(rangedSpecial?.045f:clash?.10f:.16f)*focus*(autoMode?.75f:1);
+                        float focusX=rangedSpecial?(attacker.OriginalFoot.x+defender.OriginalFoot.x)*.5f:contact.x;
+                        Vector2 offset=new Vector2((rangedSpecial?960:1050)-focusX*zoom,555-contact.y*zoom)*focus;
                         fx.localScale=new Vector3(zoom,zoom,1);fx.anchoredPosition=ToMesh(offset);
                         marker.FocusScale=zoom;marker.FocusOffset=offset;
                         float arrive=Smooth(elapsed/approach);
-                        actorFoot=Vector2.Lerp(attacker.OriginalFoot,actorMeet,arrive);
-                        targetFoot=Vector2.Lerp(defender.OriginalFoot,targetMeet,arrive);
+                        actorFoot=Vector2.Lerp(special?actorMeet:attacker.OriginalFoot,actorMeet,arrive);
+                        targetFoot=Vector2.Lerp(special?targetMeet:defender.OriginalFoot,targetMeet,arrive);
                         actorFoot.y-=Mathf.Sin(arrive*Mathf.PI)*14;
                         if(elapsed>=approach&&elapsed<contactAt){float strike=Smooth((elapsed-approach-windup)/swing);actorFoot.x-=facing*18*(1-strike);if(clash)targetFoot.x+=facing*12*(1-strike);}
                         if(elapsed>=contactAt){float recoilAmount=Mathf.Sin(Mathf.Clamp01(motionAfter/(follow+recoil))*Mathf.PI);actorFoot.x-=facing*12*recoilAmount;targetFoot.x+=facing*(damage?34:18)*recoilAmount;}
@@ -427,8 +438,8 @@ namespace RequiemLantern.Presentation
                     marker.Phase=phase;marker.Pose=attackPose;marker.ActorFoot=actorFoot;marker.DefenderFoot=targetFoot;
                     actorIdentity.text=actor.Name+" · "+(visibleHealth.TryGetValue(actor.Id,out var actorHp)?actorHp:actor.Hp)+"/"+actor.MaxHp;
                     targetIdentity.text=target.Name+" · "+(visibleHealth.TryGetValue(target.Id,out var targetHp)?targetHp:target.Hp)+"/"+target.MaxHp;
-                    actorIdentity.rectTransform.anchoredPosition=ToMesh(actorFoot+new Vector2(facing>0?-262:12,15));
-                    targetIdentity.rectTransform.anchoredPosition=ToMesh(targetFoot+new Vector2(facing>0?12:-262,15));
+                    actorIdentity.rectTransform.anchoredPosition=ToMesh(actorFoot+new Vector2(rangedSpecial?-125:facing>0?-262:12,15));
+                    targetIdentity.rectTransform.anchoredPosition=ToMesh(targetFoot+new Vector2(rangedSpecial?-125:facing>0?12:-262,15));
                     shadowA.rectTransform.anchoredPosition=ToMesh(actorFoot+new Vector2(-48,1));shadowB.rectTransform.anchoredPosition=ToMesh(targetFoot+new Vector2(-53,1));
                     if(fatal)defender.Tint(Color.Lerp(targetColor,new Color(.33f,.35f,.41f,.45f),Mathf.Clamp01(after/.20f)));
                     else if(!reducedMotion&&damage&&applied){float tint=Mathf.Clamp01(1-after/.20f)*.34f;defender.Tint(Color.Lerp(targetColor,new Color(1,.62f,.49f,targetColor.a),tint));}
@@ -471,6 +482,7 @@ namespace RequiemLantern.Presentation
         {
             if(version!=screenVersion||!layer)yield break;
             var actor=battle.Unit(e.ActorId);var target=battle.Unit(e.TargetId);
+            ApplyFlavorEvent(e);
             bool damage=e.Type=="Damage",heal=e.Type=="Heal",guard=e.Type=="Guard"||e.Type=="Evade"||e.Type=="EvadeFail"||e.Type=="Counter";
             bool summary=e.Type=="Clash"||e.Type=="ClashWin",shatter=e.Type=="PartBreak"||e.Type=="Rift",resonance=e.Type=="Resonance"||e.Type=="Lantern";
             Color color=heal?Teal:guard?Hex("A7D4E9"):actor!=null?ElementColor(actor.Element):Gold;
@@ -499,6 +511,10 @@ namespace RequiemLantern.Presentation
                 string intercepted=e.OriginalTargetId=="all"?"전체 공격에 맞불\n"+(actor?.Name??""):(battle.Unit(e.OriginalTargetId)?.Name??"동료")+" 대신\n"+(actor?.Name??"")+" · 가로막기";
                 number=Label(fx,"Interception feedback",intercepted,point.x-180,point.y-158,360,92,28,color,TextAnchor.MiddleCenter);
             }
+            else if(e.Type=="AwakeningCharge"||e.Type=="AwakeningReady"||e.Type=="AwakeningUsed"){
+                point=new Vector2(305,352);number=Label(fx,"Awakening feedback",e.Type=="AwakeningReady"?(actor?.AwakeningName??"각성")+" · READY":e.Type=="AwakeningUsed"?"각성 3스킬 · 스택 소모":(actor?.AwakeningName??"각성")+" "+e.AwakeningStacks+"/"+e.AwakeningMaxStacks,70,280,600,54,26,Gold);duration=autoMode?.12f:.24f;
+            }
+            else if(e.Type=="ShieldAbsorb"){number=Label(fx,"Shield feedback","보호막 흡수 "+e.Amount,point.x-180,point.y-130,360,65,26,Teal,TextAnchor.MiddleCenter);duration=autoMode?.12f:.22f;}
             else if(summary){number=Label(fx,"Clash result",e.Type=="ClashWin"?"2연승 · 공격권 확보":"맞불 종료",point.x-270,point.y-160,540,85,34,Gold,TextAnchor.MiddleCenter);duration=autoMode?.20f:.30f;}
             else if(shatter||resonance){
                 if(e.Type=="PartBreak")ShowPartBroken(e.TargetId);

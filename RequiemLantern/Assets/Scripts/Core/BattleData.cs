@@ -29,6 +29,10 @@ namespace RequiemLantern.Core
         public Element Element;
         public SkillKind Kind;
         public bool IsPrototype = true;
+        public bool CanSupportAlly, Awakened;
+        public string SupportDescription, AnimationKey, Quote, AwakenedName;
+        public int SupportShield, SupportPower, SupportSanity;
+        public SkillData Copy() { return (SkillData)MemberwiseClone(); }
     }
 
     [Serializable]
@@ -61,6 +65,8 @@ namespace RequiemLantern.Core
         public int NextCardNumber;
         public int UnlockedActionSlots = 1, MaxActionSlots = 2;
         public bool DeckInitialized;
+        public int AwakeningStacks, AwakeningMaxStacks, Barrier, SupportPower;
+        public string AwakeningName, AwakeningDescription;
         public bool Alive { get { return Hp > 0; } }
         public int SlotCount { get { return IsSupport ? 1 : Math.Max(1, Math.Min(MaxActionSlots, UnlockedActionSlots)); } }
     }
@@ -107,6 +113,9 @@ namespace RequiemLantern.Core
         public int ActorSanity, TargetSanity, ClashIndex, WinnerStreak;
         public string SkillId, SkillName;
         public int SkillNumber, BasePower, FlamePower, EnemyBasePower, EnemyFlamePower;
+        public string Quote, AnimationKey;
+        public bool Awakened;
+        public int AwakeningStacks, AwakeningMaxStacks, Barrier, SupportPower;
         public BattleEvent(string type, string actor, string target, string message, int amount, int round)
         { Type = type; ActorId = actor; TargetId = target; Message = message; Amount = amount; Round = round; }
     }

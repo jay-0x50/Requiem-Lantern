@@ -472,6 +472,42 @@ async function materialChecks(){
  pass('legacy synchronized companions keep their third skill with zero materials and optional seven-material coupon results coexist with ordinary coupons');
 }
 
+async function skillFlavorChecks(){
+ let env=environment();fourParty(env);
+ env.run(`const a=unit('lian');a.syncLevel=1;a.awakeningMaxStacks=3;a.awakeningStacks=2;a.awakeningName='꺼지지 않는 파수';a.awakeningDescription='방어 또는 맞불 승리마다 +1';a.skills.push({id:'lian_s3',name:'파수의 결의',number:3,requiredSyncLevel:1,slots:1,kind:'Attack',cost:0,basePower:8,flamePower:3,flameCount:2,canSupportAlly:true,supportShield:18,supportSanity:2,supportDescription:'아군: 보호막 18·정신력 +2 / 각성: 보호막 30·정신력 +4'});a.skillHand[0]={id:'lian:s3:card',skillId:'lian_s3'};selectedActor='lian';selectedCardId='lian:s3:card';selectedSkill='lian_s3';showBattle();`);
+ let targets=Array.from(env.run("validDropTargets(skill('lian','lian_s3'))"));assert.ok(targets.includes('minato')&&targets.includes('lian')&&targets.includes('intent1')&&targets.includes('anger'));
+ assert.ok(!Array.from(env.run("validDropTargets(skill('lian','lian_glimmer'))")).includes('minato'));
+ pass('dual-purpose attack cards expose living ally support alongside their unchanged enemy and exact forecast targets');
+ env.run(`globalThis.flavorCalls=[];tone=()=>{};command=async(action,args)=>{flavorCalls.push({action,...args});return true;};showBattle=()=>{};`);
+ await env.context.linkTarget('minato');let call=env.context.flavorCalls.at(-1);
+ assert.equal(call.kind,'Support');assert.equal(call.actorId,'lian');assert.equal(call.targetId,'minato');assert.equal(call.cardId,'lian:s3:card');assert.equal(call.slot,0);
+ assert.equal(env.run("unit('minato').barrier"),undefined);assert.equal(env.run("unit('lian').awakeningStacks"),2);
+ pass('Lian third-skill ally click sends one support action with its real card while leaving barrier, stacks and damage for the engine');
+ await env.context.linkTarget('intent1');call=env.context.flavorCalls.at(-1);assert.equal(call.kind,'Clash');assert.equal(call.targetId,'intent1');assert.equal(call.skillId,'lian_s3');
+ pass('the same supporting attack card still intercepts the exact enemy forecast as a clash');
+ env.run(`unit('minato').hp=0;globalThis.flavorCalls=[];`);await env.context.linkTarget('minato');assert.equal(env.context.flavorCalls.length,0);assert.ok(!Array.from(env.run("validDropTargets(skill('lian','lian_s3'))")).includes('minato'));
+ env.run(`unit('minato').hp=90;selectedSkill='lian_glimmer';selectedCardId='lian-card-2';`);await env.context.linkTarget('minato');assert.equal(env.context.flavorCalls.length,0);
+ pass('dead ally and ordinary attack ally clicks cannot forge support requests');
+ env=environment();fourParty(env);env.run(`const k=unit('minato').skills[0];k.canSupportAlly=true;k.supportPower=3;k.supportSanity=2;k.supportDescription='다음 공격 행동 전체 위력 +3·정신력 +2';selectedActor='minato';selectedSkill=k.id;selectedCardId='minato-card-1';globalThis.supportDrag=null;tone=()=>{};command=async(action,args)=>{supportDrag={action,...args};return true;};`);
+ env.gameEvents.pointerdown({clientX:750,clientY:700,pointerId:41,target:{closest:()=>({dataset:{actor:'minato',cardId:'minato-card-1'},disabled:false})}});env.events.pointermove({clientX:137,clientY:495,pointerId:41});env.setHit('lian');await env.events.pointerup({clientX:137,clientY:495,pointerId:41});
+ assert.equal(env.context.supportDrag.kind,'Support');assert.equal(env.context.supportDrag.targetId,'lian');assert.equal(env.context.supportDrag.cardId,'minato-card-1');
+ pass('dragging a dual-purpose candidate onto another ally selects its real owner and sends support with the offered card identity');
+ env=environment();fourParty(env);env.run(`unit('lian').awakeningMaxStacks=3;unit('lian').awakeningStacks=3;unit('lian').awakeningName='파수';unit('lian').syncLevel=1;unit('lian').barrier=18;unit('lian').supportPower=3;unit('sera').awakeningMaxStacks=3;unit('sera').awakeningStacks=1;showBattle();`);
+ assert.ok(env.game.innerHTML.includes('3/3 각성 준비'));assert.ok(env.game.innerHTML.includes('보호막 18 · 다음 공격 +3'));assert.equal((env.game.innerHTML.match(/<i class="lit"><\/i>/g)||[]).length,4);assert.ok(env.game.innerHTML.includes('각성 중첩 없음'));
+ assert.equal((env.game.innerHTML.match(/data-action="skill-card:/g)||[]).length,8);
+ pass('compact identities show only authoritative awakening pips and active shield or attack support without changing the eight offered candidates');
+ env.run(`const k=unit('lian').skills[0];k.number=3;k.basePower=8;k.flamePower=3;k.flameCount=2;k.supportDescription='아군 보호막 18';k.canSupportAlly=true;showBattle();`);
+ assert.ok(env.game.innerHTML.includes('3중첩이면 전부 소모'));assert.ok(env.game.innerHTML.includes('기본 위력 +4·불 위력 +1'));assert.ok(env.game.innerHTML.includes('강화와 지원 효과는 실행 시 조건 판정'));assert.equal(env.run("skill('lian','lian_glimmer').basePower"),8);assert.equal(env.run("skill('lian','lian_glimmer').flamePower"),3);
+ pass('third-skill tooltips explain stack consumption and execution-time support without mutating or pre-applying their base power');
+ env.run(`selectedActor='lian';selectedSkill='lian_glimmer';`);assert.ok(env.run("targetHint('lian','minato')").includes('지원'));assert.ok(env.run("targetHint('lian','minato')").includes('실행 시 조건 판정'));assert.ok(env.run("targetHint('lian','intent1')").includes('맞불'));
+ pass('friendly target hints explain support while the enemy hint retains the two-sided clash route');
+ env.run(`unit('lian').syncLevel=0;showBattle();`);assert.ok(env.game.innerHTML.includes('3/3 동기화 필요'));assert.ok(env.game.innerHTML.includes('3스킬 사용에는 동기화가 필요합니다.'));assert.equal(env.run("unit('lian').syncLevel"),0);
+ pass('three awakening stacks on an unsynchronized ally explicitly require synchronization instead of implying that the third skill is unlocked');
+ env=environment();env.run(`page='battle';settings.assisted=false;autoBattle=false;data.battle.links=[{actorId:'lian',slot:0,skillId:'lian_glimmer',kind:'Support',targetId:'minato'}];globalThis.igniteCalls=0;ignite=async()=>{igniteCalls++;return 'Good';};command=async()=>true;battleFx.play=async()=>true;showBattle=()=>{page='battle';};`);await env.context.resolveRound();assert.equal(env.context.igniteCalls,0);
+ env.run(`data.battle.links[0].kind='Strike';data.battle.links[0].targetId='anger';`);await env.context.resolveRound();assert.equal(env.context.igniteCalls,1);
+ pass('manual ignition follows the actual action kind: fixed ally support skips the timing input while an ordinary attack still requests it');
+}
+
 async function main() {
   if(process.argv.includes('--materials-only')){await materialChecks();console.log('TOTAL '+passed+' synchronization material UI cases passed');return;}
   if(process.argv.includes('--recurring-only')){await recurringChecks();console.log('TOTAL '+passed+' recurring UI cases passed');return;}
@@ -1148,6 +1184,7 @@ async function main() {
   await intentDockChecks();
   await recurringChecks();
   await materialChecks();
+  await skillFlavorChecks();
   console.log('TOTAL ' + passed + ' regression cases passed');
 }
 

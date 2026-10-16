@@ -10,7 +10,7 @@ const assert=require('node:assert/strict');
 const {environment}=require('./preview-regression.cjs');
 const base=process.argv[2]||'http://127.0.0.1:8128';
 assert.equal(base,'http://127.0.0.1:8128','Only the isolated 8128 QA host may be mutated.');
-const output=process.argv[3]||'QA/SynchronizationMaterials/2026-10-16/Browser/response-loss-http.json';
+const output=process.argv[3]||'QA/SkillFlavor/2026-10-16/Browser/response-loss-http.json';
 const records=[];
 async function request(action,fields={}){
  const response=await fetch(base+(action?'/api/action':'/api/state'),action?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...fields})}:{});
@@ -39,7 +39,7 @@ const walletKeys=['coins','stardust','lanternFragments','memoryFragments','chara
 function wallet(state){return Object.fromEntries(walletKeys.map(key=>[key,state.progress[key]]));}
 function delta(before,after,expected){for(const key of walletKeys)assert.equal(after.progress[key]-before.progress[key],expected[key]||0,key+' must be paid exactly once');}
 async function campaignLoss(){
- let state=await request();assert.equal(state.application,'RequiemLantern');assert.equal(state.runtimeRevision,'sync-material-v15');
+ let state=await request();assert.equal(state.application,'RequiemLantern');assert.equal(state.runtimeRevision,'skill-flavor-v16');
  assert.deepEqual(state.recruitment.party,['lian','minato','heidel','mare']);
  const stages=state.campaign.chapters.flatMap(chapter=>chapter.stages),first=stages.find(stage=>stage.number==='1-1'),stage=stages.find(stage=>stage.number==='1-2');
  if(!first.cleared){await request('stage-enter',{stageId:first.id});await request('stage-story',{stageId:first.id,expectedPhase:'BeforeStory'});await request('stage-exit');}
@@ -81,7 +81,7 @@ async function materialLoss(){
 }
 async function main(){
  await campaignLoss();await dungeonLoss(false);await dungeonLoss(true);await materialLoss();
- const report={status:'PASS',runtimeRevision:'sync-material-v15',isolatedPort:8128,scenarios:records,uiUsesActualAppScript:true,lossInjectedAfterServerCompletedRequest:true};
+ const report={status:'PASS',runtimeRevision:'skill-flavor-v16',isolatedPort:8128,scenarios:records,uiUsesActualAppScript:true,lossInjectedAfterServerCompletedRequest:true};
  fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
  console.log('PASS actual HTTP response loss: campaign reward, dungeon reward, practice and material drop, each committed once and recovered through retry snapshots.');
 }

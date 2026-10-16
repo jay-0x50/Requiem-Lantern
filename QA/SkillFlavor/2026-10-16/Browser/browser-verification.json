@@ -1,0 +1,126 @@
+{
+  "status": "PASS",
+  "dateKst": "2026-10-16",
+  "runtimeRevision": "skill-flavor-v16",
+  "isolatedPort": 8128,
+  "livePort8127Touched": false,
+  "uiRegressionCases": 149,
+  "newSkillUiCases": 10,
+  "combatFxRegressionCases": 59,
+  "newSkillFxCases": 10,
+  "actualHttpResponseLossScenarios": 4,
+  "allSevenS3ValidatedInVirtualClock": true,
+  "actualBrowserCharacters": [
+    "lian",
+    "minato",
+    "kai",
+    "noa"
+  ],
+  "actualUiChecks": [
+    "Four compact party identities retain two candidates and their existing action unlock rule; awakening and buffs fit below identity.",
+    "Kai S2 is chosen through UI and targets ally Lian, granting next-attack +3 without enemy damage.",
+    "Lian guard actions charge actual engine stacks, and Noa wins an exact intercept clash to gain its own stack.",
+    "Lian reaches three stacks through actual defenses, plans a real offered S3, and consumes the stacks only on execution.",
+    "Awakened Lian S3 supports ally Noa with barrier 30 and sanity +4; enemy damage absorbs into the barrier while Noa HP is preserved.",
+    "Actual awakened Lian attack is captured at quote, flame reveal, approach, windup, signature, swing, contact, recoil, recovery and return.",
+    "The single enemy HP change waits for the actual S3 contact; additional cosmetic poses do not apply extra damage.",
+    "Minato S3 displays its own original portrait and staff preparation, then heals Kai exactly 32 at support-contact and supplies barrier 12.",
+    "Latest portrait layout shows full Lian and Minato faces. Field name and health rows end above the expanded dock.",
+    "After execution, Lian stacks are zero, Noa barrier is 21 after absorption, Kai barrier is 12, and no cut-in or moving pose remains.",
+    "Console warnings and errors are empty. Test tab was reloaded after changes and closed; Native agent received the focus handoff."
+  ],
+  "fixture": {
+    "source": "response-loss-progress.xml",
+    "isolatedPort": 8128,
+    "owned": [
+      "lian",
+      "sera",
+      "noa",
+      "minato",
+      "heidel",
+      "kai",
+      "mare"
+    ],
+    "party": [
+      "lian",
+      "minato",
+      "kai",
+      "noa"
+    ],
+    "level": 1,
+    "syncLevel": 1,
+    "stackOrDamageInjected": false,
+    "progressUnlock": "Actual HTTP campaign 1-1/1-2 and after-story; preceding response-loss script"
+  },
+  "actualUiResult": {
+    "round": 12,
+    "allies": [
+      {
+        "id": "lian",
+        "hp": 116,
+        "awakeningStacks": 0,
+        "barrier": 0,
+        "supportPower": 0
+      },
+      {
+        "id": "minato",
+        "hp": 76,
+        "awakeningStacks": 0,
+        "barrier": 0,
+        "supportPower": 0
+      },
+      {
+        "id": "kai",
+        "hp": 115,
+        "awakeningStacks": 0,
+        "barrier": 12,
+        "supportPower": 0
+      },
+      {
+        "id": "noa",
+        "hp": 113,
+        "awakeningStacks": 0,
+        "barrier": 21,
+        "supportPower": 0
+      }
+    ],
+    "weeklyDungeonClaimsUnchangedAt": 1,
+    "remainingCutins": 0,
+    "remainingPoses": 0,
+    "fieldHealthToDockGapPixels": 7.3499755859375
+  },
+  "sourceSha256": {
+    "Preview/app.js": "a935d9b6ff7563bca6eb6d142dea57fba8c56c94ca3f4fec20a484d02b3a9c8d",
+    "Preview/theme.css": "5e6e1a8e75f0bc41c79e29fde379d564f44eeea61ab56053398eec16fb8e52ee",
+    "Preview/combat-fx.js": "f2dd71746749c03d98ba07686b51b8e8c90870219b133c0cf2be5ce1ba422422",
+    "Preview/combat-fx.css": "c442c8b098c68e85dc2e49bdaeb425111274ef5cb90b142069c4eb1862de4007",
+    "Tests/preview-regression.cjs": "9ec94c2c80b330499ea8ba5621475e5c08608df76aa24d173ef2190d10a7beaf",
+    "Tests/combat-fx-regression.cjs": "14944b86bcb8f8fbadf2abcc87a3accfc373c189f07f3264f0c3e2ca601ec54d",
+    "Tests/preview-response-loss-http.cjs": "a3221cc28cd3d30117d6b110b6ea4c9c94ef43b653a987a18b976ced09789170"
+  },
+  "screenshotCount": 58,
+  "keyScreenshots": [
+    "03-normal-quote.jpg",
+    "04-support-applied.jpg",
+    "05-awakening-ready.jpg",
+    "07-shield-after-absorption.jpg",
+    "09-real-awakened-attack-06.jpg",
+    "09-real-awakened-attack-07.jpg",
+    "09-real-awakened-attack-08.jpg",
+    "09-real-awakened-attack-09.jpg",
+    "09-real-awakened-attack-10.jpg",
+    "09-real-awakened-attack-11.jpg",
+    "09-real-awakened-attack-12.jpg",
+    "11-final-support-02.jpg",
+    "11-final-support-07.jpg",
+    "11-final-support-12.jpg",
+    "12-final-support-status.jpg"
+  ],
+  "captureNotes": [
+    "01 through 07 precede final field health-row and portrait crop correction. 08 and 10 are transition diagnostics, not final layout evidence.",
+    "Final corrected portrait frames are 11-final-support-02 and 11-final-support-12; final HUD is 12-final-support-status.",
+    "The final FX-only fix clears a previous actor flame panel on SkillStart; the added virtual-clock regression verifies cleanup before the next quote. Continuous images precede that cleanup fix and can show the old panel."
+  ],
+  "responseLossEvidence": "QA/SkillFlavor/2026-10-16/Browser/response-loss-http.json",
+  "consoleWarningsAndErrors": 0
+}

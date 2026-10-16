@@ -10,6 +10,7 @@ Builds/
 !Tests/CampaignTests.csproj
 !Tests/RecurringContentTests.csproj
 !Tests/SynchronizationMaterialsTests.csproj
+!Tests/CombatSkillFlavorTests.csproj
 *.sln
 *.blend1
 *.blend2

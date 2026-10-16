@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "evidence": "Actual DOM readings taken during Chrome screenshots",
+  "lianS3": {
+    "beforeHp": 60,
+    "throughWindupAndSignature": 60,
+    "contactHp": 17,
+    "contactCountObserved": 1,
+    "contactMs": 2331
+  },
+  "minatoS3": {
+    "gatherKaiHp": 83,
+    "contactKaiHp": 115,
+    "healed": 32
+  },
+  "fieldRowsAboveDock": true,
+  "noResidualCutinOrPose": true
+}

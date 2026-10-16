@@ -87,7 +87,7 @@ namespace RequiemLantern.Core
                     break;
                 default: throw new ArgumentException("Unknown character: " + id, "id");
             }
-            unit.SyncLevel = Math.Max(0, syncLevel); return unit;
+            unit.SyncLevel = Math.Max(0, syncLevel);CombatSkillFlavor.Configure(unit); return unit;
         }
 
         public static bool IsCharacter(string id) { return id == "lian" || id == "sera" || id == "minato" || id == "noa" || id == "heidel" || id == "kai" || id == "mare"; }

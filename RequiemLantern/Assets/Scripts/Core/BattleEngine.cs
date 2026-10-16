@@ -26,6 +26,8 @@ namespace RequiemLantern.Core
         private readonly Dictionary<string, HashSet<Element>> elementsHit = new Dictionary<string, HashSet<Element>>();
         private readonly HashSet<string> reactions = new HashSet<string>();
         private readonly HashSet<string> shattered = new HashSet<string>();
+        private readonly Dictionary<string,int> quoteTurns = new Dictionary<string,int>();
+        private readonly HashSet<SkillData> chargedDamageActions = new HashSet<SkillData>();
         private int clashEmber, siphonEmber;
 
         public BattleEngine(BattleState state, Func<BattleState> restartFactory = null, IBattleRandom randomSource = null)
@@ -34,7 +36,7 @@ namespace RequiemLantern.Core
             State = state; factory = restartFactory; ownsRandom = randomSource == null;
             random = randomSource ?? new SeededBattleRandom(state.RandomSeed);
             BattleRules.ApplyActionProgression(state);
-            foreach (var unit in state.Allies.Concat(state.Enemies)) unit.Sanity = BattleRules.ClampSanity(unit.Sanity);
+            foreach (var unit in state.Allies.Concat(state.Enemies)) { unit.Sanity = BattleRules.ClampSanity(unit.Sanity);CombatSkillFlavor.ResetBattle(unit); }
             foreach (var unit in state.Allies) InitializeDeck(unit);
         }
 
@@ -67,7 +69,7 @@ namespace RequiemLantern.Core
             if ((skill.Slots == 2 && slot != 0) || skill.Slots > actor.SlotCount)
             { error = "이 스킬은 빈 슬롯 두 칸이 필요합니다."; return false; }
             if (actor.IsSupport && kind != LinkKind.Guard && kind != LinkKind.Support) { error = "서포트는 호위·지원 연결만 가능합니다."; return false; }
-            if ((skill.Kind == SkillKind.Attack && kind != LinkKind.Strike && kind != LinkKind.Clash) ||
+            if ((skill.Kind == SkillKind.Attack && kind != LinkKind.Strike && kind != LinkKind.Clash && !(kind == LinkKind.Support && skill.CanSupportAlly)) ||
                 (skill.Kind == SkillKind.Heal && kind != LinkKind.Support) || (BattleRules.IsDefensive(skill) && kind != LinkKind.Guard))
             { error = "스킬과 연결 종류가 맞지 않습니다."; return false; }
             if (kind == LinkKind.Clash)
@@ -234,6 +236,7 @@ namespace RequiemLantern.Core
             if (intent.Kind == IntentKind.Illusion)
             { preview.Summary = "허상 — 피해 없이 행동만 소모합니다."; preview.Grade = PreviewGrade.Close; return preview; }
             var enemy = Unit(intent.ActorId);
+            skill=CombatSkillFlavor.Effective(actor,skill,link.Kind);
             float multiplier = grade == IgniteGrade.Perfect ? 1.25f : grade == IgniteGrade.Miss ? .75f : 1f;
             preview.AllyPower = Power(Expected(BattleRules.Base(skill), BattleRules.Flame(skill), BattleRules.Flames(skill), actor.Sanity), skill.Element, enemy, multiplier, false);
             preview.EnemyPower = Power(Expected(BattleRules.Base(intent), BattleRules.Flame(intent), BattleRules.Flames(intent), enemy.Sanity), intent.Element, actor, 1, true);
@@ -245,6 +248,8 @@ namespace RequiemLantern.Core
             preview.Summary = string.Format("{0}  ·  기대 위력 {1:0.#} : {2:0.#}  ·  2연승 시 공격", preview.Grade == PreviewGrade.Advantage ? "우세" : preview.Grade == PreviewGrade.Close ? "접전" : "열세", preview.AllyPower, preview.EnemyPower);
             return preview;
         }
+        public SkillData PreviewSkill(string actorId,string skillId,LinkKind kind)
+        { return CombatSkillFlavor.Effective(Unit(actorId),Skill(actorId,skillId),kind); }
         private static float Expected(int basePower, int flamePower, int flames, int sanity)
         { return basePower + flamePower * flames * (float)BattleRules.FlameChance(sanity); }
 
@@ -337,7 +342,7 @@ namespace RequiemLantern.Core
             State.Ember -= PlannedCost;
             previousLinks.Clear(); previousLinks.AddRange(State.Links.Select(x => x.Copy()));
             CommitHandCards();
-            guards.Clear(); elementsHit.Clear(); reactions.Clear(); shattered.Clear(); clashEmber = 0; siphonEmber = 0;
+            guards.Clear(); elementsHit.Clear(); reactions.Clear(); shattered.Clear(); chargedDamageActions.Clear(); clashEmber = 0; siphonEmber = 0;
             if (State.LanternQueued)
             {
                 State.Lantern -= 100; State.Gloom = Math.Max(0, State.Gloom - 1);
@@ -400,6 +405,7 @@ namespace RequiemLantern.Core
             if (factory == null) throw new InvalidOperationException("Restart requires a battle factory.");
             ResolvedClashes = ResolvedDefenses = 0;
             State = factory(); if (ownsRandom) random = new SeededBattleRandom(State.RandomSeed); deckRandom.Clear(); foreach (var actor in State.Allies) InitializeDeck(actor); previousLinks.Clear(); guards.Clear(); elementsHit.Clear(); reactions.Clear(); shattered.Clear(); Observe();
+            quoteTurns.Clear();chargedDamageActions.Clear();foreach(var unit in State.Allies.Concat(State.Enemies))CombatSkillFlavor.ResetBattle(unit);
         }
 
         private void Observe()
@@ -475,35 +481,73 @@ namespace RequiemLantern.Core
         {
             var actor = Unit(link.ActorId); var skill = Skill(link.ActorId, link.SkillId);
             if (!BattleRules.IsSkillUnlocked(actor, skill)) { Log("Cancel", actor.Id, "", "동기화되지 않은 스킬 — 행동 취소", 0); return; }
+            var intent=link.Kind==LinkKind.Clash?Intent(link.TargetId):null;
+            UnitState target=link.Kind==LinkKind.Clash?(intent==null?null:Unit(intent.ActorId)):TargetUnit(link.TargetId);
+            if(target==null||!target.Alive){Log("Cancel",actor.Id,link.TargetId,"대상이 전투불능이거나 사라져 행동 취소",0);return;}
+            if(link.Kind==LinkKind.Clash&&intent!=null&&!intent.Resolved&&IntentActive(intent)&&intent.Kind==IntentKind.Illusion){ResolveClash(actor,skill,intent,1);return;}
+            skill=BeginSkill(actor,skill,link.Kind,target,intent);
             float multiplier = 1;
             if (grade == IgniteGrade.Perfect)
             { multiplier = 1.25f + Math.Min(.25f, State.IgniteChain * .05f); State.IgniteChain++; AddLantern(3); }
             else if (grade == IgniteGrade.Miss) { multiplier = .75f; State.IgniteChain = 0; }
-            Log("Ignite", actor.Id, link.TargetId, actor.Name + " · " + skill.Name + " — " + (grade == IgniteGrade.Perfect ? "점화" : grade == IgniteGrade.Good ? "양호" : "빗나감"), (int)Math.Round(multiplier * 100));
+            var ignite=new BattleEvent("Ignite",actor.Id,link.TargetId,actor.Name+" · "+skill.Name+" — "+(grade==IgniteGrade.Perfect?"점화":grade==IgniteGrade.Good?"양호":"빗나감"),(int)Math.Round(multiplier*100),State.Round);SetSkillMetadata(ignite,skill);if(intent!=null)SetIntentContext(ignite,intent);State.Events.Add(ignite);
             if (link.Kind == LinkKind.Support)
             {
-                var ally = Unit(link.TargetId); if (ally == null || !ally.Alive) return;
+                var ally = target;
                 var roll = RollSkill(actor, skill, null, multiplier); LogRoll(actor, ally, roll, null, 0, skill);
-                int heal = Math.Min(ally.MaxHp - ally.Hp, (int)Math.Round((skill.Heal + roll.Raw - BattleRules.Base(skill)) * multiplier)); ally.Hp += heal;
-                Log("Heal", actor.Id, ally.Id, actor.Name + " → " + ally.Name + " 치유 +" + heal, heal); return;
+                if(skill.Kind==SkillKind.Heal){
+                    int heal = Math.Min(ally.MaxHp - ally.Hp, (int)Math.Round((skill.Heal + roll.Raw - BattleRules.Base(skill)) * multiplier)); ally.Hp += heal;
+                    var healed=new BattleEvent("Heal",actor.Id,ally.Id,actor.Name+" → "+ally.Name+" 치유 +"+heal,heal,State.Round);SetSkillMetadata(healed,skill);State.Events.Add(healed);
+                }
+                ApplySupport(actor,ally,skill);return;
             }
             if (link.Kind == LinkKind.Guard)
             {
                 ResolvedDefenses++;
                 var roll = RollSkill(actor, skill, null, multiplier); LogRoll(actor, Unit(link.TargetId), roll, null, 0, skill);
                 guards[link.TargetId] = new DefenseAction { Actor = actor, Skill = skill, Roll = roll };
-                Log("Guard", actor.Id, link.TargetId, actor.Name + " · " + skill.Name + " — 방어 위력 " + roll.Power.ToString("0.#"), (int)Math.Round(roll.Power)); return;
+                var guard=new BattleEvent("Guard",actor.Id,link.TargetId,actor.Name+" · "+skill.Name+" — 방어 위력 "+roll.Power.ToString("0.#"),(int)Math.Round(roll.Power),State.Round);SetSkillMetadata(guard,skill);State.Events.Add(guard);
+                if(actor.Id=="lian")ChargeAwakening(actor,skill);return;
             }
             if (link.Kind == LinkKind.Clash)
             {
-                var intent = Intent(link.TargetId);
                 if (intent != null && !intent.Resolved && IntentActive(intent)) { ResolveClash(actor, skill, intent, multiplier); return; }
                 var enemy = intent == null ? null : Unit(intent.ActorId);
                 Log("Relink", actor.Id, enemy == null ? "" : enemy.Id, "사라진 예고선 → 적 본체 공격으로 전환", 0);
                 if (enemy != null && enemy.Alive) Strike(actor, skill, enemy, null, multiplier); return;
             }
-            var target = TargetUnit(link.TargetId); if (target == null || !target.Alive) return;
             Strike(actor, skill, target, target.Parts.FirstOrDefault(x => x.Id == link.TargetId && !x.Destroyed), multiplier);
+        }
+
+        SkillData BeginSkill(UnitState actor,SkillData original,LinkKind kind,UnitState target,IntentState intent)
+        {
+            var skill=CombatSkillFlavor.Effective(actor,original,kind);
+            string key=actor.Id+":"+original.Id;int turn;quoteTurns.TryGetValue(key,out turn);quoteTurns[key]=turn+1;
+            skill.Quote=CombatSkillFlavor.Quote(actor.Id,skill.Number,skill.Awakened,turn);
+            if(skill.Awakened){actor.AwakeningStacks-=actor.AwakeningMaxStacks;var used=ActorEvent("AwakeningUsed",actor,target,actor.Name+" · "+actor.AwakeningName+" — 각성 3스킬",3,skill);State.Events.Add(used);}
+            if(kind!=LinkKind.Support&&original.Kind==SkillKind.Attack)actor.SupportPower=0;
+            var start=ActorEvent("SkillStart",actor,target,actor.Name+" · "+skill.Name,0,skill);if(intent!=null)SetIntentContext(start,intent);State.Events.Add(start);return skill;
+        }
+        BattleEvent ActorEvent(string type,UnitState actor,UnitState target,string message,int amount,SkillData skill)
+        {
+            var value=new BattleEvent(type,actor.Id,target==null?"":target.Id,message,amount,State.Round) { ActorSanity=actor.Sanity,TargetSanity=target==null?0:target.Sanity,
+                AwakeningStacks=actor.AwakeningStacks,AwakeningMaxStacks=actor.AwakeningMaxStacks,Barrier=actor.Barrier,SupportPower=actor.SupportPower };
+            if(skill!=null)SetSkillMetadata(value,skill);return value;
+        }
+        void ChargeAwakening(UnitState actor,SkillData skill)
+        {
+            if(skill==null||skill.Awakened||actor.AwakeningMaxStacks<=0||actor.AwakeningStacks>=actor.AwakeningMaxStacks)return;
+            actor.AwakeningStacks++;State.Events.Add(ActorEvent("AwakeningCharge",actor,null,actor.Name+" · "+actor.AwakeningName+" "+actor.AwakeningStacks+"/"+actor.AwakeningMaxStacks,1,skill));
+            if(actor.AwakeningStacks==actor.AwakeningMaxStacks)State.Events.Add(ActorEvent("AwakeningReady",actor,null,actor.Name+" · 각성 준비 완료",actor.AwakeningStacks,skill));
+        }
+        void ApplySupport(UnitState actor,UnitState target,SkillData skill)
+        {
+            target.Barrier=Math.Max(target.Barrier,Math.Min(CombatSkillFlavor.MaxBarrier,Math.Max(0,skill.SupportShield)));
+            target.SupportPower=Math.Max(target.SupportPower,Math.Min(CombatSkillFlavor.MaxSupportPower,Math.Max(0,skill.SupportPower)));
+            if(skill.SupportSanity!=0)ChangeSanity(target,skill.SupportSanity);
+            if(skill.SupportShield==0&&skill.SupportPower==0&&skill.SupportSanity==0)return;
+            var applied=ActorEvent("SupportApplied",actor,target,actor.Name+" → "+target.Name+" · "+(skill.SupportDescription??"아군 지원"),0,skill);
+            applied.Barrier=target.Barrier;applied.SupportPower=target.SupportPower;applied.TargetSanity=target.Sanity;State.Events.Add(applied);
         }
 
         private RolledPower Roll(int basePower, int flamePower, int flames, int sanity)
@@ -537,7 +581,7 @@ namespace RequiemLantern.Core
             State.Events.Add(e); return e;
         }
         private static void SetSkillMetadata(BattleEvent e, SkillData skill)
-        { e.SkillId = skill.Id; e.SkillName = skill.Name; e.SkillNumber = skill.Number; e.BasePower = BattleRules.Base(skill); e.FlamePower = BattleRules.Flame(skill); }
+        { e.SkillId = skill.Id; e.SkillName = skill.Name; e.SkillNumber = skill.Number; e.BasePower = BattleRules.Base(skill); e.FlamePower = BattleRules.Flame(skill);e.Quote=skill.Quote;e.AnimationKey=skill.AnimationKey;e.Awakened=skill.Awakened; }
         private static void SetIntentMetadata(BattleEvent e, IntentState intent)
         { e.SkillId = intent.Id; e.SkillName = intent.Name; e.SkillNumber = 0; e.BasePower = BattleRules.Base(intent); e.FlamePower = BattleRules.Flame(intent); SetIntentContext(e,intent); }
         private static void SetIntentContext(BattleEvent e, IntentState intent)
@@ -594,6 +638,7 @@ namespace RequiemLantern.Core
                 State.Events.Add(win); ChangeSanity(winner, 2); ChangeSanity(loser, -2);
                 if (result > 0)
                 {
+                    if(actor.Id=="lian"||actor.Id=="noa")ChargeAwakening(actor,skill);
                     AddLantern(10); if (clashEmber < 2) { clashEmber++; State.Ember = Math.Min(6, State.Ember + 1); }
                     ApplyStrike(actor, skill, enemy, null, own, intent);
                 }
@@ -675,14 +720,18 @@ namespace RequiemLantern.Core
         { return Math.Max(1, (int)Math.Round(Math.Max(1, actor.Attack * power / 10 - target.Defense) * reduction * (target.IsEnemy && target.BrokenThroughRound >= State.Round ? 1.3f : 1))); }
         private void Hurt(UnitState actor, UnitState target, int damage, SkillData skill = null, RolledPower roll = null, IntentState intent = null)
         {
+            int absorbed=Math.Min(target.Barrier,damage);target.Barrier-=absorbed;damage-=absorbed;
+            if(absorbed>0){var shield=new BattleEvent("ShieldAbsorb",actor.Id,target.Id,target.Name+" 보호막이 피해 "+absorbed+" 흡수",absorbed,State.Round) { Barrier=target.Barrier,SupportPower=target.SupportPower,ActorSanity=actor.Sanity,TargetSanity=target.Sanity };if(skill!=null)SetSkillMetadata(shield,skill);else if(intent!=null)SetIntentMetadata(shield,intent);State.Events.Add(shield);}
+            int previousHp=target.Hp;
             target.Hp = Math.Max(0, target.Hp - damage);
             if (!target.IsEnemy) AddLantern(2);
             var e = new BattleEvent("Damage", actor.Id, target.Id, actor.Name + " → " + target.Name + "  " + damage, damage, State.Round)
-            { ActorSanity = actor.Sanity, TargetSanity = target.Sanity };
+            { ActorSanity = actor.Sanity, TargetSanity = target.Sanity,Barrier=target.Barrier,SupportPower=target.SupportPower };
             if (skill != null) SetSkillMetadata(e, skill); else if (intent != null) SetIntentMetadata(e, intent);
             if (intent != null) SetIntentContext(e,intent);
             if (roll != null) { e.FlameStates = roll.Flames; e.ActorPower = roll.Power; }
             State.Events.Add(e);
+            if(actor.Id=="sera"&&skill!=null&&skill.Kind==SkillKind.Attack&&previousHp>target.Hp&&chargedDamageActions.Add(skill))ChargeAwakening(actor,skill);
             if (target.Hp == 0)
             { Log("DefeatUnit", actor.Id, target.Id, target.Name + " 전투불능", 0); if (!target.IsEnemy)
                 {

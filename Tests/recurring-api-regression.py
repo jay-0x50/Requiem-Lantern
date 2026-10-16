@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parent.parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--host',type=Path,default=ROOT/'PreviewHost/bin/recurring-qa/PreviewHost.dll')
 args=parser.parse_args()
-QA=ROOT/'QA/SynchronizationMaterials/2026-10-16/RecurringAPI'
+QA=ROOT/'QA/SkillFlavor/2026-10-16/RecurringAPI'
 QA.mkdir(parents=True,exist_ok=True)
 SAVE=QA/('progress-'+str(time.time_ns())+'.xml')
 CLOCK=QA/'clock.txt'
@@ -93,7 +93,7 @@ def finish_tutorial():
 try:
     set_time('2026-10-16T19:59:59Z') # Saturday 04:59:59 KST, still Friday's period.
     data=start()
-    assert data['runtimeRevision']=='sync-material-v15'
+    assert data['runtimeRevision']=='skill-flavor-v16'
     assert data['activities']['dailyKey']=='2026-10-16' and data['activities']['weeklyKey']=='2026-10-12'
     assert data['activities']['nextDailyResetUtc']=='2026-10-16T20:00:00Z'
     assert not data['activities']['dungeonUnlocked']
@@ -189,7 +189,7 @@ try:
     assert quest(data,'weekly_victory')['current']==1
     checks.append('Monday 05:00 resets both periods and the shared quota. A practice run stays rewardless across reset; backward time cannot restore the old week, and the fresh week can earn rewards normally.')
 
-    report={'status':'PASS','runtimeRevision':'sync-material-v15','port':PORT,'checks':checks,'isolatedSave':True,'playerSaveModified':False,'clockSource':'Explicit QA clock file; production uses DateTime.UtcNow','processStopped':True}
+    report={'status':'PASS','runtimeRevision':'skill-flavor-v16','port':PORT,'checks':checks,'isolatedSave':True,'playerSaveModified':False,'clockSource':'Explicit QA clock file; production uses DateTime.UtcNow','processStopped':True}
     (QA/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     for check in checks:print('PASS:',check)
 finally:

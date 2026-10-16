@@ -1,0 +1,1107 @@
+[
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 동료의 결의생명의 파도",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "미나토 · 생명의 파도돌아갈 숨은, 내가 지킬게.",
+    "ms": 22,
+    "file": "11-final-support-01.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 동료의 결의생명의 파도",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "미나토 · 생명의 파도돌아갈 숨은, 내가 지킬게.",
+    "ms": 467,
+    "file": "11-final-support-02.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 점등 / 격돌 / 타격미나토 · 생명의 파도 — 양호공격 자세를 잡습니다",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 799,
+    "file": "11-final-support-03.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등불의 점등을 확인합니다…",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 1099,
+    "file": "11-final-support-04.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등미나토 · 불꽃 2/3 · 위력 18",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 1331,
+    "file": "11-final-support-05.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 아군 지원지팡이의 치유미나토 → 카이 치유 +32",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "83 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "support-gather",
+    "ms": 1425,
+    "file": "11-final-support-06.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 아군 지원지팡이의 치유미나토 → 카이 치유 +32",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "support-contact",
+    "ms": 1686,
+    "file": "11-final-support-07.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": ""
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 빛이 맞닿는 순간정신력 변화카이 정신력 +3",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 1947,
+    "file": "11-final-support-08.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 아군 지원동료 지원미나토 → 카이 · 아군 체력 회복·보호막 12·정신력 +3",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 2263,
+    "file": "11-final-support-09.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 3스킬 실행 시 각성각성 · 중첩 소모리안 · 꺼지지 않는 파수 — 각성 3스킬",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 2684,
+    "file": "11-final-support-10.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 각성꺼지지 않는 파수 · 고조각성 중첩을 소모했습니다. 이번 행동의 위력이 강화됩니다.",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "리안 · 각성 / 꺼지지 않는 파수 · 고조이번에는, 아무도 두고 가지 않아.",
+    "ms": 2844,
+    "file": "11-final-support-11.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 각성꺼지지 않는 파수 · 고조각성 중첩을 소모했습니다. 이번 행동의 위력이 강화됩니다.",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "리안 · 각성 / 꺼지지 않는 파수 · 고조이번에는, 아무도 두고 가지 않아.",
+    "ms": 3259,
+    "file": "11-final-support-12.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 각성꺼지지 않는 파수 · 고조각성 중첩을 소모했습니다. 이번 행동의 위력이 강화됩니다.",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "quote": "리안 · 각성 / 꺼지지 않는 파수 · 고조이번에는, 아무도 두고 가지 않아.",
+    "ms": 3677,
+    "file": "11-final-support-13.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 점등 / 격돌 / 타격리안 · 꺼지지 않는 파수 · 고조 — 양호공격 자세를 잡습니다",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 3938,
+    "file": "11-final-support-14.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등불의 점등을 확인합니다…",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 4212,
+    "file": "11-final-support-15.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등리안 · 불꽃 3/4 · 위력 37",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 4457,
+    "file": "11-final-support-16.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": ""
+      }
+    ],
+    "caption": "③ 실행 · 빛이 맞닿는 순간정신력 변화노아 정신력 +4",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 4539,
+    "file": "11-final-support-17.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": "보호막 30"
+      }
+    ],
+    "caption": "③ 실행 · 아군 지원파수의 보호막리안 → 노아 · 아군: 보호막 18·정신력 +2 / 각성: 보호막 30·정신력 +4",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 4883,
+    "file": "11-final-support-18.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": "보호막 30"
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등어둠의 발현을 확인합니다…",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 5294,
+    "file": "11-final-support-19.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": "보호막 30"
+      }
+    ],
+    "caption": "③ 실행 · 정신력과 불스킬 · 점등기억의 그림자 1 · 어둠 1/2 · 위력 14.4",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "",
+    "ms": 5948,
+    "file": "11-final-support-20.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": "보호막 30"
+      }
+    ],
+    "caption": "③ 실행 · 격돌 / 타격적의 공격기억의 그림자 1 → 리안  9",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "approach",
+    "ms": 6193,
+    "file": "11-final-support-21.jpg"
+  },
+  {
+    "buffs": [
+      {
+        "id": "lian",
+        "text": ""
+      },
+      {
+        "id": "minato",
+        "text": ""
+      },
+      {
+        "id": "kai",
+        "text": "보호막 12"
+      },
+      {
+        "id": "noa",
+        "text": "보호막 30"
+      }
+    ],
+    "caption": "③ 실행 · 격돌 / 타격적의 공격기억의 그림자 1 → 리안  9",
+    "hp": [
+      {
+        "id": "anger",
+        "text": "17 / 60 · 균열 6 / 36"
+      },
+      {
+        "id": "enemy_2",
+        "text": "60 / 60 · 균열 36 / 36"
+      },
+      {
+        "id": "lian",
+        "text": "125 / 150"
+      },
+      {
+        "id": "minato",
+        "text": "76 / 100"
+      },
+      {
+        "id": "kai",
+        "text": "115 / 115"
+      },
+      {
+        "id": "noa",
+        "text": "113 / 120"
+      }
+    ],
+    "phase": "windup",
+    "ms": 6359,
+    "file": "11-final-support-22.jpg"
+  }
+]

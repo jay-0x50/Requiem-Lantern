@@ -244,7 +244,7 @@ namespace RequiemLantern.Preview
             return new
             {
                 battle = battle.State, progress = progress.Data, plannedCost = battle.PlannedCost, availableEmber = battle.AvailableEmber,
-                application = "RequiemLantern", runtimeRevision = "sync-material-v15",
+                application = "RequiemLantern", runtimeRevision = "skill-flavor-v16",
                 activities = progress.GetActivities(),
                 materials = progress.GetSynchronizationMaterials(),
                 materialDungeon = new{activeCharacterId=materialDungeon.Active?.CharacterId,active=materialDungeon.Active,outcome=materialDungeon.Active==null?null:(BattleOutcome?)materialDungeon.Battle.State.Outcome},

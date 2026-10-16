@@ -141,6 +141,27 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 
 작전실에는 완료한 구간과 다음 스테이지까지만 표시합니다. 1-3 완료 후에는 1-1~1-4가 보입니다. 점화 결과를 하나씩 공개하고 접전에서는 짧게 뜸을 들이며, 리안의 묵직한 타격·세라의 되돌아 베기 등 스킬 동작을 보강했습니다.
 
+## 전투 대사·3스킬·각성·아군 지원
+
+7명 모두 실제 스킬을 실행할 때 짧은 전투 자막을 표시합니다. 일반 스킬·방어 대사는 번갈아 사용하고, 3스킬에는 인물별 전용 대사와 초상 컷인·무기 동작을 사용합니다. 대사 선택은 점화와 손패 난수를 소비하지 않습니다. 준비·연속 동작·접촉·마무리를 구분하며 실제 피해는 기존처럼 해당 공격의 한 번의 피해 이벤트에서 적용합니다.
+
+| 각성 대상 | 스택 획득 | 3스택에서 3스킬 실행 |
+|---|---|---|
+| 리안 · 꺼지지 않는 파수 | 방어 행동 실행 또는 맞불 승리 | 각성 3스킬. 아군 지원으로 쓰면 보호막 30·정신력 +4 |
+| 세라 · 잿빛 맹세 | 공격 행동으로 실제 체력 피해를 주기 | 각성 3스킬 |
+| 노아 · 되찾은 이름의 서명 | 맞불 승리 | 각성 3스킬 |
+
+최대 3스택이며 각성 여부는 **실제 행동 실행 시점**에 결정합니다. 각성은 스택 3개를 소모해 그 행동의 기본 위력 +4·불 위력 +1, 전용 대사와 연출을 적용합니다. 각성 행동 자체에서는 스택을 다시 얻지 않습니다. 유효하게 사용한 각성기는 맞불에서 패배해도 스택을 소모합니다. 취소·허상·미실행 계획에서는 소모하지 않습니다. 동기화·제시 카드·불씨·행동칸과 상성·2연승 맞불 규칙은 그대로 적용합니다.
+
+| 스킬 | 아군에게 연결한 효과 |
+|---|---|
+| 리안 3스킬 | 보호막 18·정신력 +2. 각성이면 보호막 30·정신력 +4 |
+| 카이 2스킬 | 다음 공격 행동의 기본 위력 +3·정신력 +2 |
+| 미나토 2스킬 | 기존 치유·정신력 +2 |
+| 미나토 3스킬 | 기존 치유·보호막 12·정신력 +3 |
+
+리안 3스킬과 카이 2스킬은 적에게 연결하면 공격, 살아 있는 아군에게 연결하면 지원으로 실행합니다. 지원도 제시된 카드와 기존 비용·행동을 사용합니다. 보호막은 방어 경감 뒤 체력 피해를 흡수하며 최대 40, 새 보호막은 더 큰 값으로 갱신합니다. 다음 공격 강화는 방어·치유·지원에 소모되지 않고, 다음 유효 공격의 모든 맞불 비교와 타격에 적용한 뒤 한 번만 소비합니다. 스택·보호막·공격 강화는 전투 중 상태이며 새 전투와 재시작에서 초기화합니다. 동기화 전에도 각성 스택은 쌓이지만 3스킬 개방에는 동기화가 필요합니다.
+
 ## 전투 실행 화면과 귀항호 항해도
 
 후보 카드 2장과 남은 행동 수를 구분해 표시합니다. 카드의 ‘2번 칸 배정’은 사용할 행동칸의 번호입니다. 매 턴 미사용 카드를 포함해 두 장 모두 새로 뽑는다는 안내도 제공합니다.
@@ -203,10 +224,10 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 
 - 스토리: 대화창 클릭 또는 Space. 현재까지 표시된 글자만 담은 전체 대화 기록, 장면 내 좌우 유지, 주요 침묵의 자동 대기와 실제 전환 안내를 지원합니다. 기록 열기·앱 포커스 이탈 시 타이핑과 자동 진행을 멈춥니다. 수동 진행과 장면 넘기기는 지연하지 않습니다.
 - 전투: 하단의 원하는 캐릭터 카드 선택 → 예고선·적 부위·아군 클릭. 카드에서 대상으로 바로 드래그할 수도 있습니다. 특정 행동을 바꾸려면 행동칸을 먼저 선택합니다.
-- 적 예고선에 공격 스킬 연결: 맞불. 다른 동료를 노리는 공격에도 대신 맞불을 걸 수 있습니다. 팔·핵·본체: 공격. 치유·호위 스킬: 아군을 대상으로 선택.
+- 적 예고선에 공격 스킬 연결: 맞불. 다른 동료를 노리는 공격에도 대신 맞불을 걸 수 있습니다. 팔·핵·본체: 공격. 치유·호위와 아군 지원이 가능한 공격 스킬은 아군을 대상으로 선택할 수 있습니다.
 - **AI 제안 → 빛실 실행**으로 첫 라운드를 시작하기 쉽습니다.
 - 수동 연결 버튼을 눌러 오토를 켜면 다음 라운드도 자동 진행합니다.
-- 설정의 점화 보조를 끄면 공격 스킬마다 수축 링이 나옵니다. 두 원이 겹칠 때 클릭/Space.
+- 설정의 점화 보조를 끄면 공격으로 실행하는 스킬마다 수축 링이 나옵니다. 두 원이 겹칠 때 클릭/Space. 아군 지원에는 점화 입력이 없습니다.
 - 일반 전투 첫 승리: 코인 40, 등불 조각 2. 보스 첫 승리: 코인 120, 등불 조각 10, 기억의 파편 1. 재클리어에는 첫 보상을 중복 지급하지 않습니다. 스토리 전용과 다시 읽기는 보상이 없습니다.
 - 거점의 등대 복구: 100코인으로 2단계, 200코인으로 3단계.
 
@@ -240,6 +261,7 @@ Blender 캐릭터는 원화를 평면 메시로 변형하는 **정면 2.5D 빌�
 
 - 대사·초기 스킬/적 수치: `Assets/Scripts/Core/PrototypeData.cs`
 - 전투 규칙·추천: `Assets/Scripts/Core/BattleEngine.cs`
+- 전투 대사·각성·지원 정의: `Assets/Scripts/Core/CombatSkillFlavor.cs`
 - 타이밍·상성·데이터 구조: `Assets/Scripts/Core/BattleData.cs`
 - 저장·보상·복구: `Assets/Scripts/Core/ProgressService.cs`
 - 전용 동기화 재료·기억 잠항: `Assets/Scripts/Core/SynchronizationMaterials.cs`
@@ -256,6 +278,7 @@ dotnet run --project Tests/CoreTests.csproj
 dotnet run --project Tests/CampaignTests.csproj
 dotnet run --project Tests/RecurringContentTests.csproj
 dotnet run --project Tests/SynchronizationMaterialsTests.csproj
+dotnet run --project Tests/CombatSkillFlavorTests.csproj
 node Tests/preview-regression.cjs
 node Tests/combat-fx-regression.cjs
 node Tests/combat-audio-regression.cjs
@@ -269,9 +292,9 @@ Windows 빌드를 실행할 때 `--smoke --capture-dir "절대경로"`를 전달
 
 진행 저장 위치: 브라우저는 `PreviewHost/.local/progress.xml`, Unity는 `Application.persistentDataPath/progress.xml`. 두 실행 환경의 진행 파일은 별도입니다.
 
-HTTP 검수용 호스트는 `dotnet build PreviewHost/PreviewHost.csproj -o PreviewHost/bin/material-qa`로 만듭니다. `python Tests/material-api-regression.py`는 실제 채집·동기화·쿠폰·구 저장을 검사하고, `python Tests/recurring-api-regression.py --host PreviewHost/bin/material-qa/PreviewHost.dll`은 별도 저장과 QA 시계로 초기화·주간 보상·저장 실패를 검사합니다.
+HTTP 검수용 호스트는 `dotnet build PreviewHost/PreviewHost.csproj -o PreviewHost/bin/skill-qa`로 만듭니다. `python Tests/skill-flavor-api-regression.py`는 실제 전투에서 대사·각성·아군 지원·강화 소비와 재시작 초기화를 검사합니다. `python Tests/material-api-regression.py --host PreviewHost/bin/skill-qa/PreviewHost.dll`은 실제 채집·동기화·쿠폰·구 저장을 검사하고, `python Tests/recurring-api-regression.py --host PreviewHost/bin/skill-qa/PreviewHost.dll`은 별도 저장과 QA 시계로 초기화·주간 보상·저장 실패를 검사합니다.
 
-Unity 전용 검수는 Windows 실행 파일의 `--material-smoke --capture-dir "절대경로"`와 `--recurring-smoke --capture-dir "절대경로"`를 사용합니다. 최신 재료 검수 기록은 `QA/SynchronizationMaterials/2026-10-16/`, 이전 주기 콘텐츠 검수는 `QA/RecurringContent/2026-10-16/`에 있습니다.
+Unity 전용 검수는 Windows 실행 파일의 `--skill-flavor-smoke --capture-dir "절대경로"`로 7명 스킬 대사·3스킬 동작·각성·지원·취소·움직임 간소화를 검사합니다. 관련 기록은 `QA/SkillFlavor/2026-10-16/`에 있습니다. 기존 재료·주기 콘텐츠 검수는 `--material-smoke`와 `--recurring-smoke`를 사용하며 기록은 각각 `QA/SynchronizationMaterials/2026-10-16/`, `QA/RecurringContent/2026-10-16/`에 있습니다. 모든 검수 모드는 별도 저장 파일을 사용합니다.
 
 ## 아트 출처
 

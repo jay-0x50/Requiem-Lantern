@@ -170,6 +170,61 @@ async function actorLabelChecks(){
  pass('flame rolls keep faction-owned power immediately before its own lamps and the panel in fixed central screen space');
 }
 
+async function skillFlavorChecks(){
+ const castNames={lian:'리안',sera:'세라',noa:'노아',heidel:'하이델',minato:'미나토',kai:'카이',mare:'마레'},styles=new Set();
+ for(const [id,name] of Object.entries(castNames)){
+  const initial=battle();initial.allies[0]={...initial.allies[0],id,name,portrait:id,awakeningStacks:0,awakeningMaxStacks:['lian','sera','noa'].includes(id)?3:0};
+  if(id==='minato')initial.allies[1].id='patient';
+  const env=environment(true,false,initial),heal=id==='minato',target=heal?'patient':'anger',amount=heal?24:21,metadata={skillNumber:3,skillId:id+'_s3',skillName:name+' 세 번째 스킬',animationKey:id+'_s3',quote:name+'의 짧은 결의',awakeningStacks:0,awakeningMaxStacks:initial.allies[0].awakeningMaxStacks};
+  const final=copy(initial);if(heal)final.allies[1].hp+=amount;else final.enemies[0].hp-=amount;
+  let applied=0;const base=env.fx.applyEvent.bind(env.fx);env.fx.applyEvent=e=>{if(e.type===(heal?'Heal':'Damage'))applied++;base(e);};
+  const playing=env.fx.play([{...event('SkillStart',target,0,id),...metadata},{...event(heal?'Heal':'Damage',target,amount,id),...metadata}],final);
+  await env.until(()=>!!env.root.querySelector('.skill-cutin'));
+  assert.equal(env.root.querySelector('.skill-cutin').parent,env.stage);assert.equal(env.root.querySelector('.skill-cutin').querySelector('img').src,'/art/'+id[0].toUpperCase()+id.slice(1)+'.png');assert.equal(applied,0);
+  await env.until(()=>env.stage.dataset.combatPhase===(heal?'support-gather':'signature'));assert.equal(applied,0);assert.equal(env.fx.units.get(target).hp,heal?30:190);
+  if(!heal)styles.add(env.stage.dataset.attackStyle);
+  await env.until(()=>env.stage.dataset.combatPhase===(heal?'support-contact':'contact'));assert.equal(applied,1);assert.equal(env.fx.units.get(target).hp,heal?54:169);
+  assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,heal?0:1);
+  await env.drain();assert.equal(await playing,true);assert.equal(applied,1);assert.equal(env.root.querySelectorAll('.skill-quote').length,0);assert.equal(env.root.querySelectorAll('.fx-beam').length,0);
+ }
+ assert.equal(styles.size,6);
+ pass('all seven real third-skill portraits precede distinct weapon or staff sequences, with HP unchanged through each windup and exactly one actual contact');
+ let env=environment();let plays=0;const quote=env.fx.skillQuote.bind(env.fx);env.fx.skillQuote=(...args)=>{plays++;return quote(...args);};
+ const meta={skillId:'lian_s3',skillNumber:3,quote:'이번에는 아무도 두고 가지 않아.',animationKey:'lian_s3_awakened',awakened:true,skillName:'각성 파수'};
+ const full=[{...event('SkillStart','anger'),...meta},...Array.from({length:4},()=>({...event('Clash','anger'),...meta})),{...event('Damage','anger',12),...meta}];
+ const playing=env.fx.play(full,copy(env.initial));await env.drain();assert.equal(await playing,true);assert.equal(plays,1);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,1);
+ pass('one SkillStart produces one quote across repeated clashes and cosmetic S3 swings without repeating real damage');
+ for(const [number,awakened,fast,duration] of [[1,false,false,450],[3,false,false,800],[3,true,false,1100],[3,true,true,605]]){
+  env=environment();const showing=env.fx.skillQuote({...event('SkillStart','anger'),...meta,skillNumber:number,awakened},fast,env.fx.epoch);
+  assert.equal([...env.timers.values()][0].due,duration);await env.drain();await showing;
+ }
+ pass('ordinary, third-skill, awakened and fast quotes use their intended short durations without adding voice or network work');
+ env=environment();const cancelled=env.fx.play([{...event('SkillStart','anger'),...meta},event('Damage','anger',80)],copy(env.initial));await env.until(()=>!!env.root.querySelector('.skill-quote'));
+ env.fx.clear();env.fx.attach(copy(env.initial));const newer=env.fx.skillQuote({...event('SkillStart','anger',0,'minato'),quote:'새 동료 대사',skillNumber:3,animationKey:'minato_s3'},false,env.fx.epoch);const newerCard=env.root.querySelector('.skill-quote');
+ await Promise.resolve();await Promise.resolve();assert.equal(env.root.querySelector('.skill-quote'),newerCard);assert.equal(env.fx.units.get('anger').hp,190);await env.drain();await newer;assert.equal(await cancelled,false);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,0);
+ pass('cancelling a cut-in suppresses its pending hit and old cleanup cannot remove a later encounter quote');
+ const initial=battle();initial.allies[0].awakeningStacks=2;initial.allies[0].awakeningMaxStacks=3;initial.allies[0].barrier=18;initial.allies[0].supportPower=3;initial.allies[1].barrier=0;initial.allies[1].supportPower=0;
+ env=environment(true,false,initial);
+ env.fx.applyEvent({...event('AwakeningReady','anger'),awakeningStacks:3,awakeningMaxStacks:3});assert.equal(env.fx.units.get('lian').awakeningStacks,3);
+ env.fx.applyEvent({...event('AwakeningUsed','anger'),awakeningStacks:0,awakeningMaxStacks:3});assert.equal(env.fx.units.get('lian').awakeningStacks,0);assert.equal(env.fx.units.get('lian').barrier,18);
+ env.fx.applyEvent({...event('SkillStart','anger'),awakeningStacks:0,awakeningMaxStacks:3,barrier:18,supportPower:0});assert.equal(env.fx.units.get('lian').supportPower,0);assert.equal(env.fx.units.get('lian').barrier,18);
+ pass('awakening charge and consumption update the actor only, and SkillStart consumes the actor’s attack support while preserving its actual shield');
+ env.fx.applyEvent({...event('SupportApplied','minato'),barrier:30,supportPower:3,targetSanity:4});assert.equal(env.fx.units.get('minato').barrier,30);assert.equal(env.fx.units.get('minato').supportPower,3);assert.equal(env.fx.units.get('minato').sanity,4);assert.equal(env.fx.units.get('lian').barrier,18);assert.equal(env.fx.units.get('lian').supportPower,0);
+ env.fx.applyEvent({...event('Guard','minato'),barrier:0,supportPower:0});assert.equal(env.fx.units.get('minato').barrier,30);assert.equal(env.fx.units.get('minato').supportPower,3);
+ pass('support applies shield, next-attack strength and sanity to its recipient, while unrelated default metadata cannot erase those buffs');
+ env.fx.applyEvent({...event('ShieldAbsorb','lian',10,'anger'),barrier:8,supportPower:0});assert.equal(env.fx.units.get('lian').barrier,8);assert.equal(env.fx.units.get('lian').hp,80);
+ const hitting=env.fx.play([{...event('Damage','lian',6,'anger'),barrier:0,supportPower:0}],copy(initial));await env.until(()=>env.stage.dataset.combatPhase==='windup');assert.equal(env.fx.units.get('lian').hp,80);
+ await env.until(()=>env.stage.dataset.combatPhase==='contact');assert.equal(env.fx.units.get('lian').hp,74);assert.equal(env.fx.units.get('lian').barrier,0);await env.drain();await hitting;
+ pass('shield absorption changes only the remaining barrier and the following real HP damage still waits for its own contact');
+ env=environment(false,false,initial);const still=env.fx.play([{...event('SkillStart','minato'),...meta},{...event('SupportApplied','minato'),barrier:30,supportPower:0,targetSanity:4}],copy(initial));await env.until(()=>!!env.root.querySelector('.skill-cutin'));assert.ok(!env.stage.dataset.cameraFocus);assert.equal(env.fx.units.get('minato').hp,30);await env.drain();assert.equal(await still,true);assert.equal(env.root.querySelector('.skill-quote'),null);assert.equal(env.root.querySelector('.action-dock').inert,false);assert.equal(env.impacts.filter(([kind])=>kind==='hit').length,0);
+ pass('reduced-motion ally support retains a static cut-in, no attack hit, unchanged HP and complete dock cleanup');
+ env=environment();const healing=env.fx.play([{...event('Heal','minato',20,'minato'),skillId:'minato_s3',skillNumber:3,animationKey:'minato_s3'}],copy(env.initial));await env.until(()=>env.stage.dataset.combatPhase==='support-gather');env.fx.clear();await env.drain();assert.equal(await healing,false);assert.equal(env.fx.units.get('minato').hp,30);assert.equal(env.fx.portrait('minato').style.visibility,'');
+ pass('cancelling staff preparation prevents the pending heal and restores the original recipient and caster art');
+ env=environment();env.fx.showFlameRoll({...event('FlameRoll','minato',0,'minato'),flameStates:[true,false],actorPower:11});assert.ok(env.root.querySelector('.flame-roll'));
+ const fresh=env.fx.play([{...event('SkillStart','anger'),...meta}],copy(env.initial));await env.until(()=>!!env.root.querySelector('.skill-quote'));assert.equal(env.root.querySelector('.flame-roll'),null);env.fx.clear();await env.drain();assert.equal(await fresh,false);
+ pass('a new skill quote removes the preceding actor’s flame panel before the next ignition so another companion’s power is never attributed to it');
+}
+
 async function main() {
   if(process.argv.includes('--actor-label-only')){await actorLabelChecks();console.log('TOTAL '+passed+' actor-label/roll cases passed');return;}
   let env = environment();
@@ -760,6 +815,7 @@ async function main() {
   pass('starting or cancelling playback hides inspection through the shared hook and restores the planning dock');
 
   await actorLabelChecks();
+  await skillFlavorChecks();
   console.log('TOTAL ' + passed + ' combat FX regression cases passed');
 }
 

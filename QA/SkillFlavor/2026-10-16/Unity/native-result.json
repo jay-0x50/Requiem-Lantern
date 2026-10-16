@@ -1,0 +1,337 @@
+{
+  "dateKst": "2026-10-16",
+  "verifiedAtKst": "2026-10-16T14:10:15+09:00",
+  "result": "PASS",
+  "exitCode": 0,
+  "command": "RequiemLantern.exe --skill-flavor-smoke --capture-dir QA/SkillFlavor/2026-10-16/Unity -screen-width 1600 -screen-height 900 -screen-fullscreen 0",
+  "buildLog": "Logs/unity-skill-flavor-v16-build-final-accepted.log",
+  "smokeLog": "QA/SkillFlavor/2026-10-16/Unity/native-skill-flavor-smoke-final-accepted.log",
+  "renderedSize": "1600x900",
+  "canvasReference": "1920x1080",
+  "isolatedSave": "flavor-progress.xml",
+  "playerSaveUnchanged": true,
+  "playerPrefsWriteInvoked": false,
+  "executable": {
+    "path": "Builds/Windows/RequiemLantern.exe",
+    "sha256": "718444f6a718fa668da96eb0a58445b009673310e6129152a63dbf7a92b8de00"
+  },
+  "managedAssembly": {
+    "path": "Builds/Windows/RequiemLantern_Data/Managed/Assembly-CSharp.dll",
+    "sha256": "2ab1089790a58675f628f704e6f8880b86041d05e5b0cf806762bb7eeeb29766"
+  },
+  "sourceHashes": [
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/BattleData.cs",
+      "sha256": "8204a230e4fbcf0b171fecffebd9d5d9bfe2abfb9e26b49f353009ce6bae8209"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/BattleEngine.cs",
+      "sha256": "22c7bc75019a8ffc776b1e1ed20fb594eddfeae978ea5f2417231d4ffe93a1b8"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/Campaign.cs",
+      "sha256": "d2d1fbf1962c37676980b932cd17f32c57f5eb4ae5a8e4714a7a57c1bfeefd3f"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/CampaignCatalog.cs",
+      "sha256": "61bfdeedbb50187dfaf16c6a06ffacde3bc4ff3906e6658dd543d60f1c3fabaf"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/CombatSkillFlavor.cs",
+      "sha256": "79adbad793d5de35b58a6a5153ae558ed42eaf9107a9c1bbeb277c1decfa1eff"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/ProgressService.cs",
+      "sha256": "32c558585bf72fe3d1eaa9cecf515406464c9c56c4dc1f2db6f79c20236449a9"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/PrototypeData.cs",
+      "sha256": "8a8388d2dff2b56809973bdd07c3afe6f41b3682b28fd7d649664255cf5d5b0c"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/Recruitment.cs",
+      "sha256": "c8e85698fc0fc131e254210f95eda1019848d0bb36e9ec759234d4725ca09d18"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/RecurringContent.cs",
+      "sha256": "166dc1a4f3f5e1ae273cec07704a1caffbe42aa5ea58f88ed158303e9179bcfc"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Core/SynchronizationMaterials.cs",
+      "sha256": "629e1a67753708c8b8a01caf1234e7fe83cadbba674e2b71e660a0675848f124"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/BattleAvatar.cs",
+      "sha256": "94c74edbbbeba174f57825f3d34f14ad9619e045d1fc69ab7b334f303ff273d4"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/CombatAudioBank.cs",
+      "sha256": "d153b5a98c9a25a860efcc670d9c6d218dbe8b8f8e86ddf64844a0b60a646ec8"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/CombatPosePlayer.cs",
+      "sha256": "7fc892f3989eda6c2e5ca7293748b96a8b031f03464d199f91689b95fcf67b1f"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/FlameGraphic.cs",
+      "sha256": "a5e5aa4ccedeb36cb85a14ee29f28bc9e65886bcca40f785377a797728e952f0"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternApp.cs",
+      "sha256": "2a4e3bd74e8c58280b428dd52240ea63eb98ecab5e390e3b5a2bd6beb448fd6e"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBattle.cs",
+      "sha256": "de2597e3ba0bf14576903e9d7662363f0b10dd58e8c66b6ebf3782acdbd6aef1"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBattleEffects.cs",
+      "sha256": "55d439042d9cc30b9127f00480109ac5d33087667af6193647a387d0a51f802d"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternBootstrap.cs",
+      "sha256": "576dbe63fb7732d25c86b8439b089dc36234396a94cbdad9fb6a2a44e9e5e648"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternCampaign.cs",
+      "sha256": "ea7cae53c4fe5d533d4eb3468ccae943965631b277c1e2208376a0a123a00332"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternIntentDock.cs",
+      "sha256": "d177ed4c7ca425587be4bd27fd04aa9093c57abb4086fb62cf02174632089f83"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternIntentDockSmoke.cs",
+      "sha256": "9bc26ae4a5f2fd25fbb9d33b11aec8f507789a4b40c678bfdfd3634744d1a915"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternMareSmoke.cs",
+      "sha256": "0c134d2129159a53a533026837c769cbbe59a0270cc6b0dd894dcdffc4ae5c35"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternMaterials.cs",
+      "sha256": "071b83395e09cfc5d3cd17f361c4af083b2e8d6ff5af9e1d64114f61723967d6"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternMaterialSmoke.cs",
+      "sha256": "50bdf10438f3e38d4d0a4172bd716751da9e4d06100e6ca95c16382b59db56b6"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecruitment.cs",
+      "sha256": "098c74652687a77240fbd9731c21f687ce304e6bc99fc916702fe1077ac73a40"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecruitmentSmoke.cs",
+      "sha256": "290cae82d37d34d3c07fe256d85fc347908a4331f17381d9222e7f0b4963b3fc"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecurring.cs",
+      "sha256": "92c5c4de2a9c124d92cd8a976b7271153589ff92c779bdb936513eb20958a807"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternRecurringSmoke.cs",
+      "sha256": "4b5eaa9bc71116713336d1a918b65c8d9ffac8f3bb65f6a397b5a64de5a6ad7d"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternSkillFlavor.cs",
+      "sha256": "2886091e1e170fe9825bac3f95b1dc87e6cb01292cb2d04a480b0d0dece502f6"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternSkillFlavorSmoke.cs",
+      "sha256": "4e83051910dfbf50630491c70abd8cc68aea78491dd945f9be5b4f8263840baf"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternStoryReading.cs",
+      "sha256": "3acd4039c693e002c3f1fd514196b780fa3e84cca6d18ccbfb3112459973dc89"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternStoryReadingSmoke.cs",
+      "sha256": "98ddf823936c7197c3dbe6828447197bee08c1580d222f51f349bb3b8625164a"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternTitle.cs",
+      "sha256": "08ee77c7cf4b5b0d15724e55cebb8ec091cb5c1e3bf108820539ea096f5897bd"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternTitleSmoke.cs",
+      "sha256": "a1fed251cb947700b03e08e265d12c821e891b1172a09c9d287a5f0cca4581a2"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/LanternViews.cs",
+      "sha256": "764e39374416f15db17c4951c10e5b125d54e9f06a83a5236de520194479854b"
+    },
+    {
+      "path": "RequiemLantern/Assets/Scripts/Presentation/UiPrimitives.cs",
+      "sha256": "c2baf4c7327e3d2ca0d7e96c6e00f6faf64c06b4f6efe137d58d1cd4b9779476"
+    }
+  ],
+  "captures": [
+    {
+      "name": "00-lian-s3-cut-in.png",
+      "bytes": 2410733,
+      "sha256": "0fccbbd9ee5d67084d112111a5d4d5cea0b2b2de7b5e30118dbda6644d363388",
+      "visuallyInspected": true
+    },
+    {
+      "name": "01-lian-s3-contact.png",
+      "bytes": 2388624,
+      "sha256": "f37e347c33f27c75c226835994db6a8e55809b587d493bb488f8bbb655f9c1f6",
+      "visuallyInspected": true
+    },
+    {
+      "name": "02-sera-s3-contact.png",
+      "bytes": 2389851,
+      "sha256": "63f3ee69b621857dc240e85d3a0dd984e1b524c34a5c7b11dce9c40f1143c1d9",
+      "visuallyInspected": true
+    },
+    {
+      "name": "03-noa-s3-contact.png",
+      "bytes": 2392041,
+      "sha256": "435dc4380dea29a9e31816d22c5e541276d31c21db59c93cf4887b4d1e7b9160",
+      "visuallyInspected": true
+    },
+    {
+      "name": "04-minato-s3-contact.png",
+      "bytes": 2444727,
+      "sha256": "337fcaef08f6186d641a2a31c0a16190a108d834aabc5b7db680b60faae75abf",
+      "visuallyInspected": true
+    },
+    {
+      "name": "05-heidel-s3-contact.png",
+      "bytes": 2367749,
+      "sha256": "23df0dc272f454cee88d2721909fbe3eb727976f479a0a721145a4da80e8d4ac",
+      "visuallyInspected": true
+    },
+    {
+      "name": "06-kai-s3-contact.png",
+      "bytes": 2391212,
+      "sha256": "1c0178f2183ca02e722d4a953d84f805b7e7afefa99c1b7ab0d060c943338270",
+      "visuallyInspected": true
+    },
+    {
+      "name": "07-mare-s3-contact.png",
+      "bytes": 2382813,
+      "sha256": "16e1d7870f335498319381aa95b8fe61a01a68479359aee9ebadba86b38b3ab4",
+      "visuallyInspected": true
+    },
+    {
+      "name": "08-lian-awakened-cut-in.png",
+      "bytes": 2431629,
+      "sha256": "fdc5b92176980ecf54210047b975c86eade6582a886ccfce26b581e431aa8c2a",
+      "visuallyInspected": true
+    },
+    {
+      "name": "09-sera-awakened-cut-in.png",
+      "bytes": 2431993,
+      "sha256": "9a7b6703669b72f9c5878bb4a0b06fb8f25accbd18f3829003a19308bb666cf1",
+      "visuallyInspected": true
+    },
+    {
+      "name": "10-noa-awakened-cut-in.png",
+      "bytes": 2431622,
+      "sha256": "ce12ac21b4712b7efc05e24ea07cab156e6d378cdefc41e1aa9effaff3a37b91",
+      "visuallyInspected": true
+    },
+    {
+      "name": "11-lian-ally-support.png",
+      "bytes": 2449557,
+      "sha256": "c81bb8be8211f0c92036a1d93c7bce7c48a41aff3867b46bb8082a1746d1bf0e",
+      "visuallyInspected": true
+    },
+    {
+      "name": "12-kai-ally-support.png",
+      "bytes": 2449025,
+      "sha256": "9917397aed72872db68e916d5dd29a65a991593021db473805165621bcee7da3",
+      "visuallyInspected": true
+    },
+    {
+      "name": "13-minato-ally-support.png",
+      "bytes": 2444727,
+      "sha256": "337fcaef08f6186d641a2a31c0a16190a108d834aabc5b7db680b60faae75abf",
+      "visuallyInspected": true
+    },
+    {
+      "name": "14-ready-gauge-sync-lock-tooltip.png",
+      "bytes": 1811427,
+      "sha256": "3b67eb086d56ffc8f3da46f7aaf69c64fa909f951053db9e0c1c9a50be985b8c",
+      "visuallyInspected": true
+    },
+    {
+      "name": "15-reduced-motion-contact.png",
+      "bytes": 2372557,
+      "sha256": "db70120230a1f183d3b41625cfddbd4f6b8e24b8e3c50440f374b2ef10cb42d9",
+      "visuallyInspected": true
+    },
+    {
+      "name": "16-cancelled-clean-hub.png",
+      "bytes": 2343142,
+      "sha256": "548489ef4d9a444298f59f8d061f30fdd3fc8df52f815ccae525efe9c6389e0b",
+      "visuallyInspected": true
+    },
+    {
+      "name": "17-normal-skill-quote.png",
+      "bytes": 2411909,
+      "sha256": "5c0b12a399556f4e386b5e0b43095860ec5be6f645e4165effc6aac654b15cf2",
+      "visuallyInspected": true
+    },
+    {
+      "name": "18-clash-flame-ownership.png",
+      "bytes": 2390508,
+      "sha256": "e137ba0ae05e531d7e997f1ed50d3820d0ba91ae1fa0d9a144b93b0ce6e2f4f3",
+      "visuallyInspected": true
+    }
+  ],
+  "checks": [
+    "All 28 actual allied actions (7 characters x S1/S2/S3/defense) emitted one nonempty SkillStart quote and animation key.",
+    "All seven S3 introductions and class-specific SD contacts were rendered from real battle events.",
+    "Lian, Sera and Noa awakened S3 variants consumed their seeded three stacks.",
+    "Preparation strokes and cut-ins did not change visible HP; one real damage contact changed HP once and played one impact sound.",
+    "Lian S3, Kai S2 and Minato S3 selected allied Support links; heal and recipient barrier snapshots matched engine events.",
+    "Full awakening at Sync0 displayed the synchronization requirement in both gauge and tooltip.",
+    "Heidel stayed within the stage and both actual transformed identity-label bounds stayed inside the safe stage width.",
+    "Ranged and reduced-motion contact temporarily hid the conflicting fixed lower enemy status.",
+    "Reduced motion retained original performer feet and unit zoom.",
+    "Cancelling during a cut-in and S3 prelude removed temporary actors/captions and stopped combat audio.",
+    "Legacy Ignite intent ownership and the two-owner clash flame panel remained intact.",
+    "All final 19 screenshots were opened and visually inspected."
+  ],
+  "fixtureScope": {
+    "seed": 42,
+    "stage": "c1s02",
+    "enemyHp": 600,
+    "allSevenOwned": true,
+    "synchronizationLevel": 1,
+    "forcedOfferedCard": true,
+    "awakenedVariantsSeedStacks": 3,
+    "productionResolveHudEntry": true,
+    "limitations": "Presentation fixtures grant ownership, synchronization and variant stacks and stabilize enemy HP. They are not a natural progression or balance proof and do not test OS mouse-input timing."
+  },
+  "runHistory": [
+    {
+      "run": "initial",
+      "outcome": "FAIL",
+      "log": "native-skill-flavor-smoke.log",
+      "symptom": "Flavor presentation never exposed its required phase: lian SkillStart",
+      "fix": "Yield after fixture construction, cap presentation visual delta at 0.05 seconds, add phase-opacity/frame-delta diagnostics. A large initial rendering frame was suspected; its exact source was not proven."
+    },
+    {
+      "run": "first corrected runtime",
+      "outcome": "functional PASS, visual review required corrections",
+      "log": "native-skill-flavor-smoke-final.log",
+      "findings": "Heidel stationary ranged S3 inherited a melee camera and left the screen; direct event fixtures also omitted the production resolution HUD entry."
+    },
+    {
+      "run": "camera and production HUD correction",
+      "outcome": "functional PASS, visual review required label correction",
+      "log": "native-skill-flavor-smoke-visual-final.log",
+      "findings": "Heidel was visible, but its target identity exceeded the right edge. Reduced-motion contact also overlapped the fixed lower enemy status."
+    },
+    {
+      "run": "final accepted",
+      "outcome": "PASS, 19 final screenshots inspected",
+      "log": "native-skill-flavor-smoke-final-accepted.log",
+      "fix": "Center ranged identity labels at performer feet, assert transformed bounds, and hide conflicting lower enemy status during stationary contact. Restore widgets on cleanup."
+    }
+  ],
+  "smokeResult": "PASS: twenty-eight real ally action SkillStart events each supplied exactly one quote/key. All seven S3 cut-ins and actor-specific SD contacts, plus three awakened variants, used real engine events. Preparation strokes/cut-ins left HP unchanged; final damage contact applied once with one impact sound, healing changed HP once, and shield/support snapshots matched their recipient. Ally targeting used Support links for Lian S3, Kai S2 and Minato S3; no extra damage was invented for visual follow-up strokes. Three awakened fixtures consumed their stacks, and a full unsynchronized gauge clearly required synchronization. Reduced motion retained original feet and unit zoom; leaving during cut-in and special movement removed all temporary captions/performers and stopped audio. Isolated fixtures expose all acquired synchronized skills and seed three stacks for variant coverage; these are animation fixtures rather than natural progression/balance proof. Player saves/settings were untouched. Captures: 19."
+}

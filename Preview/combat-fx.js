@@ -64,7 +64,7 @@ class LanternCombatFX {
   this.options.stopSound?.();
   this.releaseMelee();
   for(const [id,done] of this.pending){clearTimeout(id);done(false);}this.pending.clear();
-  this.root.querySelectorAll('.combat-fx,.combat-caption,.drag-cursor,.flame-roll').forEach(n=>n.remove());
+  this.root.querySelectorAll('.combat-fx,.combat-caption,.drag-cursor,.flame-roll,.skill-quote').forEach(n=>n.remove());
   this.root.querySelectorAll('.fx-active,.drop-ready,.drop-focus,.fx-lunge,.fx-hit').forEach(n=>n.classList.remove('fx-active','drop-ready','drop-focus','fx-lunge','fx-hit'));
   this.execution(false);this.resetFrame();this.root.querySelector('.battle')?.classList.remove('fx-shake','tension-roll');
  }
@@ -76,6 +76,7 @@ class LanternCombatFX {
  }
  attackStyle(e,clash){
   if(clash||(!e.skillId&&!e.skillNumber))return'clash';
+  if(e.skillNumber===3)return({lian:'shield-crown',sera:'flame-chain',noa:'shadow-cross',heidel:'frost-volley',minato:'tide-ritual',kai:'lantern-circle',mare:'anchor-drag'}[e.actorId])||'strike';
   return ({lian:'shield-blow',sera:'double-slash',minato:'staff-wave'}[e.actorId])||'strike';
  }
  audioMetadata(e){return{actorId:e.actorId,skillNumber:e.skillNumber||0,skillId:e.skillId||'',clashIndex:e.clashIndex||0,isEnemy:!!this.units.get(e.actorId)?.isEnemy};}
@@ -180,7 +181,7 @@ class LanternCombatFX {
   const pair=[attacker,defender];this.meleePair=pair;
   const stage=this.root.querySelector('.battle');stage?.classList.add('melee-active');
   const pause=ms=>this.step(this.motion?ms*(fast?.76:1):90);
-  const style=this.attackStyle(e,clash),special=this.motion&&e.type==='Damage'&&style!=='clash',heavy=special&&style==='shield-blow';
+  const style=this.attackStyle(e,clash),special=this.motion&&e.type==='Damage'&&style!=='clash',heavy=special&&['shield-blow','shield-crown','anchor-drag'].includes(style),signature=special&&e.skillNumber===3;
   if(stage){stage.dataset.attackStyle=style;stage.dataset.skillNumber=String(e.skillNumber||0);}
   const valid=()=>epoch===this.epoch;
   const angerPose=id=>this.units.get(id)?.isEnemy&&(this.units.get(id)?.portrait||id).toLowerCase()==='anger';
@@ -189,7 +190,7 @@ class LanternCombatFX {
   const reach=this.weaponOffset(attacker,attackFrame),counterReach=this.weaponOffset(defender,counterFrame);
   const allyFighter=pair.find(f=>f?.side==='ally-side'),enemyFighter=pair.find(f=>f?.side==='enemy-side');
   const contactX=Math.max(850,Math.min(1283.3333333333335,((allyFighter?.start??750)+(enemyFighter?.start??1175))/2));
-  const center=f=>f===attacker?contactX-reach.x:clash?contactX-counterReach.x:contactX+(f?.side==='enemy-side'?65:-65);
+  const center=f=>f===attacker?contactX-reach.x-(signature&&style==='frost-volley'?220:0):clash?contactX-counterReach.x:contactX+(f?.side==='enemy-side'?65:-65);
   // A small ally and a larger boss meet at one weapon contact height.
   const contactY=583.3333333333334-Math.min(attacker?.bodyHeight??183.33333333333334,defender?.bodyHeight??183.33333333333334)*.5;
   if(attacker&&this.motion)attacker.wrapper.style.top=contactY-reach.y-440+'px';
@@ -208,23 +209,27 @@ class LanternCombatFX {
    this.place(attacker,center(attacker)-direction(attacker)*(heavy?42:24),-direction(attacker)*(heavy?7:5),100);
    if(clash)this.place(defender,center(defender)-direction(defender)*18,-direction(defender)*4,100);
    if(!await pause(['Clash','Tie'].includes(e.type)?80:heavy?180:style==='double-slash'?80:style==='staff-wave'?115:150)||!valid())return;
-   if(special&&style==='double-slash'){
+   if(signature&&!await this.signatureWindup(e,pair,hit,center,pause,valid))return;
+   if(special&&['double-slash','flame-chain'].includes(style)){
     this.setPosePhase(pair,'feint');this.pose(attacker,2,'feint');this.place(attacker,center(attacker)-direction(attacker)*12,-direction(attacker)*3,45);
     this.options.impact?.('swish',0,this.audioMetadata(e));this.expire(this.node('weapon-cut feint-cut',hit,this.tint(e.actorId)),190);
     if(!await pause(65)||!valid())return;this.pose(attacker,3,'feint');
     if(!await pause(55)||!valid())return;
+    if(signature){this.pose(attacker,1,'feint');this.expire(this.node('weapon-cut second-cut feint-cut',hit,this.tint(e.actorId)),190);if(!await pause(70)||!valid())return;}
    }
    this.setPosePhase(pair,'swing');this.pose(attacker,attackFrame,'swing');if(clash)this.pose(defender,counterFrame,'swing');
    this.place(attacker,center(attacker),0,70);
    if(clash)this.place(defender,center(defender),0,70);
    this.options.impact?.('swish',e.amount,this.audioMetadata(e));
+   if(signature&&style==='frost-volley'){const bolt=this.node('frost-bolt',{x:hit.x-220,y:hit.y},'#c3ecff');if(bolt){bolt.style.setProperty('--travel','220px');this.expire(bolt,130);}}
    if(!await pause(style==='double-slash'&&special?45:75)||!valid())return;
    this.setPosePhase(pair,'contact');this.pose(attacker,attackFrame,'contact');this.pose(defender,clash?counterFrame:5,'contact');
    if(e.type==='Damage')this.applyEvent(e);
    this.options.impact?.(clash?'clash':'hit',e.amount,this.audioMetadata(e));
    if(this.motion){
     stage?.classList.add('hit-stop','contact-kick');
-    this.shards(hit,clash?'#ffdea1':this.tint(e.actorId));
+    this.shards(hit,clash?'#ffdea1':this.tint(e.actorId),signature&&e.awakened);
+    if(signature)this.signatureContact(e,hit);
     if(special&&style==='staff-wave')this.expire(this.node('staff-wave',hit,'#9eddd8'),350);
     else this.expire(this.node('weapon-cut '+(heavy?'heavy-cut ':style==='double-slash'?'second-cut ':'')+(direction(attacker)<0?'reverse':''),hit,this.tint(e.actorId)),heavy?330:230);
     if(heavy){this.pulse(hit,'#ffdd95',true);this.expire(this.node('shield-impact',hit,'#ffe0a0'),300);}
@@ -252,6 +257,68 @@ class LanternCombatFX {
    if(this.meleePair===pair&&(!['Clash','Tie'].includes(e.type)||!valid()))this.releaseMelee();
   }
  }
+ // Quotes belong to SkillStart, never to each clash or cosmetic swing.
+ async skillQuote(e,fast,epoch){
+  if(!e.quote)return;
+  this.root.querySelectorAll('.skill-quote').forEach(n=>n.remove());
+  const stage=this.root.querySelector('.battle');if(!stage)return;
+  const special=e.skillNumber===3,card=document.createElement('aside');card.className='skill-quote'+(special?' skill-cutin':'')+(e.awakened?' awakened':'');card.dataset.animationKey=e.animationKey||'';card.dataset.quoteActor=e.actorId;
+  card.setAttribute('role','status');card.style.setProperty('--fx-color',this.tint(e.actorId));
+  const actor=this.units.get(e.actorId),name=LanternCombatAtlasNames[e.actorId];
+  if(special&&name){const portrait=document.createElement('img');portrait.src='/art/'+name+'.png';portrait.alt='';card.appendChild(portrait);}
+  const text=document.createElement('div');text.className='skill-quote-text';
+  const label=document.createElement('small');label.textContent=(actor?.name||e.actorId)+' · '+(e.awakened?'각성 / ':'')+(e.skillName||'');text.appendChild(label);
+  const quote=document.createElement('strong');quote.textContent=e.quote;text.appendChild(quote);card.appendChild(text);stage.appendChild(card);
+  this.caption(e.skillName||'스킬 실행',e.awakened?'각성 중첩을 소모했습니다. 이번 행동의 위력이 강화됩니다.':'',e.awakened?'③ 실행 · 각성':'③ 실행 · 동료의 결의');
+  try{await this.step((e.awakened?1100:special?800:450)*(fast?.55:1));}finally{card.remove();}
+ }
+ async signatureWindup(e,pair,hit,center,pause,valid){
+  const [attacker,defender]=pair,style=this.attackStyle(e,false),c=this.tint(e.actorId);
+  this.setPosePhase(pair,'signature');
+  if(style==='shield-crown'){
+   this.pose(attacker,4,'signature');this.expire(this.node('support-shield raised',{x:hit.x-90,y:hit.y},c),500);this.place(attacker,center(attacker)-52,-9,100);
+  }else if(style==='shadow-cross'){
+   this.pose(attacker,3,'signature');if(attacker)attacker.wrapper.style.opacity='.35';
+   this.expire(this.node('shadow-echo',{x:hit.x-90,y:hit.y},c),420);this.expire(this.node('weapon-cut shadow-cut',hit,c),360);
+  }else if(style==='frost-volley'){
+   this.pose(attacker,4,'signature');this.place(attacker,center(attacker)-24,-3,90);this.expire(this.node('frost-sight',hit,'#c3ecff'),450);
+  }else if(style==='anchor-drag'){
+   this.pose(attacker,2,'signature');const rope=this.node('anchor-rope',{x:hit.x-130,y:hit.y-10},c);if(rope)rope.style.width='220px';this.expire(rope,440);this.expire(this.node('anchor-hook',{x:hit.x+75,y:hit.y},c),440);this.place(defender,center(defender)+80,5,80);
+  }else if(style==='lantern-circle'){
+   this.pose(attacker,1,'signature');this.expire(this.node('lantern-orbit',{x:hit.x-85,y:hit.y-25},c),480);
+  }else if(style==='tide-ritual'){
+   this.pose(attacker,1,'signature');this.expire(this.node('staff-wave',{x:hit.x-90,y:hit.y},'#9eddd8'),450);
+  }else this.pose(attacker,1,'signature');
+  if(!await pause(e.awakened?190:130)||!valid())return false;
+  if(attacker)attacker.wrapper.style.opacity='';
+  if(style==='anchor-drag'){this.pose(attacker,1,'signature-pull');this.place(defender,center(defender)-22,-7,90);if(!await pause(110)||!valid())return false;}
+  return true;
+ }
+ signatureContact(e,hit){
+  const style=this.attackStyle(e,false),c=this.tint(e.actorId);
+  if(style==='shadow-cross'){this.expire(this.node('weapon-cut shadow-cut',hit,c),320);this.expire(this.node('weapon-cut shadow-cut reverse',hit,c),340);}
+  else if(style==='frost-volley'){this.expire(this.node('frost-burst',hit,'#c3ecff'),430);this.shards(hit,'#c3ecff');}
+  else if(style==='anchor-drag'){this.expire(this.node('anchor-impact',hit,c),380);}
+  else if(style==='lantern-circle'){this.expire(this.node('lantern-orbit contact',hit,c),400);}
+  else if(style==='flame-chain'){this.expire(this.node('weapon-cut second-cut',hit,c),330);}
+  if(e.awakened)this.expire(this.node('awakening-sigil consumed',hit,c,'✦'),500);
+ }
+ async supportRitual(e,fast,epoch,heal){
+  const c=e.actorId==='minato'?'#9eddd8':this.tint(e.actorId),point=this.point(e.targetId),special=e.skillNumber===3;
+  if(heal)this.releaseMelee();
+  const pair=heal?[this.createFighter(e.actorId,'ally-side')]:[],actor=pair[0];
+  if(heal){this.meleePair=pair;this.pose(actor,1,'support-gather');this.setPosePhase(pair,'support-gather');}
+  const glyph=this.node(e.actorId==='minato'?'tide-ritual':e.actorId==='lian'?'support-shield':'lantern-orbit',point,c);
+  if(glyph)glyph.classList.toggle('empowered',!!e.awakened);
+  this.caption(heal?'지팡이의 치유':e.actorId==='lian'?'파수의 보호막':'동료 지원',e.message,'③ 실행 · 아군 지원');
+  try{
+   if(!await this.step(heal?(fast?110:special?300:210):fast?100:200)||epoch!==this.epoch)return;
+   if(heal){this.setPosePhase(pair,'support-contact');this.pose(actor,2,'support-contact');this.applyEvent(e);this.number(e.targetId,e.amount,true);}
+   this.pulse(point,c,special);this.options.impact?.('ignite',0,{...this.audioMetadata(e),level:.35});
+   if(!heal){const target=this.units.get(e.targetId),label=[target?.barrier>0?'보호막 '+target.barrier:'',target?.supportPower>0?'다음 공격 +'+target.supportPower:'',e.targetSanity!==undefined?'정신 '+(e.targetSanity>0?'+':'')+e.targetSanity:''].filter(Boolean).join(' · ');this.expire(this.node('fx-link-label',point,c,label||'지원 적용'),650);}
+   await this.step(fast?100:special?240:160);
+  }finally{glyph?.remove();if(heal&&this.meleePair===pair)this.releaseMelee();}
+ }
  number(id,amount,heal=false){this.expire(this.node('fx-number'+(heal?' healing':''),this.point(id),heal?'#9ce8d6':this.tint(id),heal?'+'+amount:String(amount)),950);}
  caption(title,detail='',tag='③ 실행 · 빛이 맞닿는 순간'){
   const n=this.root.querySelector('.combat-caption');if(!n)return;n.classList.add('visible');
@@ -267,10 +334,14 @@ class LanternCombatFX {
  }
  connected(actor,slot,target,kind){
   const a=this.options.slotPoint?.(actor,slot)||LanternBattleGeometry.slotPoint(this.battle.allies.findIndex(u=>u.id===actor),slot),b=this.point(target),c=this.tint(actor);
-  this.beam(a,b,c);this.shards(b,c);this.expire(this.node('fx-link-label',b,c,kind==='Clash'?'맞불 연결':kind==='Support'?'치유 연결':kind==='Guard'?'호위 연결':'공격 연결'),1000);
+  this.beam(a,b,c);this.shards(b,c);this.expire(this.node('fx-link-label',b,c,kind==='Clash'?'맞불 연결':kind==='Support'?'지원 연결':kind==='Guard'?'호위 연결':'공격 연결'),1000);
  }
  applyEvent(e){
   const u=this.units.get(e.targetId);
+  const actor=this.units.get(e.actorId);
+  if(['SkillStart','AwakeningCharge','AwakeningReady','AwakeningUsed'].includes(e.type)&&actor){actor.awakeningStacks=e.awakeningStacks||0;actor.awakeningMaxStacks=e.awakeningMaxStacks||0;}
+  if(e.type==='SkillStart'&&actor){actor.barrier=e.barrier||0;actor.supportPower=e.supportPower||0;}
+  if(['SupportApplied','ShieldAbsorb','Damage'].includes(e.type)&&u){u.barrier=e.barrier||0;u.supportPower=e.supportPower||0;if(e.type==='SupportApplied')u.sanity=e.targetSanity||0;}
   if(e.type==='Damage'&&u)u.hp=Math.max(0,u.hp-Math.max(0,e.amount));
   if(e.type==='Heal'&&u)u.hp=Math.min(u.maxHp,u.hp+Math.max(0,e.amount));
   if(e.type==='PartBreak'&&this.parts.has(e.targetId))this.parts.get(e.targetId).hp=0;
@@ -284,6 +355,8 @@ class LanternCombatFX {
    this.root.querySelectorAll('[data-hp-text]').forEach(n=>{if(n.dataset.hpText===u.id)n.textContent=u.hp+' / '+u.maxHp+(u.isEnemy?' · 균열 '+u.rift+' / '+u.maxRift:'');});
    this.root.querySelectorAll('[data-pose-hp]').forEach(n=>{if(n.dataset.poseHp===u.id)n.textContent=u.hp+' / '+u.maxHp;});
    this.portrait(u.id)?.classList.toggle('dead',u.hp<=0);
+   this.root.querySelectorAll('[data-awakening]').forEach(n=>{if(n.dataset.awakening!==u.id||!u.awakeningMaxStacks)return;const stacks=u.awakeningStacks||0,max=u.awakeningMaxStacks;n.classList.toggle('ready',stacks>=max);n.setAttribute('aria-label',(u.awakeningName||'각성')+' '+stacks+'/'+max);n.querySelectorAll('i').forEach((pip,index)=>pip.classList.toggle('lit',index<stacks));const label=n.querySelector('b');if(label)label.textContent=stacks+'/'+max+(stacks>=max?((u.syncLevel||0)>0?' 각성 준비':' 동기화 필요'):'');});
+   this.root.querySelectorAll('[data-buffs]').forEach(n=>{if(n.dataset.buffs===u.id)n.textContent=(u.barrier>0?'보호막 '+u.barrier:'')+(u.barrier>0&&u.supportPower>0?' · ':'')+(u.supportPower>0?'다음 공격 +'+u.supportPower:'');});
    this.root.querySelectorAll('[data-sanity]').forEach(n=>{if(n.dataset.sanity===u.id)n.textContent='정신력 '+((u.sanity||0)>0?'+':'')+(u.sanity||0);});
   }
   for(const p of this.parts.values()){const n=this.target(p.id);if(n){n.textContent=p.name+' · '+(p.hp<=0?'파괴됨':p.hp+'/'+p.maxHp);n.classList.toggle('part-broken',p.hp<=0);}}
@@ -343,7 +416,21 @@ class LanternCombatFX {
  }
  async event(e,fast,epoch){
   const pause=ms=>this.step(this.motion?(fast?ms*.7:ms):110),a=this.point(e.actorId),b=this.point(e.targetId),c=this.tint(e.actorId);
-  if(e.type==='Ignite'){
+  if(e.type==='SkillStart'){
+   this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());this.rollActors.clear();this.lastClash=null;
+   this.releaseMelee();this.applyEvent(e);await this.skillQuote(e,fast,epoch);
+  }else if(['AwakeningCharge','AwakeningReady','AwakeningUsed'].includes(e.type)){
+   this.applyEvent(e);const ready=e.type==='AwakeningReady',used=e.type==='AwakeningUsed';
+   this.caption(used?'각성 · 중첩 소모':ready?'각성 준비':'각성 중첩',e.message,'③ 실행 · 3스킬 실행 시 각성');
+   if(ready||used)this.expire(this.node('awakening-sigil'+(used?' consumed':''),a,c,used?'✦':'✧'),500);
+   await pause(used?160:ready?210:100);
+  }else if(e.type==='Heal'){
+   await this.supportRitual(e,fast,epoch,true);
+  }else if(e.type==='SupportApplied'){
+   this.applyEvent(e);await this.supportRitual(e,fast,epoch,false);
+  }else if(e.type==='ShieldAbsorb'){
+   this.applyEvent(e);this.expire(this.node('support-shield absorbed',b,'#b5e4ef'),450);this.expire(this.node('fx-link-label',b,'#b5e4ef','보호막 '+e.amount),650);this.caption('보호막 흡수',e.message);this.options.impact?.('brace',e.amount,this.audioMetadata(e));await pause(150);
+  }else if(e.type==='Ignite'){
    this.lastClash=null;this.rollActors.clear();this.root.querySelectorAll('.flame-roll').forEach(n=>n.remove());
    this.root.querySelectorAll('.fx-active').forEach(n=>n.classList.remove('fx-active'));
    this.active={actor:e.actorId,target:e.targetId,clash:this.battle.intents.some(i=>i.id===e.targetId)};
@@ -358,8 +445,7 @@ class LanternCombatFX {
    await this.melee(e,fast,epoch,clash);
   }else{
    this.applyEvent(e);
-   if(e.type==='Heal'){this.beam(a,b,'#75c8c4');this.pulse(b,'#75c8c4',true);this.number(e.targetId,e.amount,true);this.caption('치유의 물결',e.message);this.options.impact?.('ignite',0,{...this.audioMetadata(e),level:.35});}
-   else if(e.type==='Guard'||e.type==='Evade'||e.type==='Counter'){this.pulse(b,'#a7d4e9',true);this.expire(this.node('fx-guard',b,'#a7d4e9','◇'),1400);this.caption(e.type==='Evade'?'회피':e.type==='Counter'?'반격 준비':'빛의 호위',e.message);this.options.impact?.(e.type==='Evade'?'swing':'brace',0,this.audioMetadata(e));}
+   if(e.type==='Guard'||e.type==='Evade'||e.type==='Counter'){this.pulse(b,'#a7d4e9',true);this.expire(this.node('fx-guard',b,'#a7d4e9','◇'),1400);this.caption(e.type==='Evade'?'회피':e.type==='Counter'?'반격 준비':'빛의 호위',e.message);this.options.impact?.(e.type==='Evade'?'swing':'brace',0,this.audioMetadata(e));}
    else if(e.type==='PartBreak'||e.type==='Rift'){
     this.shards(b,'#e6c7ff',true);this.expire(this.node('fx-fracture',b,'#e6c7ff','✧'),900);
     this.caption(e.type==='Rift'?'균열 붕괴':'부위 파괴',e.message);this.options.impact?.('break',e.amount,this.audioMetadata(e));

@@ -55,6 +55,10 @@ JSON 키는 camelCase, enum은 문자열이다.
 
 상태 응답 구조:
 
+스킬 대사와 전용 연출은 `SkillStart` 이벤트의 `quote`, `animationKey`, `awakened`, `skillId/skillName/skillNumber`로 전달한다. `SkillStart.targetId`는 실제 대상 유닛이며 맞불의 예고 식별자는 `intentId`에 둔다. 기존 점화 화면과 호환되도록 `Ignite.targetId`는 연결한 예고선·부위 식별자를 유지한다. 후속 피해·치유·방어·점화에는 같은 행동 복사본의 메타데이터를 사용한다. 클라이언트가 위력이나 각성 여부를 제출하지 않는다.
+
+`battle.allies`의 `awakeningStacks/awakeningMaxStacks/awakeningName/awakeningDescription`, `barrier`, `supportPower`는 전투 상태다. `AwakeningCharge/Ready/Used`, `SupportApplied`, `ShieldAbsorb` 이벤트로 상태 표시를 갱신한다. `CanSupportAlly` 공격 스킬은 `link`의 `kind: Support`와 살아 있는 아군 `targetId`를 사용하며 기존 카드·행동·불씨 검증을 통과해야 한다. 각성과 다음 공격 강화는 실제 유효 행동에서만 소비하며 `previews`를 조회해도 변하지 않는다.
+
 ```text
 battle: BattleState
 progress: ProgressData

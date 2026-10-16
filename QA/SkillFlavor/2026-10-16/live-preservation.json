@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "skill-flavor-v16",
+  "saveFiles": [
+    {
+      "path": "PreviewHost/.local/progress.xml",
+      "sha256": "9065e2c04d92641e7793d9f4ebfcd07e31db0aa9656104f7bea19c98e6954c28",
+      "unchanged": true
+    },
+    {
+      "path": "PreviewHost/.local/progress.xml.bak",
+      "sha256": "4167a5e1cda67877a8a8fd1593e3e20b6cfe1ce770ca9314a0c718dec0737d73",
+      "unchanged": true
+    }
+  ],
+  "persistedFieldsChecked": [
+    "version",
+    "playerName",
+    "prologueCompleted",
+    "coins",
+    "lanternFragments",
+    "memoryFragments",
+    "keepLevel",
+    "clearedStages",
+    "claimedBattles"
+  ],
+  "apiProgressDifferences": [
+    "recruitRandomState"
+  ],
+  "legacyMigrationNote": "The legacy save does not persist recruitRandomState. Its initial in-memory migration can choose a new state on reload; every field present in the XML is preserved. No recruitment action was made.",
+  "servedAssets": [
+    {
+      "path": "Preview/app.js",
+      "sha256": "a935d9b6ff7563bca6eb6d142dea57fba8c56c94ca3f4fec20a484d02b3a9c8d",
+      "servedMatches": true
+    },
+    {
+      "path": "Preview/theme.css",
+      "sha256": "5e6e1a8e75f0bc41c79e29fde379d564f44eeea61ab56053398eec16fb8e52ee",
+      "servedMatches": true
+    },
+    {
+      "path": "Preview/combat-fx.js",
+      "sha256": "f2dd71746749c03d98ba07686b51b8e8c90870219b133c0cf2be5ce1ba422422",
+      "servedMatches": true
+    },
+    {
+      "path": "Preview/combat-fx.css",
+      "sha256": "c442c8b098c68e85dc2e49bdaeb425111274ef5cb90b142069c4eb1862de4007",
+      "servedMatches": true
+    }
+  ],
+  "activeCampaign": false,
+  "writeActionsPerformed": false
+}

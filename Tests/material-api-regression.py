@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parent.parent
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--host',type=Path,default=ROOT/'PreviewHost/bin/material-qa/PreviewHost.dll')
 args=parser.parse_args()
-QA=ROOT/'QA/SynchronizationMaterials/2026-10-16/API'
+QA=ROOT/'QA/SkillFlavor/2026-10-16/MaterialAPI'
 QA.mkdir(parents=True,exist_ok=True)
 SAVE=QA/('progress-'+str(time.time_ns())+'.xml')
 PORT=8132
@@ -87,7 +87,7 @@ def collect_quest(id):
     return call('quest-claim',questId=id,periodKey=q['periodKey'])
 
 try:
-    state=start();assert state['runtimeRevision']=='sync-material-v15'
+    state=start();assert state['runtimeRevision']=='skill-flavor-v16'
     assert not state['materials']['unlocked'] and len(state['materials']['entries'])==7
     assert len(set(e['materialName'] for e in state['materials']['entries']))==7
     assert all(e['count']==0 and e['dropCount']==3 for e in state['materials']['entries'])
@@ -169,7 +169,7 @@ try:
     assert entry(state,'lian')['synchronized'] and entry(state,'minato')['synchronized']
     checks.append('Legacy XML without the inventory loads with empty materials while preserving every existing field, including completed synchronization and unlocked third skills.')
 
-    report={'status':'PASS','runtimeRevision':'sync-material-v15','port':PORT,'checks':checks,'playerSaveModified':False,'actualFarmWins':11,'processStopped':True}
+    report={'status':'PASS','runtimeRevision':'skill-flavor-v16','port':PORT,'checks':checks,'playerSaveModified':False,'actualFarmWins':11,'processStopped':True}
     (QA/'result.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     for check in checks:print('PASS:',check)
 finally:

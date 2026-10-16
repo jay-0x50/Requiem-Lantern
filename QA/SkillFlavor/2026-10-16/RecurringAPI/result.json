@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "skill-flavor-v16",
+  "port": 8131,
+  "checks": [
+    "Fresh period keys and KST 05:00 boundary; incomplete quests and dungeon unlock reject without changes.",
+    "Check-in is idempotent. A real save failure restores all quest state/currency; retry pays once.",
+    "Real campaign victory records server battle metrics only at saved rewards; failed story/reward saves restore phase and progress. The after-story gate controls dungeon unlock.",
+    "Story replay and dungeon retreat grant no activity progress or weekly charge.",
+    "Daily reset preserves weekly progress. Stale-period claims and clock rollback cannot reopen paid periods.",
+    "Three real dungeon victories share one weekly quota and pay exactly once; save failure preserves the same victory for retry, with no main-story completion pollution.",
+    "All eight objectives become completable through real combat/check-in. Exact five-currency payouts, claims, quota and progress persist across restart.",
+    "Monday 05:00 resets both periods and the shared quota. A practice run stays rewardless across reset; backward time cannot restore the old week, and the fresh week can earn rewards normally."
+  ],
+  "isolatedSave": true,
+  "playerSaveModified": false,
+  "clockSource": "Explicit QA clock file; production uses DateTime.UtcNow",
+  "processStopped": true
+}

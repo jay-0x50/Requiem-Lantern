@@ -1,0 +1,23 @@
+{
+  "source": "response-loss-progress.xml",
+  "isolatedPort": 8128,
+  "owned": [
+    "lian",
+    "sera",
+    "noa",
+    "minato",
+    "heidel",
+    "kai",
+    "mare"
+  ],
+  "party": [
+    "lian",
+    "minato",
+    "kai",
+    "noa"
+  ],
+  "level": 1,
+  "syncLevel": 1,
+  "stackOrDamageInjected": false,
+  "progressUnlock": "Actual HTTP campaign 1-1/1-2 and after-story; preceding response-loss script"
+}

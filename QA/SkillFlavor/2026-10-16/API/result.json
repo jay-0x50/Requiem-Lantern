@@ -1,0 +1,14 @@
+{
+  "status": "PASS",
+  "runtimeRevision": "skill-flavor-v16",
+  "port": 8133,
+  "checks": [
+    "Actual starter campaign emits named skill quotes and animation metadata; synchronization and farming still enter through saved progression.",
+    "Real guard execution charges three stacks; reads/recommendations/planning do not spend them. The offered S3 spends once, emits its awakened quote, and grants ally barrier 30 instead of enemy damage.",
+    "Legacy Kai can target an ally with his offered S2; next-attack power survives defense, previews do not consume it, and all clash rolls use one boosted action before consuming once.",
+    "Battle-only stacks, barriers and power buffs reset on restart/reload while saved growth, materials, party and quest progress remain unchanged."
+  ],
+  "playerSaveModified": false,
+  "legacyKaiFixture": "Only the isolated QA XML ownership/party was edited; combat outcomes and stacks were earned normally.",
+  "processStopped": true
+}

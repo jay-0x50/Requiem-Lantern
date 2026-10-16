@@ -1,0 +1,46 @@
+{
+  "buffs": [
+    {
+      "id": "lian",
+      "text": "0/3"
+    },
+    {
+      "id": "lian",
+      "text": ""
+    },
+    {
+      "id": "minato",
+      "text": "지원 효과"
+    },
+    {
+      "id": "minato",
+      "text": ""
+    },
+    {
+      "id": "kai",
+      "text": "지원 효과"
+    },
+    {
+      "id": "kai",
+      "text": "보호막 12"
+    },
+    {
+      "id": "noa",
+      "text": "0/3"
+    },
+    {
+      "id": "noa",
+      "text": "보호막 21"
+    }
+  ],
+  "dockTop": 659.4000244140625,
+  "fieldBottoms": [
+    652.050048828125,
+    652.050048828125,
+    652.050048828125,
+    652.050048828125
+  ],
+  "phase": "ROUND 12   /   ② 연결",
+  "remainingCutins": 0,
+  "remainingPoses": 0
+}
