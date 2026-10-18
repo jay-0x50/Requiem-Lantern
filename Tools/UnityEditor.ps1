@@ -19,8 +19,8 @@ function Resolve-LanternUnityEditor {
     if (-not $override) { $override = $env:UNITY_EDITOR_PATH }
     if ($override) {
         $candidates.Add($override)
-        $candidates.Add((Join-Path $override 'Unity.exe'))
-        $candidates.Add((Join-Path $override 'Editor/Unity.exe'))
+        $candidates.Add([IO.Path]::Combine($override, 'Unity.exe'))
+        $candidates.Add([IO.Path]::Combine($override, 'Editor', 'Unity.exe'))
     } else {
         foreach ($programRoot in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
             if ($programRoot) { $candidates.Add((Join-Path $programRoot "Unity/Hub/Editor/$requiredVersion/Editor/Unity.exe")) }
@@ -47,7 +47,7 @@ function Resolve-LanternUnityEditor {
         if ($onPath) { $candidates.Add($onPath.Source) }
     }
     foreach ($candidate in ($candidates | Select-Object -Unique)) {
-        if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
+        if (-not (Test-Path -LiteralPath $candidate -PathType Leaf -ErrorAction SilentlyContinue)) { continue }
         $editor = Get-Item -LiteralPath $candidate
         if ($editor.Name -ne 'Unity.exe') { continue }
         $productVersion = $editor.VersionInfo.ProductVersion

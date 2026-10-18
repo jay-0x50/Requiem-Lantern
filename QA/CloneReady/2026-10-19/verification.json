@@ -1,0 +1,94 @@
+{
+  "status": "PASS",
+  "dateKst": "2026-10-19",
+  "candidateCloneCommit": "3824104162217857a17f240b5a3a2e0aa7b713bb",
+  "unityProjectTree": "f0f8d151aa4cb83f25aab8ccfedc7f4d3ceef9cf",
+  "requiredUnityVersion": "6000.6.0f1",
+  "sourceOnlyClone": "Actual local git clone --no-local --no-hardlinks with 658 tracked files and no project Library/Temp/Builds. No untracked working files or project caches were copied. The installed Unity SDK and normal package registry cache remain host prerequisites.",
+  "windowsLauncherChecks": [
+    "Windows PowerShell 5 parser accepts all five PowerShell scripts.",
+    "Open-Unity.cmd -CheckOnly resolves the cloned project and tracked main scene from a path containing Korean characters and spaces.",
+    "Default editor install, explicit editor directory and UNITY_EDITOR_PATH resolve the required product version.",
+    "A nonexistent custom drive reports the required Unity version and setup guidance without launching another editor."
+  ],
+  "unitySourceCompilation": {
+    "errors": 0,
+    "warnings": 0,
+    "scriptCount": 37
+  },
+  "cleanUnityBuild": {
+    "status": "PASS",
+    "entryPoint": "Build-Windows.cmd",
+    "editor": "6000.6.0f1",
+    "exitCode": 0,
+    "firstProjectImport": true,
+    "buildLog": "Tests/test-output/Notebook Clone/Requiem-Lantern/Logs/unity-build-20261019-074653.log",
+    "executableSha256": "718444f6a718fa668da96eb0a58445b009673310e6129152a63dbf7a92b8de00",
+    "assemblySha256": "ee32b75ab6746601ebc7760eb42e1ce79c0ea5a86f5f431d7633adefb1ea019f"
+  },
+  "actualPlayer": {
+    "exitCode": 0,
+    "captures": 19,
+    "quoteActions": 28,
+    "source": "Fresh clone executable, isolated --skill-flavor-smoke save; ownership/sync/card/awakening fixtures are presentation coverage. Actual natural progression and charging are checked by four HTTP groups.",
+    "rootVisuallyReviewed": [
+      "08-lian-awakened-cut-in.png",
+      "16-cancelled-clean-hub.png"
+    ],
+    "captureSha256": {
+      "00-lian-s3-cut-in.png": "f719f5c88ccc921804742bbeb5b66b3b6e62eafe63b5cd5c44a699206fb6a3e7",
+      "01-lian-s3-contact.png": "4b18b0b98f368004f62c12c0a47d6aad3c14bd94cef43782d0c80a56008f2744",
+      "02-sera-s3-contact.png": "53e6d5b6c1ae526e4d730218f349a816dc59854b0591399d6e5c41baaee4f799",
+      "03-noa-s3-contact.png": "435dc4380dea29a9e31816d22c5e541276d31c21db59c93cf4887b4d1e7b9160",
+      "04-minato-s3-contact.png": "337fcaef08f6186d641a2a31c0a16190a108d834aabc5b7db680b60faae75abf",
+      "05-heidel-s3-contact.png": "d09c96b7a52e7cf1445b925e76c8cedc3445d3e240177fcb8922b92b96031b50",
+      "06-kai-s3-contact.png": "4b6c563ccb1dd67457c401f27e678dab01449dd230ca3e6899bfe2288d92b86d",
+      "07-mare-s3-contact.png": "b3d0b37263cf314e7af9c9700bc6df8153b95e750eb492618f009c2198b49629",
+      "08-lian-awakened-cut-in.png": "fdc5b92176980ecf54210047b975c86eade6582a886ccfce26b581e431aa8c2a",
+      "09-sera-awakened-cut-in.png": "21cd540dfb9b8fd1aab69d689462ebafded3f93eeb8414f72fc50ad69c1629d0",
+      "10-noa-awakened-cut-in.png": "3df9f4934709b86f34636f75cdb1996df014261538757c61564905ff2859cf31",
+      "11-lian-ally-support.png": "c81bb8be8211f0c92036a1d93c7bce7c48a41aff3867b46bb8082a1746d1bf0e",
+      "12-kai-ally-support.png": "0a23a31b3a9025b08b61e3b5f1ac7faf1a171e88ee635193109f28099eb0b70a",
+      "13-minato-ally-support.png": "db457ea6d596e10740dd6e13527770825710e3d835d9794e32019ff64ef068a4",
+      "14-ready-gauge-sync-lock-tooltip.png": "3b67eb086d56ffc8f3da46f7aaf69c64fa909f951053db9e0c1c9a50be985b8c",
+      "15-reduced-motion-contact.png": "db70120230a1f183d3b41625cfddbd4f6b8e24b8e3c50440f374b2ef10cb42d9",
+      "16-cancelled-clean-hub.png": "a8b4550454e793e3ae97016e2619781b4c4964fc98e6a0a0febaac5cb25de33d",
+      "17-normal-skill-quote.png": "dae5f96e38c761b5bb9c6cc0c2509a0f43a6c46707699eee3fbfd348f47aea43",
+      "18-clash-flame-ownership.png": "e137ba0ae05e531d7e997f1ed50d3820d0ba91ae1fa0d9a144b93b0ce6e2f4f3"
+    }
+  },
+  "actualFreshHttp": {
+    "status": "PASS",
+    "groups": 4,
+    "hostBuildErrors": 0,
+    "hostBuildWarnings": 0,
+    "dotnetResolvedFromPath": true,
+    "report": "fresh-http-result.json"
+  },
+  "mediaComparedWithSource": 73,
+  "sourceComparison": "Binary media matched byte for byte. C# and JSON matched with Git checkout CRLF/LF line endings normalized.",
+  "savePreservation": "save-preservation.json",
+  "sourceSha256": {
+    "Open-Unity.ps1": "deb0b90679f3ad345ab6488fa7bd0f2382e698a87e1521a3bb4b76ab5fdbbd23",
+    "Open-Unity.cmd": "52e8294532829b8845643aed93133844c2c29c6def80879a218cc0537d174048",
+    "Start-Preview.ps1": "778a64f892cd03ed4d1fbc5797cbe8e421b9ce82fdd521c4c7452177d73a82d4",
+    "Start-Preview.cmd": "5fbe9919891bc22f7f8534da50a5d733cdde20677e5018135dabf069119a35e9",
+    "Build-Windows.ps1": "0f0f2d0e07d06d106e14e1ba677e8981141e1101f9dba96ff87d7044804e971e",
+    "Build-Windows.cmd": "a96c1d5f06a75ffc13b709837727c2783c2e80e447d8117170e02783bf5e8152",
+    "Tools/UnityEditor.ps1": "012fec0cd6dbd5fa731b430c03869670eded230021218fc04b7ffddcf707a9eb",
+    "Tools/check-unity-source.ps1": "13aec34dfe8d3b976dfcad91da1ed580fb31eb7f0057b9d14d6c1683cf643b5d",
+    "NOTEBOOK_SETUP.md": "2e21e7876e04d6b8a23bb1124ddcafccac7b55a55a16ef362ec5abd0e41f380e",
+    "README.md": "3f9f1d7c07eeb295bfa7349f6a1217af070691e01cf4a95af9cdedc14b5bcdd5"
+  },
+  "runNotes": [
+    "An initial hidden-window capture returned no usable frame. The visible graphical run then completed with exit 0 and 19 usable captures; no gameplay source change was needed.",
+    "Validation trusted only this sandbox-created clone directory with per-command git safe.directory; global Git settings were not modified.",
+    "The final editor lookup also handles nonexistent custom drives; this is a launcher-only follow-up to the clone candidate. Game source and media are identical."
+  ],
+  "notIncludedInGit": [
+    "Unity editor installation",
+    "Library/Temp and build outputs",
+    "Personal progress saves",
+    "Non-distributable Suno preview candidates"
+  ]
+}

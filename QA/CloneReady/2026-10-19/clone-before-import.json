@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "cloneCommit": "3824104162217857a17f240b5a3a2e0aa7b713bb",
+  "clonePath": "D:\\Project\\레퀴엠 랜턴 (Requiem Lantern)\\Tests\\test-output\\Notebook Clone\\Requiem-Lantern",
+  "trackedFiles": 658,
+  "gameAssetsWithMetadata": 119,
+  "absentBeforeUnityImport": [
+    "RequiemLantern/Library",
+    "RequiemLantern/Temp",
+    "Builds"
+  ],
+  "gitLfsPointers": false,
+  "dotnetBuild": "Built from cloned source, zero errors and warnings; bin/obj did not come from Git.",
+  "source": "Actual git clone --no-local --no-hardlinks from the committed repository; no untracked working files or project caches were copied.",
+  "gitOwnershipNote": "The sandbox clone was created by the elevated worker. Read-only checks trust this exact validation directory per command; no global Git trust setting was changed."
+}

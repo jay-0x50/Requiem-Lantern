@@ -1,0 +1,27 @@
+{
+  "dateKst": "2026-10-19",
+  "before": [
+    {
+      "path": "D:\\Project\\레퀴엠 랜턴 (Requiem Lantern)\\PreviewHost\\.local\\progress.xml",
+      "exists": true,
+      "sha256": "9065e2c04d92641e7793d9f4ebfcd07e31db0aa9656104f7bea19c98e6954c28"
+    },
+    {
+      "path": "D:\\Project\\레퀴엠 랜턴 (Requiem Lantern)\\PreviewHost\\.local\\progress.xml.bak",
+      "exists": true,
+      "sha256": "4167a5e1cda67877a8a8fd1593e3e20b6cfe1ce770ca9314a0c718dec0737d73"
+    },
+    {
+      "path": "C:\\Users\\Mirim\\AppData\\LocalLow\\Requiem Lantern Studio\\Requiem Lantern\\progress.xml",
+      "exists": true,
+      "sha256": "24e8972385cacadf1e830755e41a17c710040b50fb157d5b64e0f2be12b341c5"
+    },
+    {
+      "path": "C:\\Users\\Mirim\\AppData\\LocalLow\\Requiem Lantern Studio\\Requiem Lantern\\progress.xml.bak",
+      "exists": true,
+      "sha256": "36f2792357e2e03a1166dfa787fa40c0692e495c4e2a2b9264c487790f5c4af9"
+    }
+  ],
+  "status": "PASS",
+  "allFourPlayerSaveFilesUnchanged": true
+}

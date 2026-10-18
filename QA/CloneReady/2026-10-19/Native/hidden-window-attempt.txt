@@ -1,0 +1,5 @@
+FAIL: skill quotes, S3 motion, awakening and support
+System.Exception: Screen capture returned no usable texture for 00-lian-s3-cut-in.
+  at RequiemLantern.Presentation.LanternApp.WriteSmokeScreenshot (System.String directory, System.String name) [0x00024] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\Tests\test-output\Notebook Clone\Requiem-Lantern\RequiemLantern\Assets\Scripts\Presentation\LanternBootstrap.cs:798
+  at RequiemLantern.Presentation.LanternApp+<FlavorPlay>d__294.MoveNext () [0x00922] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\Tests\test-output\Notebook Clone\Requiem-Lantern\RequiemLantern\Assets\Scripts\Presentation\LanternSkillFlavorSmoke.cs:91
+  at RequiemLantern.Presentation.LanternApp+<SmokeTour>d__160.MoveNext () [0x001d6] in D:\Project\레퀴엠 랜턴 (Requiem Lantern)\Tests\test-output\Notebook Clone\Requiem-Lantern\RequiemLantern\Assets\Scripts\Presentation\LanternBootstrap.cs:45
