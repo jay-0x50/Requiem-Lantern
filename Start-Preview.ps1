@@ -1,6 +1,12 @@
 param([switch]$NoBrowser)
 $ErrorActionPreference='Stop'
 $projectRoot=$PSScriptRoot
+$dotnet=Get-Command dotnet -CommandType Application -ErrorAction SilentlyContinue
+if (-not $dotnet) { throw 'Install .NET 10 SDK, then run Start-Preview.cmd again. Unity development does not require this SDK. See NOTEBOOK_SETUP.md.' }
+$sdks=@(& $dotnet.Source --list-sdks)
+if (-not ($sdks | Where-Object { $_ -match '^10\.' })) {
+    throw '.NET 10 SDK is required for the browser preview. Install the SDK (not only the runtime), reopen the terminal, and try again.'
+}
 $url='http://127.0.0.1:8127/'
 $state=$null
 try { $state=Invoke-RestMethod ($url+'api/state') -TimeoutSec 2 } catch { }
@@ -23,8 +29,6 @@ if ($state) {
     }
     Stop-Process -Id $previousHost.ProcessId -ErrorAction Stop
 }
-$dotnet=Get-Command dotnet -ErrorAction SilentlyContinue
-if (-not $dotnet) { throw '.NET SDK 10 is required for the local preview. The Unity project can be opened separately.' }
 $output=Join-Path $projectRoot 'PreviewHost\bin\live'
 & $dotnet.Source build (Join-Path $projectRoot 'PreviewHost\PreviewHost.csproj') --configuration Release --output $output --verbosity quiet
 if ($LASTEXITCODE -ne 0) { throw 'Preview host build failed.' }

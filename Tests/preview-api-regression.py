@@ -1,7 +1,9 @@
 """Run isolated real PreviewHost HTTP campaign checks without touching player saves."""
 from pathlib import Path
-import argparse, json, struct, subprocess, time, urllib.request, urllib.error
+import argparse, json, shutil, struct, subprocess, time, urllib.request, urllib.error
 ROOT=Path(__file__).resolve().parent.parent
+DOTNET=shutil.which('dotnet')
+if not DOTNET: raise SystemExit('Install .NET 10 SDK and reopen the terminal before running HTTP checks.')
 PORT=8129
 SAVE=ROOT/'Logs/ApiTests/progress.xml'
 SAVE.parent.mkdir(parents=True,exist_ok=True)
@@ -75,8 +77,8 @@ def combat_art_routes():
             assert response.headers.get_content_type()=='image/png'
             assert response.read()==(ROOT/'RequiemLantern/Assets/Resources/Art'/f'{name}.png').read_bytes()
 log=(SAVE.parent/'host.log').open('w',encoding='utf-8')
-process=subprocess.Popen(['C:/Program Files/dotnet/dotnet.exe',str(HOST),str(ROOT),str(SAVE),str(PORT)],
-  stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
+process=subprocess.Popen([DOTNET,str(HOST),str(ROOT),str(SAVE),str(PORT)],
+  stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
 try:
     data=None
     for _ in range(50):

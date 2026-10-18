@@ -1,6 +1,10 @@
-param([string]$EditorRoot = 'C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor')
+param([string]$EditorRoot)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if (-not $EditorRoot) {
+    . (Join-Path $PSScriptRoot 'UnityEditor.ps1')
+    $EditorRoot = Split-Path -Parent (Resolve-LanternUnityEditor -ProjectPath (Join-Path $projectRoot 'RequiemLantern'))
+}
 $dataRoot = Join-Path $EditorRoot 'Data'
 $sdkRoot = Join-Path $dataRoot 'DotNetSdk'
 $compiler = Get-ChildItem (Join-Path $sdkRoot 'sdk') -Filter csc.dll -Recurse | Select-Object -First 1

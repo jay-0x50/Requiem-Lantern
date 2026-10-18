@@ -4,9 +4,20 @@
 
 ## 바로 실행
 
-**Unity Hub에서 추가할 폴더는 `RequiemLantern/`입니다.** 전체 경로는 `D:\Project\레퀴엠 랜턴 (Requiem Lantern)\RequiemLantern`입니다. 저장소 최상위 폴더를 추가하면 게임 자산이 없는 빈 프로젝트가 열립니다.
+### 노트북·새 PC에서 시작
 
-PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트와 `Assets/Scenes/Main.unity`를 함께 엽니다. 에디터 상단의 Play를 누르면 게임이 시작됩니다. 기본 씬에는 카메라와 조명이 있으며 게임 UI는 Play 시 스크립트가 생성합니다.
+1. Unity Hub에서 **Unity 6000.6.0f1**을 설치하고 라이선스를 활성화합니다. 이미 설치돼 있으면 그대로 사용합니다.
+2. 이 저장소를 클론합니다. Git LFS나 별도 이미지 다운로드는 필요 없습니다.
+   ```powershell
+   git clone https://github.com/jay-0x50/Requiem-Lantern.git
+   cd Requiem-Lantern
+   ```
+3. Windows에서는 **`Open-Unity.cmd`를 더블클릭**합니다. 또는 Unity Hub에서 **클론 폴더 안의 `RequiemLantern/`**을 프로젝트로 추가합니다.
+4. 첫 자산 임포트가 끝나면 `Assets/Scenes/Main.unity`에서 **Play**를 누릅니다.
+
+코드·원화·전투 SD·효과음·폰트·씬·Unity 설정·패키지 목록이 저장소에 포함돼 있습니다. Blender·Figma·Codex 설치는 게임 실행에 필요하지 않습니다. 상세 설치, 다른 Unity 설치 경로, 빌드와 저장 이전은 [새 PC 시작 안내](NOTEBOOK_SETUP.md)를 참고합니다.
+
+**Unity Hub에 저장소 최상위 폴더를 추가하지 마세요. 실제 게임 프로젝트는 그 안의 `RequiemLantern/`입니다.** `Open-Unity.cmd`는 이 폴더와 메인 씬을 자동으로 엽니다. 에디터 상단의 Play를 누르면 게임이 시작됩니다. 기본 씬에는 카메라와 조명이 있으며 게임 UI는 Play 시 스크립트가 생성합니다.
 
 타이틀은 저장 상태와 관계없이 **화면을 클릭해 시작 / CLICK TO START**로 표시합니다. 화면 클릭이나 Enter·Space로 시작하며, 처음에는 도입 이야기, 기존 진행이 있으면 등대 요새로 이동합니다. 설정은 별도 버튼으로 열고 진행 기록은 자동으로 유지합니다.
 
@@ -17,16 +28,16 @@ PowerShell에서 `./Open-Unity.ps1`을 실행하면 올바른 Unity 프로젝트
 프로젝트 루트에서 PowerShell로 실행합니다.
 
 ```powershell
-.\Start-Preview.ps1
+.\Start-Preview.cmd
 ```
 
-브라우저에서 <http://127.0.0.1:8127/>가 열립니다. 현재 PC의 .NET 10 SDK를 사용합니다. 외부 서버나 계정은 필요하지 않습니다. 전투 계산은 Unity 프로젝트와 **동일한 C# Core 소스**를 사용합니다. 브라우저 화면은 검수용 별도 구현이며, Unity WebGL 빌드는 아닙니다.
+브라우저에서 <http://127.0.0.1:8127/>가 열립니다. 이 기능에만 **.NET 10 SDK** 설치가 필요합니다. Unity 편집·실행에는 별도 .NET SDK가 필요하지 않습니다. 전투 계산은 Unity 프로젝트와 **동일한 C# Core 소스**를 사용합니다. 브라우저 화면은 검수용 별도 구현이며, Unity WebGL 빌드는 아닙니다.
 
 현재 프리뷰는 **PC 마우스·키보드 기준**입니다. 모바일 터치 타깃, 세이프 에어리어, 실제 기기 성능은 후속 검증 대상입니다.
 
 ### Windows 게임
 
-`Builds/Windows/RequiemLantern.exe`를 실행합니다. 같은 폴더의 데이터와 DLL이 필요하므로 전달할 때는 `Builds/Windows` 폴더 전체를 복사합니다.
+`Build-Windows.cmd`를 실행하거나 Unity의 **Requiem Lantern → Build Windows Preview** 메뉴로 생성한 뒤 `Builds/Windows/RequiemLantern.exe`를 실행합니다. 실행 빌드와 `Library` 캐시는 Git에 포함하지 않으므로 새 클론에서는 한 번 생성합니다. 같은 폴더의 데이터와 DLL이 필요하므로 전달할 때는 `Builds/Windows` 폴더 전체를 복사합니다.
 
 ### Unity
 

@@ -1,8 +1,10 @@
 """Exercise recurring income against a real isolated host and an explicit QA clock."""
 from pathlib import Path
-import argparse, json, subprocess, time, urllib.request, urllib.error
+import argparse, json, shutil, subprocess, time, urllib.request, urllib.error
 
 ROOT=Path(__file__).resolve().parent.parent
+DOTNET=shutil.which('dotnet')
+if not DOTNET: raise SystemExit('Install .NET 10 SDK and reopen the terminal before running HTTP checks.')
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--host',type=Path,default=ROOT/'PreviewHost/bin/recurring-qa/PreviewHost.dll')
 args=parser.parse_args()
@@ -31,7 +33,7 @@ def call(action=None,status=200,**fields):
 
 def start():
     global process
-    process=subprocess.Popen(['C:/Program Files/dotnet/dotnet.exe',str(args.host.resolve()),str(ROOT),str(SAVE),str(PORT),str(CLOCK)],stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW)
+    process=subprocess.Popen([DOTNET,str(args.host.resolve()),str(ROOT),str(SAVE),str(PORT),str(CLOCK)],stdout=log,stderr=subprocess.STDOUT,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
     for _ in range(80):
         if process.poll() is not None:raise RuntimeError('The isolated host exited. See QA host.log.')
         try:return call()
